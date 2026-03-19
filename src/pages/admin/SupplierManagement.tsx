@@ -1,0 +1,179 @@
+import { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { AdminLayout } from "@/components/common/layout";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import { SupplierDialog } from "@/components/admin/dialogs/suppliers/SupplierDialog";
+import { DeleteSupplierDialog } from "@/components/admin/dialogs/suppliers/DeleteSupplierDialog";
+
+interface Supplier {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+}
+
+const suppliers: Supplier[] = [
+  {
+    id: "1",
+    name: "Ramesh Poultry Farm",
+    phone: "+91 98765 43210",
+    address: "Village Road, Chickmagalur, Karnataka",
+  },
+  {
+    id: "2",
+    name: "Kumar Feed Suppliers",
+    phone: "+91 98765 43211",
+    address: "Market Street, Hassan, Karnataka",
+  },
+  {
+    id: "3",
+    name: "Lakshmi Egg Traders",
+    phone: "+91 98765 43212",
+    address: "Nehru Circle, Mysore, Karnataka",
+  },
+];
+
+export default function SupplierManagement() {
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(
+    null,
+  );
+
+  const handleEdit = (id: string) => {
+    const supplier = suppliers.find((s) => s.id === id);
+    if (supplier) {
+      setEditingSupplier(supplier);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    const supplier = suppliers.find((s) => s.id === id);
+    if (supplier) {
+      setDeletingSupplier(supplier);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    console.log("Deleting supplier:", deletingSupplier?.id);
+    setDeleteDialogOpen(false);
+    setDeletingSupplier(null);
+  };
+
+  return (
+    <AdminLayout title="Supplier Management">
+      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.1)]">
+          <p className="text-base text-muted-foreground">
+            Manage supplier information
+          </p>
+          <Button
+            onClick={() => setAddDialogOpen(true)}
+            className="flex items-center gap-2 h-9 px-4 bg-admin text-white text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+          >
+            <Plus className="size-4" />
+            <span>Add Supplier</span>
+          </Button>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
+              <TableHead className="text-left py-3 pl-6 text-sm font-medium text-foreground">
+                Supplier Name
+              </TableHead>
+              <TableHead className="text-left py-3 pl-6 text-sm font-medium text-foreground">
+                Phone Number
+              </TableHead>
+              <TableHead className="text-left py-3 pl-6 text-sm font-medium text-foreground">
+                Address
+              </TableHead>
+              <TableHead className="text-right py-3 pr-6 text-sm font-medium text-foreground">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {suppliers.map((supplier) => (
+              <TableRow
+                key={supplier.id}
+                className="border-b border-[rgba(0,0,0,0.1)]"
+              >
+                <TableCell className="py-3 pl-6 text-sm font-medium text-foreground">
+                  {supplier.name}
+                </TableCell>
+                <TableCell className="py-3 pl-6 text-sm text-foreground">
+                  {supplier.phone}
+                </TableCell>
+                <TableCell className="py-3 pl-6 text-sm text-foreground">
+                  {supplier.address}
+                </TableCell>
+                <TableCell className="py-3 pr-6">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(supplier.id)}
+                      className="size-8 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <Pencil className="size-4 text-[#525252]" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(supplier.id)}
+                      className="size-8 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.1)]">
+          <p className="text-sm text-muted-foreground italic">
+            Note: Supplier information is not connected to inventory in this
+            version.
+          </p>
+        </div>
+      </div>
+
+      <SupplierDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        mode="add"
+      />
+      {editingSupplier && (
+        <SupplierDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          mode="edit"
+          supplier={editingSupplier}
+        />
+      )}
+      {deletingSupplier && (
+        <DeleteSupplierDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          supplierName={deletingSupplier.name}
+          onDelete={handleConfirmDelete}
+        />
+      )}
+    </AdminLayout>
+  );
+}

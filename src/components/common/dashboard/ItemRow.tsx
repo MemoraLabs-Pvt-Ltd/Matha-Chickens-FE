@@ -1,0 +1,64 @@
+import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+interface Item {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  status: "active" | "inactive";
+}
+
+interface ItemRowProps extends Item {
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+export function ItemRow({ id, name, category, price, status, onEdit, onDelete }: ItemRowProps) {
+  return (
+    <tr className="border-b border-[rgba(0,0,0,0.1)] hover:bg-muted/50 transition-colors">
+      <td className="py-3 pl-6 pr-2">
+        <span className="text-sm font-medium text-[#0a0a0a]">{name}</span>
+      </td>
+      <td className="py-3 px-2">
+        <span className="text-sm text-[#0a0a0a]">{category}</span>
+      </td>
+      <td className="py-3 px-2">
+        <span className="text-sm text-[#0a0a0a]">{price}</span>
+      </td>
+      <td className="py-3 px-2">
+        <Badge
+          variant="default"
+          className={`${
+            status === "active"
+              ? "bg-[#dcfce7] text-[#016630] border border-[#dcfce7]"
+              : "bg-[#ffe2e2] text-[#c10007] border border-[#ffe2e2]"
+          }`}
+        >
+          {status === "active" ? "Active" : "Inactive"}
+        </Badge>
+      </td>
+      <td className="py-3 px-2">
+        <div className="flex items-center justify-end gap-2 pr-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onEdit(id)}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+          >
+            <Pencil className="size-4 text-[#525252]" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(id)}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+          >
+            <Trash2 className="size-4 text-destructive" />
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}

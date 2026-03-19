@@ -3,6 +3,7 @@ import type { IconType } from "react-icons";
 import { LayoutDashboard, Receipt, Package, ShoppingBag, FileText } from "lucide-react";
 import { StoreSidebar } from "@/components/common/layout/StoreSidebar";
 import { Watermark } from "@/components/ui/watermark";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StoreLayoutProps {
   title: string;
@@ -30,12 +31,18 @@ export function StoreLayout({
   children,
 }: StoreLayoutProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/store/login");
+  };
 
   return (
     <div className="flex min-h-screen bg-background-secondary">
       <StoreSidebar
         navItems={storeNavItems}
-        onLogout={() => navigate("/store/login")}
+        onLogout={handleLogout}
       />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         <header className="bg-card border-b border-border h-[85px] px-8 py-4 shrink-0 z-10">

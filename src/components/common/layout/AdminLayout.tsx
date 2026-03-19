@@ -4,6 +4,7 @@ import { Store, Receipt, ShoppingCart, FileText, Users, Box } from "lucide-react
 import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Header } from "@/components/common/layout/Header";
 import { Watermark } from "@/components/ui/watermark";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AdminLayoutProps {
   title: string;
@@ -34,14 +35,16 @@ export function AdminLayout({
   bgColor = "bg-white",
 }: AdminLayoutProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/admin/login");
+  };
 
   return (
-    <div className="flex min-h-screen bg-[#fafafa]">
-      <Sidebar
-        navItems={adminNavItems}
-        onLogout={() => navigate("/")}
-        bgColor={bgColor}
-      />
+    <div className="flex min-h-screen bg-background">
+      <Sidebar navItems={adminNavItems} onLogout={handleLogout} bgColor={bgColor} />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         <Header title={title} userName={userName} userEmail={userEmail} />
         <div className="flex-1 p-8 overflow-auto z-10">{children}</div>

@@ -17,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { OrderDetailsSheet } from "./OrderDetailsSheet";
 
 interface OrderItem {
@@ -41,39 +50,18 @@ interface OnlineOrder {
 }
 
 const onlineOrders: OnlineOrder[] = [
-  {
-    id: "ORD001",
-    customer: "Priya Sharma",
-    phone: "+91 98765 00001",
-    address: "123, Brigade Road, Bangalore - 560001",
-    items: [
-      { name: "Fresh Chicken Breast", quantity: 2, price: 280 },
-      { name: "Farm Fresh Eggs (12 pcs)", quantity: 1, price: 84 },
-    ],
-    subtotal: 644,
-    discount: 32.2,
-    tax: 30.59,
-    total: 642.39,
-    date: "24/02/2026",
-    time: "10:30:00",
-    status: "Order Received",
-  },
-  {
-    id: "ORD002",
-    customer: "Rajesh Kumar",
-    phone: "+91 98765 00002",
-    address: "456, MG Road, Bangalore - 560001",
-    items: [
-      { name: "Whole Roast Chicken", quantity: 1, price: 450 },
-    ],
-    subtotal: 450,
-    discount: 0,
-    tax: 22.5,
-    total: 472.5,
-    date: "23/02/2026",
-    time: "14:15:00",
-    status: "Dispatched",
-  },
+  { id: "ORD001", customer: "Priya Sharma", phone: "+91 98765 00001", address: "123, Brigade Road, Bangalore - 560001", items: [{ name: "Fresh Chicken Breast", quantity: 2, price: 280 }, { name: "Farm Fresh Eggs (12 pcs)", quantity: 1, price: 84 }], subtotal: 644, discount: 32.2, tax: 30.59, total: 642.39, date: "24/02/2026", time: "10:30:00", status: "Order Received" },
+  { id: "ORD002", customer: "Rajesh Kumar", phone: "+91 98765 00002", address: "456, MG Road, Bangalore - 560001", items: [{ name: "Whole Roast Chicken", quantity: 1, price: 450 }], subtotal: 450, discount: 0, tax: 22.5, total: 472.5, date: "23/02/2026", time: "14:15:00", status: "Dispatched" },
+  { id: "ORD003", customer: "Anita Desai", phone: "+91 98765 00003", address: "789, Indiranagar, Bangalore - 560038", items: [{ name: "Crispy Fried Chicken", quantity: 2, price: 320 }, { name: "Chicken Wings", quantity: 1, price: 240 }], subtotal: 880, discount: 44, tax: 41.8, total: 877.8, date: "23/02/2026", time: "18:45:00", status: "Delivered" },
+  { id: "ORD004", customer: "Vikram Singh", phone: "+91 98765 00004", address: "321, Whitefield, Bangalore - 560066", items: [{ name: "Country Chicken - Cut Pieces", quantity: 1.5, price: 580 }], subtotal: 870, discount: 43.5, tax: 41.33, total: 867.83, date: "22/02/2026", time: "12:00:00", status: "Preparing" },
+  { id: "ORD005", customer: "Meera Patel", phone: "+91 98765 00005", address: "654, Koramangala, Bangalore - 560034", items: [{ name: "Chicken Tikka", quantity: 2, price: 400 }, { name: "Chicken Biryani Cut", quantity: 1, price: 290 }], subtotal: 1090, discount: 54.5, tax: 51.78, total: 1087.28, date: "22/02/2026", time: "20:30:00", status: "Order Received" },
+  { id: "ORD006", customer: "Arun Kumar", phone: "+91 98765 00006", address: "987, HSR Layout, Bangalore - 560102", items: [{ name: "Chicken Lolipop", quantity: 3, price: 300 }], subtotal: 900, discount: 45, tax: 42.75, total: 897.75, date: "21/02/2026", time: "14:20:00", status: "Dispatched" },
+  { id: "ORD007", customer: "Sunita Reddy", phone: "+91 98765 00007", address: "147, Marathahalli, Bangalore - 560037", items: [{ name: "Tandoori Chicken", quantity: 2, price: 380 }], subtotal: 760, discount: 38, tax: 36.1, total: 758.1, date: "21/02/2026", time: "19:15:00", status: "Delivered" },
+  { id: "ORD008", customer: "Kiran Nair", phone: "+91 98765 00008", address: "258, Electronic City, Bangalore - 560100", items: [{ name: "Chicken Keema", quantity: 1.5, price: 350 }, { name: "Chicken Naan", quantity: 4, price: 60 }], subtotal: 765, discount: 38.25, tax: 36.34, total: 763.09, date: "20/02/2026", time: "21:00:00", status: "Preparing" },
+  { id: "ORD009", customer: "Lakshmi Devi", phone: "+91 98765 00009", address: "369, Jayanagar, Bangalore - 560011", items: [{ name: "Farm Fresh Eggs (30 pcs)", quantity: 2, price: 195 }], subtotal: 390, discount: 19.5, tax: 18.53, total: 389.03, date: "20/02/2026", time: "10:45:00", status: "Order Received" },
+  { id: "ORD010", customer: "Suresh Babu", phone: "+91 98765 00010", address: "741, Rajajinagar, Bangalore - 560010", items: [{ name: "Chicken Malai Tikka", quantity: 2, price: 420 }, { name: "Chicken Seekh Kebab", quantity: 1, price: 360 }], subtotal: 1200, discount: 60, tax: 57, total: 1197, date: "19/02/2026", time: "15:30:00", status: "Dispatched" },
+  { id: "ORD011", customer: "Geetha Krishnan", phone: "+91 98765 00011", address: "852, Malleswaram, Bangalore - 560003", items: [{ name: "Chicken Spring Chicken", quantity: 1, price: 380 }], subtotal: 380, discount: 19, tax: 18.05, total: 379.05, date: "19/02/2026", time: "13:00:00", status: "Delivered" },
+  { id: "ORD012", customer: "Ravi Shankar", phone: "+91 98765 00012", address: "963, Frazer Town, Bangalore - 560005", items: [{ name: "Chicken Boneless", quantity: 2, price: 360 }, { name: "Chicken Stock (1L)", quantity: 2, price: 150 }], subtotal: 1020, discount: 51, tax: 48.45, total: 1017.45, date: "18/02/2026", time: "17:45:00", status: "Preparing" },
 ];
 
 const statusStyles: Record<OnlineOrder["status"], { bg: string; text: string }> = {
@@ -86,10 +74,32 @@ const statusStyles: Record<OnlineOrder["status"], { bg: string; text: string }> 
 export default function OnlineOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(onlineOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentOrders = onlineOrders.slice(startIndex, startIndex + itemsPerPage);
 
   const handleViewOrder = (order: OnlineOrder) => {
     setSelectedOrder(order);
     setIsSheetOpen(true);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
   };
 
   return (
@@ -141,7 +151,7 @@ export default function OnlineOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {onlineOrders.map((order) => (
+              {currentOrders.map((order) => (
                 <TableRow key={order.id} className="border-b border-border">
                   <TableCell className="py-4 pl-4">
                     <span className="text-sm font-medium text-foreground">
@@ -187,6 +197,42 @@ export default function OnlineOrdersPage() {
             </TableBody>
           </Table>
         </div>
+
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {getPageNumbers().map((page, index) =>
+                page === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={currentPage === page}
+                      onClick={() => setCurrentPage(page)}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
       <OrderDetailsSheet
         order={selectedOrder}

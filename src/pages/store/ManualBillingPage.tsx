@@ -26,6 +26,15 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { StoreLayout } from "@/components/common/layout";
 import { BillDetailsSheet } from "./BillDetailsSheet";
 
@@ -48,33 +57,18 @@ interface CompletedBill {
 }
 
 const completedBills: CompletedBill[] = [
-  {
-    billNumber: "MG-001",
-    date: "25/02/2026",
-    time: "11:20:00",
-    items: [
-      { name: "Fresh Chicken Breast", quantity: 1.5, price: 280 },
-      { name: "Farm Fresh Eggs (12 pcs)", quantity: 2, price: 84 },
-    ],
-    subtotal: 588,
-    discount: 29.4,
-    tax: 27.93,
-    total: 586.53,
-    paymentMethod: "Cash",
-  },
-  {
-    billNumber: "MG-002",
-    date: "25/02/2026",
-    time: "15:45:00",
-    items: [
-      { name: "Whole Roast Chicken", quantity: 1, price: 450 },
-    ],
-    subtotal: 450,
-    discount: 22.5,
-    tax: 21.38,
-    total: 448.88,
-    paymentMethod: "UPI",
-  },
+  { billNumber: "MG-001", date: "25/02/2026", time: "11:20:00", items: [{ name: "Fresh Chicken Breast", quantity: 1.5, price: 280 }, { name: "Farm Fresh Eggs (12 pcs)", quantity: 2, price: 84 }], subtotal: 588, discount: 29.4, tax: 27.93, total: 586.53, paymentMethod: "Cash" },
+  { billNumber: "MG-002", date: "25/02/2026", time: "15:45:00", items: [{ name: "Whole Roast Chicken", quantity: 1, price: 450 }], subtotal: 450, discount: 22.5, tax: 21.38, total: 448.88, paymentMethod: "UPI" },
+  { billNumber: "MG-003", date: "24/02/2026", time: "10:30:00", items: [{ name: "Crispy Fried Chicken", quantity: 2, price: 320 }, { name: "Chicken Wings", quantity: 1, price: 240 }], subtotal: 880, discount: 44, tax: 41.8, total: 877.8, paymentMethod: "Card" },
+  { billNumber: "MG-004", date: "24/02/2026", time: "14:15:00", items: [{ name: "Chicken Tikka", quantity: 1.5, price: 400 }], subtotal: 600, discount: 30, tax: 28.5, total: 598.5, paymentMethod: "UPI" },
+  { billNumber: "MG-005", date: "24/02/2026", time: "18:00:00", items: [{ name: "Country Chicken - Cut Pieces", quantity: 1, price: 580 }, { name: "Chicken Keema", quantity: 0.5, price: 350 }], subtotal: 755, discount: 37.75, tax: 35.86, total: 753.11, paymentMethod: "Cash" },
+  { billNumber: "MG-006", date: "23/02/2026", time: "09:45:00", items: [{ name: "Tandoori Chicken", quantity: 2, price: 380 }], subtotal: 760, discount: 38, tax: 36.1, total: 758.1, paymentMethod: "UPI" },
+  { billNumber: "MG-007", date: "23/02/2026", time: "13:20:00", items: [{ name: "Chicken Lolipop", quantity: 4, price: 300 }, { name: "Chicken Drumsticks", quantity: 2, price: 260 }], subtotal: 1720, discount: 86, tax: 81.7, total: 1715.7, paymentMethod: "Card" },
+  { billNumber: "MG-008", date: "23/02/2026", time: "17:30:00", items: [{ name: "Farm Fresh Eggs (30 pcs)", quantity: 2, price: 195 }], subtotal: 390, discount: 19.5, tax: 18.53, total: 389.03, paymentMethod: "UPI" },
+  { billNumber: "MG-009", date: "22/02/2026", time: "11:00:00", items: [{ name: "Whole Roast Chicken", quantity: 1, price: 450 }, { name: "Chicken Naan", quantity: 4, price: 60 }], subtotal: 690, discount: 34.5, tax: 32.78, total: 688.28, paymentMethod: "Cash" },
+  { billNumber: "MG-010", date: "22/02/2026", time: "15:45:00", items: [{ name: "Chicken Malai Tikka", quantity: 2, price: 420 }, { name: "Chicken Seekh Kebab", quantity: 1, price: 360 }], subtotal: 1200, discount: 60, tax: 57, total: 1197, paymentMethod: "UPI" },
+  { billNumber: "MG-011", date: "22/02/2026", time: "20:00:00", items: [{ name: "Chicken Boneless", quantity: 1.5, price: 360 }], subtotal: 540, discount: 27, tax: 25.65, total: 538.65, paymentMethod: "Card" },
+  { billNumber: "MG-012", date: "21/02/2026", time: "12:30:00", items: [{ name: "Crispy Fried Chicken", quantity: 2, price: 320 }, { name: "Chicken Spring Chicken", quantity: 1, price: 380 }], subtotal: 1020, discount: 51, tax: 48.45, total: 1017.45, paymentMethod: "UPI" },
 ];
 
 const menuItems = [
@@ -106,6 +100,12 @@ export default function ManualBillingPage() {
   const [paymentMode, setPaymentMode] = useState("");
   const [selectedBill, setSelectedBill] = useState<CompletedBill | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(completedBills.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentBills = completedBills.slice(startIndex, startIndex + itemsPerPage);
 
   const handleViewBill = (bill: CompletedBill) => {
     setSelectedBill(bill);
@@ -140,6 +140,22 @@ export default function ManualBillingPage() {
       ),
     [searchQuery],
   );
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   return (
     <StoreLayout title="Manual Billing" disableScroll>
@@ -198,7 +214,7 @@ export default function ManualBillingPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {completedBills.map((bill) => (
+                    {currentBills.map((bill) => (
                       <TableRow
                         key={bill.billNumber}
                         className="border-b border-border"
@@ -245,6 +261,44 @@ export default function ManualBillingPage() {
                     ))}
                   </TableBody>
                 </Table>
+
+                {totalPages > 1 && (
+                  <div className="py-4 px-4 border-t border-border">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, index) =>
+                          page === "ellipsis" ? (
+                            <PaginationItem key={`ellipsis-${index}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={currentPage === page}
+                                onClick={() => setCurrentPage(page)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

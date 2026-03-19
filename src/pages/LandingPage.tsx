@@ -49,7 +49,7 @@ export default function LoginLanding() {
               Manage categories, items, stores, suppliers, taxes, and orders
             </p>
             <Link className="w-full" to="/admin/login">
-              <Button className="w-full bg-admin hover:bg-admin text-white">
+              <Button className="w-full bg-admin hover:bg-admin/90 text-white">
                 Admin Login
               </Button>
             </Link>
@@ -72,9 +72,11 @@ export default function LoginLanding() {
             <p className="font-normal leading-5 text-sm text-center text-foreground">
               Manual billing, item availability, and online order management
             </p>
-            <Button className="w-full bg-store hover:bg-store text-white">
-              Store Login
-            </Button>
+            <Link className="w-full" to="/store/login">
+              <Button className="w-full bg-store hover:bg-store/90 text-white">
+                Store Login
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </section>

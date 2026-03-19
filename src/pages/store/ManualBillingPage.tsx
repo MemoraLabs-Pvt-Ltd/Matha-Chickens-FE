@@ -35,6 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { StoreLayout } from "@/components/common/layout";
 import { BillDetailsSheet } from "./BillDetailsSheet";
 
@@ -100,12 +101,7 @@ export default function ManualBillingPage() {
   const [paymentMode, setPaymentMode] = useState("");
   const [selectedBill, setSelectedBill] = useState<CompletedBill | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
-  const totalPages = Math.ceil(completedBills.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentBills = completedBills.slice(startIndex, startIndex + itemsPerPage);
+  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(completedBills);
 
   const handleViewBill = (bill: CompletedBill) => {
     setSelectedBill(bill);
@@ -140,22 +136,6 @@ export default function ManualBillingPage() {
       ),
     [searchQuery],
   );
-
-  const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("ellipsis");
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("ellipsis");
-      pages.push(totalPages);
-    }
-    return pages;
-  };
 
   return (
     <StoreLayout title="Manual Billing" disableScroll>
@@ -214,7 +194,7 @@ export default function ManualBillingPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {currentBills.map((bill) => (
+                    {currentItems.map((bill) => (
                       <TableRow
                         key={bill.billNumber}
                         className="border-b border-border"

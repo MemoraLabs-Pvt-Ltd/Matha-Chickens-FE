@@ -75,11 +75,11 @@ function ItemDialogBody({
   const [category, setCategory] = useState(
     mode === "edit" && item ? item.category : "",
   );
-  const [price, setPrice] = useState(
-    mode === "edit" && item ? item.price : "",
-  );
+  const [price, setPrice] = useState(mode === "edit" && item ? item.price : "");
   const [description, setDescription] = useState("");
-  const [gst, setGst] = useState(mode === "edit" ? "5" : "18");
+  const [taxes, setTaxes] = useState([
+    { id: "1", name: "GST", percentage: "5" },
+  ]);
   const [discountType, setDiscountType] = useState(
     mode === "edit" ? "percentage" : "none",
   );
@@ -90,14 +90,39 @@ function ItemDialogBody({
     mode === "edit" && item ? item.status === "active" : true,
   );
 
+  const addTax = () => {
+    setTaxes((prev) => [
+      ...prev,
+      { id: Date.now().toString(), name: "", percentage: "0" },
+    ]);
+  };
+
+  const removeTax = (id: string) => {
+    setTaxes((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const updateTax = (
+    id: string,
+    field: "name" | "percentage",
+    value: string,
+  ) => {
+    setTaxes((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)),
+    );
+  };
+
   const basePrice = parseFloat(price) || 0;
-  const gstAmount = basePrice * (parseFloat(gst) / 100);
+  const totalTaxPercentage = taxes.reduce(
+    (sum, t) => sum + (parseFloat(t.percentage) || 0),
+    0,
+  );
+  const taxAmount = basePrice * (totalTaxPercentage / 100);
   const discountAmount =
     discountType === "percentage"
       ? basePrice * (parseFloat(discountValue) / 100)
       : parseFloat(discountValue) || 0;
   const afterDiscount = Math.max(0, basePrice - discountAmount);
-  const finalPrice = afterDiscount + gstAmount;
+  const finalPrice = afterDiscount + taxAmount;
   const savings = discountAmount;
 
   const handleSubmit = () => {
@@ -107,7 +132,7 @@ function ItemDialogBody({
         category,
         price,
         description,
-        gst,
+        taxes,
         discountType,
         discountValue,
         isActive,
@@ -119,7 +144,7 @@ function ItemDialogBody({
         category,
         price,
         description,
-        gst,
+        taxes,
         discountType,
         discountValue,
         isActive,
@@ -129,8 +154,8 @@ function ItemDialogBody({
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-border p-5 max-w-[512px]!">
-      <DialogHeader className="mb-4">
+    <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[512px]! max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogHeader className="px-5 pt-5 pb-4 border-b border-border shrink-0">
         <DialogTitle className="text-lg font-semibold text-foreground">
           {mode === "add" ? "Add Item" : "Edit Item"}
         </DialogTitle>
@@ -141,15 +166,20 @@ function ItemDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-3">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-0">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="itemName" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="itemName"
+              className="text-sm font-medium text-foreground"
+            >
               Item Name *
             </Label>
             <Input
               id="itemName"
-              placeholder={mode === "add" ? "Enter item name" : "Fresh Chicken Breast"}
+              placeholder={
+                mode === "add" ? "Enter item name" : "Fresh Chicken Breast"
+              }
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
               className="bg-input border-transparent rounded-lg h-9 text-sm"
@@ -157,12 +187,19 @@ function ItemDialogBody({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="category"
+              className="text-sm font-medium text-foreground"
+            >
               Category *
             </Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-full h-9 bg-input border-transparent rounded-lg text-sm text-foreground">
-                <SelectValue placeholder={mode === "edit" && item ? item.category : "Select category"} />
+                <SelectValue
+                  placeholder={
+                    mode === "edit" && item ? item.category : "Select category"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -176,7 +213,10 @@ function ItemDialogBody({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price" className="text-sm font-medium text-foreground">
+          <Label
+            htmlFor="price"
+            className="text-sm font-medium text-foreground"
+          >
             Selling Price (₹/kg) *
           </Label>
           <Input
@@ -190,7 +230,10 @@ function ItemDialogBody({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description" className="text-sm font-medium text-foreground">
+          <Label
+            htmlFor="description"
+            className="text-sm font-medium text-foreground"
+          >
             Description (optional)
           </Label>
           <textarea
@@ -207,22 +250,64 @@ function ItemDialogBody({
             Tax & Discount
           </h3>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="gst" className="text-sm font-medium text-foreground">
-                GST (%)
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-foreground">
+                Taxes
               </Label>
-              <Input
-                id="gst"
-                type="number"
-                placeholder="18"
-                value={gst}
-                onChange={(e) => setGst(e.target.value)}
-                className="bg-input border-transparent rounded-lg h-9 text-sm"
-              />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={addTax}
+                className="h-7 px-2 text-xs text-admin hover:text-admin/80"
+              >
+                + Add Tax
+              </Button>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="discountType" className="text-sm font-medium text-foreground">
+              {taxes.map((tax) => (
+                <div key={tax.id} className="flex items-center gap-2">
+                  <Input
+                    placeholder="Tax name (e.g., GST)"
+                    value={tax.name}
+                    onChange={(e) => updateTax(tax.id, "name", e.target.value)}
+                    className="flex-1 bg-input border-transparent rounded-lg h-9 text-sm"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="%"
+                    value={tax.percentage}
+                    onChange={(e) =>
+                      updateTax(tax.id, "percentage", e.target.value)
+                    }
+                    className="w-20 bg-input border-transparent rounded-lg h-9 text-sm"
+                  />
+                  {taxes.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => removeTax(tax.id)}
+                      className="size-8 hover:bg-destructive/10 text-destructive"
+                    >
+                      ×
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {taxes.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Total Tax: {totalTaxPercentage}%
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label
+                htmlFor="discountType"
+                className="text-sm font-medium text-foreground"
+              >
                 Discount Type
               </Label>
               <Select value={discountType} onValueChange={setDiscountType}>
@@ -237,7 +322,10 @@ function ItemDialogBody({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="discountValue" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="discountValue"
+                className="text-sm font-medium text-foreground"
+              >
                 Discount
               </Label>
               <Input
@@ -259,13 +347,17 @@ function ItemDialogBody({
               </h4>
               <div className="flex items-center gap-6">
                 <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">Original Price</p>
+                  <p className="text-xs text-muted-foreground">
+                    Original Price
+                  </p>
                   <p className="text-base font-semibold text-muted-foreground line-through">
                     ₹{basePrice.toFixed(2)}
                   </p>
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">After Discount</p>
+                  <p className="text-xs text-muted-foreground">
+                    After Discount
+                  </p>
                   <p className="text-base font-semibold text-[#00A63E]">
                     ₹{afterDiscount.toFixed(2)}
                   </p>
@@ -321,7 +413,7 @@ function ItemDialogBody({
         )}
       </div>
 
-      <DialogFooter className="mt-4 gap-2">
+      <DialogFooter className="shrink-0 border-t border-border px-5 py-4 bg-muted/50 gap-2">
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}

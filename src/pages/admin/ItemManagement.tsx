@@ -15,6 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { ItemRow } from "@/components/common/dashboard/ItemRow";
 import { ItemDialog } from "@/components/admin/dialogs/items/ItemDialog";
 import { DeleteItemDialog } from "@/components/admin/dialogs/items/DeleteItemDialog";
@@ -35,62 +45,21 @@ const categories = [
 ];
 
 const items: Item[] = [
-  {
-    id: "1",
-    name: "Fresh Chicken Breast",
-    category: "Broiler Chicken",
-    price: "₹280.00/kg",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Whole Roast Chicken",
-    category: "Broiler Chicken",
-    price: "₹450.00/kg",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "Crispy Fried Chicken",
-    category: "Broiler Chicken",
-    price: "₹320.00/kg",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "Country Chicken - Whole",
-    category: "Country Chicken",
-    price: "₹550.00/kg",
-    status: "active",
-  },
-  {
-    id: "5",
-    name: "Country Chicken - Cut Pieces",
-    category: "Country Chicken",
-    price: "₹580.00/kg",
-    status: "active",
-  },
-  {
-    id: "6",
-    name: "Farm Fresh Eggs (12 pcs)",
-    category: "Eggs",
-    price: "₹84.00/dozen",
-    status: "active",
-  },
-  {
-    id: "7",
-    name: "Farm Fresh Eggs (30 pcs)",
-    category: "Eggs",
-    price: "₹195.00/dozen",
-    status: "active",
-  },
-  {
-    id: "8",
-    name: "Chicken Wings",
-    category: "Broiler Chicken",
-    price: "₹240.00/kg",
-    status: "active",
-  },
+  { id: "1", name: "Fresh Chicken Breast", category: "Broiler Chicken", price: "₹280.00/kg", status: "active" },
+  { id: "2", name: "Whole Roast Chicken", category: "Broiler Chicken", price: "₹450.00/kg", status: "active" },
+  { id: "3", name: "Crispy Fried Chicken", category: "Broiler Chicken", price: "₹320.00/kg", status: "active" },
+  { id: "4", name: "Country Chicken - Whole", category: "Country Chicken", price: "₹550.00/kg", status: "active" },
+  { id: "5", name: "Country Chicken - Cut Pieces", category: "Country Chicken", price: "₹580.00/kg", status: "active" },
+  { id: "6", name: "Farm Fresh Eggs (12 pcs)", category: "Eggs", price: "₹84.00/dozen", status: "active" },
+  { id: "7", name: "Farm Fresh Eggs (30 pcs)", category: "Eggs", price: "₹195.00/dozen", status: "active" },
+  { id: "8", name: "Chicken Wings", category: "Broiler Chicken", price: "₹240.00/kg", status: "active" },
+  { id: "9", name: "Chicken Drumsticks", category: "Broiler Chicken", price: "₹260.00/kg", status: "active" },
+  { id: "10", name: "Chicken Liver", category: "Broiler Chicken", price: "₹150.00/kg", status: "inactive" },
+  { id: "11", name: "Chicken Gizzard", category: "Broiler Chicken", price: "₹180.00/kg", status: "active" },
+  { id: "12", name: "Tandoori Chicken", category: "Broiler Chicken", price: "₹380.00/kg", status: "active" },
+  { id: "13", name: "Chicken Tikka", category: "Broiler Chicken", price: "₹400.00/kg", status: "active" },
+  { id: "14", name: "Chicken Keema", category: "Broiler Chicken", price: "₹350.00/kg", status: "active" },
+  { id: "15", name: "Chicken Lolipop", category: "Broiler Chicken", price: "₹300.00/kg", status: "active" },
 ];
 
 export default function ItemManagement() {
@@ -102,6 +71,7 @@ export default function ItemManagement() {
   const [selectedCategory, setSelectedCategory] =
     useState<string>("All Categories");
   const [selectedStatus, setSelectedStatus] = useState<string>("All Status");
+  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(items);
 
   const handleEdit = (id: string) => {
     const item = items.find((i) => i.id === id);
@@ -195,7 +165,7 @@ export default function ItemManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
+            {currentItems.map((item) => (
               <ItemRow
                 key={item.id}
                 {...item}
@@ -206,10 +176,45 @@ export default function ItemManagement() {
           </TableBody>
         </Table>
 
-        <div className="px-6 py-4 border-t border-text-muted">
+        <div className="px-6 py-4 border-t border-text-muted flex items-center justify-between">
           <p className="text-sm text-muted-foreground italic">
             Note: Items are available unless store marks them Out of Stock.
           </p>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {getPageNumbers().map((page, index) =>
+                  page === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        isActive={currentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       </div>
 

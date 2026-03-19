@@ -26,6 +26,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { OrderDetailsSheet } from "./OrderDetailsSheet";
 
 interface OrderItem {
@@ -74,32 +75,11 @@ const statusStyles: Record<OnlineOrder["status"], { bg: string; text: string }> 
 export default function OnlineOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
-  const totalPages = Math.ceil(onlineOrders.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentOrders = onlineOrders.slice(startIndex, startIndex + itemsPerPage);
+  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(onlineOrders);
 
   const handleViewOrder = (order: OnlineOrder) => {
     setSelectedOrder(order);
     setIsSheetOpen(true);
-  };
-
-  const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("ellipsis");
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("ellipsis");
-      pages.push(totalPages);
-    }
-    return pages;
   };
 
   return (
@@ -151,7 +131,7 @@ export default function OnlineOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentOrders.map((order) => (
+              {currentItems.map((order) => (
                 <TableRow key={order.id} className="border-b border-border">
                   <TableCell className="py-4 pl-4">
                     <span className="text-sm font-medium text-foreground">

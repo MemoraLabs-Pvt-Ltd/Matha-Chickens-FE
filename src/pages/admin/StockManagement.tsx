@@ -18,6 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { StockReceiptDialog } from "@/components/admin/dialogs/stock/StockReceiptDialog";
 
 interface StockReceipt {
@@ -34,36 +44,25 @@ interface StockReceipt {
 }
 
 const receipts: StockReceipt[] = [
-  {
-    id: "SR001",
-    date: "24 Feb 2026",
-    time: "10:30 am",
-    supplier: "Ramesh Poultry Farm",
-    item: "Fresh Chicken Breast",
-    quantity: "100",
-    unit: "kg",
-    pricePerUnit: 280,
-    total: 28000,
-    notes: "Received 100 kg of fresh chicken breast",
-  },
-  {
-    id: "SR002",
-    date: "25 Feb 2026",
-    time: "11:20 am",
-    supplier: "Lakshmi Egg Traders",
-    item: "Farm Fresh Eggs (12 pcs)",
-    quantity: "500",
-    unit: "dozen",
-    pricePerUnit: 84,
-    total: 42000,
-    notes: "Received 500 dozen of farm fresh eggs",
-  },
+  { id: "SR001", date: "24 Feb 2026", time: "10:30 am", supplier: "Ramesh Poultry Farm", item: "Fresh Chicken Breast", quantity: "100", unit: "kg", pricePerUnit: 280, total: 28000, notes: "Received 100 kg of fresh chicken breast" },
+  { id: "SR002", date: "25 Feb 2026", time: "11:20 am", supplier: "Lakshmi Egg Traders", item: "Farm Fresh Eggs (12 pcs)", quantity: "500", unit: "dozen", pricePerUnit: 84, total: 42000, notes: "Received 500 dozen of farm fresh eggs" },
+  { id: "SR003", date: "26 Feb 2026", time: "09:15 am", supplier: "Kumar Feed Suppliers", item: "Country Chicken - Whole", quantity: "50", unit: "kg", pricePerUnit: 550, total: 27500, notes: "Premium country chickens received" },
+  { id: "SR004", date: "26 Feb 2026", time: "14:45 pm", supplier: "Ramesh Poultry Farm", item: "Chicken Wings", quantity: "80", unit: "kg", pricePerUnit: 240, total: 19200, notes: "Fresh chicken wings for delivery" },
+  { id: "SR005", date: "27 Feb 2026", time: "08:00 am", supplier: "Lakshmi Egg Traders", item: "Farm Fresh Eggs (30 pcs)", quantity: "200", unit: "dozen", pricePerUnit: 195, total: 39000, notes: "Large order of 30-piece egg packs" },
+  { id: "SR006", date: "27 Feb 2026", time: "12:30 pm", supplier: "Kumar Feed Suppliers", item: "Chicken Drumsticks", quantity: "60", unit: "kg", pricePerUnit: 260, total: 15600, notes: "Fresh drumsticks batch" },
+  { id: "SR007", date: "28 Feb 2026", time: "10:00 am", supplier: "Ramesh Poultry Farm", item: "Tandoori Chicken", quantity: "40", unit: "kg", pricePerUnit: 380, total: 15200, notes: "Pre-marinated tandoori chicken" },
+  { id: "SR008", date: "28 Feb 2026", time: "15:20 pm", supplier: "Lakshmi Egg Traders", item: "Quail Eggs (12 pcs)", quantity: "100", unit: "dozen", pricePerUnit: 120, total: 12000, notes: "Quail eggs for specialty orders" },
+  { id: "SR009", date: "01 Mar 2026", time: "09:30 am", supplier: "Kumar Feed Suppliers", item: "Chicken Tikka", quantity: "45", unit: "kg", pricePerUnit: 400, total: 18000, notes: "Premium tikka cuts" },
+  { id: "SR010", date: "01 Mar 2026", time: "13:00 pm", supplier: "Ramesh Poultry Farm", item: "Chicken Keema", quantity: "30", unit: "kg", pricePerUnit: 350, total: 10500, notes: "Fresh minced chicken" },
+  { id: "SR011", date: "02 Mar 2026", time: "08:45 am", supplier: "Lakshmi Egg Traders", item: "Duck Eggs (6 pcs)", quantity: "80", unit: "dozen", pricePerUnit: 90, total: 7200, notes: "Duck eggs received" },
+  { id: "SR012", date: "02 Mar 2026", time: "11:15 am", supplier: "Kumar Feed Suppliers", item: "Chicken Lolipop", quantity: "55", unit: "kg", pricePerUnit: 300, total: 16500, notes: "Fresh chicken lolipops" },
 ];
 
 export default function StockManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(receipts);
 
   return (
     <AdminLayout title="Stock Management">
@@ -183,7 +182,7 @@ export default function StockManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {receipts.map((receipt) => (
+              {currentItems.map((receipt) => (
                 <TableRow key={receipt.id} className="border-b border-[rgba(0,0,0,0.1)] last:border-0">
                   <TableCell className="py-4">
                     <span className="font-mono font-bold text-[#155dfc] text-sm">
@@ -220,10 +219,47 @@ export default function StockManagement() {
               ))}
             </TableBody>
           </Table>
+            {totalPages > 1 && (
+              <div className="py-4 px-6 border-t border-[rgba(0,0,0,0.1)]">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {getPageNumbers().map((page, index) =>
+                      page === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${index}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            isActive={currentPage === page}
+                            onClick={() => setCurrentPage(page)}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <StockReceiptDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        <StockReceiptDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </AdminLayout>
   );
 }

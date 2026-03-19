@@ -9,13 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Switch } from "@/components/ui/switch";
 import { PinCodesInput } from "@/components/admin/dialogs/stores/PinCodesInput";
 
@@ -87,10 +81,13 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
       ? store.discount.replace("%", "")
       : "",
   );
-  const [taxType, setTaxType] = useState(
-    mode === "edit" && store
-      ? store.tax === "No Tax (0%)" ? "no-tax" : "gst-5"
-      : "no-tax",
+  const [enableTax, setEnableTax] = useState(
+    mode === "edit" && store ? store.tax !== "No Tax (0%)" : false,
+  );
+  const [taxPercentage, setTaxPercentage] = useState(
+    mode === "edit" && store && store.tax !== "No Tax (0%)"
+      ? store.tax.replace("GST ", "").replace("%", "")
+      : "5",
   );
   const [storeStatus, setStoreStatus] = useState(
     mode === "edit" && store ? store.status === "active" : true,
@@ -109,7 +106,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         password,
         enableDiscount,
         discountPercentage: enableDiscount ? discountPercentage : "No Discount",
-        taxType,
+        enableTax,
+        taxPercentage: enableTax ? taxPercentage : "No Tax",
         storeStatus,
         pinCodes,
       });
@@ -123,7 +121,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         password,
         enableDiscount,
         discountPercentage: enableDiscount ? discountPercentage : "No Discount",
-        taxType,
+        enableTax,
+        taxPercentage: enableTax ? taxPercentage : "No Tax",
         storeStatus,
         pinCodes,
       });
@@ -145,7 +144,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
         <div className="grid grid-cols-2 gap-4 min-w-0">
           <div className="space-y-2">
-            <Label htmlFor="storeName" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="storeName"
+              className="text-sm font-medium text-foreground"
+            >
               Store Name *
             </Label>
             <Input
@@ -157,7 +159,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="phone"
+              className="text-sm font-medium text-foreground"
+            >
               Phone *
             </Label>
             <Input
@@ -172,7 +177,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address" className="text-sm font-medium text-foreground">
+          <Label
+            htmlFor="address"
+            className="text-sm font-medium text-foreground"
+          >
             Address *
           </Label>
           <Input
@@ -186,7 +194,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
 
         <div className="grid grid-cols-2 gap-4 min-w-0">
           <div className="space-y-2">
-            <Label htmlFor="loginId" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="loginId"
+              className="text-sm font-medium text-foreground"
+            >
               Login ID *
             </Label>
             <Input
@@ -198,7 +209,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-foreground"
+            >
               Password *
             </Label>
             <Input
@@ -217,7 +231,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             Discount Configuration
           </h4>
           <div className="flex items-center justify-between">
-            <Label htmlFor="enableDiscount" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="enableDiscount"
+              className="text-sm font-medium text-foreground"
+            >
               Enable Discount
             </Label>
             <Switch
@@ -228,7 +245,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
           </div>
           {mode === "edit" && (
             <div className="space-y-2">
-              <Label htmlFor="discountPercentage" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="discountPercentage"
+                className="text-sm font-medium text-foreground"
+              >
                 Discount Percentage
               </Label>
               <Input
@@ -247,23 +267,45 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
           <h4 className="text-base font-medium text-foreground">
             Tax Configuration
           </h4>
-          <Select value={taxType} onValueChange={setTaxType}>
-            <SelectTrigger className="w-full bg-input border-transparent rounded-lg h-9 text-sm text-foreground">
-              <SelectValue placeholder="Select tax type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="no-tax">No Tax (0%)</SelectItem>
-              <SelectItem value="gst-5">GST 5%</SelectItem>
-              <SelectItem value="gst-12">GST 12%</SelectItem>
-              <SelectItem value="gst-18">GST 18%</SelectItem>
-              <SelectItem value="gst-28">GST 28%</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="enableTax"
+              className="text-sm font-medium text-foreground"
+            >
+              Enable Tax
+            </Label>
+            <Switch
+              id="enableTax"
+              checked={enableTax}
+              onCheckedChange={setEnableTax}
+            />
+          </div>
+          {mode === "edit" && (
+            <div className="space-y-2">
+              <Label
+                htmlFor="taxPercentage"
+                className="text-sm font-medium text-foreground"
+              >
+                Tax Percentage
+              </Label>
+              <Input
+                id="taxPercentage"
+                placeholder="Enter percentage"
+                value={taxPercentage}
+                onChange={(e) => setTaxPercentage(e.target.value)}
+                disabled={!enableTax}
+                className="bg-input border-transparent rounded-lg h-9 text-sm"
+              />
+            </div>
+          )}
         </div>
 
         <div className="border-t border-border pt-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="storeStatus" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="storeStatus"
+              className="text-sm font-medium text-foreground"
+            >
               Store Status
             </Label>
             <Switch

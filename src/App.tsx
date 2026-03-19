@@ -11,6 +11,7 @@ import TaxManagement from "./pages/admin/TaxManagement";
 import OnlineOrders from "./pages/admin/OnlineOrders";
 import OfflineBills from "./pages/admin/OfflineBills";
 import Vendors from "./pages/admin/Vendors";
+import StockManagement from "./pages/admin/StockManagement";
 import NotFound from "./pages/NotFound";
 import RootLayout from "@/layouts/RootLayout";
 
@@ -32,6 +33,7 @@ const App = () => {
           <Route path="/admin/orders" element={<OnlineOrders />} />
           <Route path="/admin/bills" element={<OfflineBills />} />
           <Route path="/admin/vendors" element={<Vendors />} />
+          <Route path="/admin/stocks" element={<StockManagement />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

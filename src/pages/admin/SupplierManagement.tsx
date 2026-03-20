@@ -10,36 +10,13 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 import { SupplierDialog } from "@/components/admin/dialogs/suppliers/SupplierDialog";
 import { DeleteSupplierDialog } from "@/components/admin/dialogs/suppliers/DeleteSupplierDialog";
-
-interface Supplier {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-}
-
-const suppliers: Supplier[] = [
-  {
-    id: "1",
-    name: "Ramesh Poultry Farm",
-    phone: "+91 98765 43210",
-    address: "Village Road, Chickmagalur, Karnataka",
-  },
-  {
-    id: "2",
-    name: "Kumar Feed Suppliers",
-    phone: "+91 98765 43211",
-    address: "Market Street, Hassan, Karnataka",
-  },
-  {
-    id: "3",
-    name: "Lakshmi Egg Traders",
-    phone: "+91 98765 43212",
-    address: "Nehru Circle, Mysore, Karnataka",
-  },
-];
+import { useDeleteSupplier, useSuppliers } from "@/hooks/useSuppliers";
+import type { Supplier } from "@/lib/api/suppliers";
+import { formatPhoneForDisplay } from "@/lib/phone";
 
 export default function SupplierManagement() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -50,7 +27,12 @@ export default function SupplierManagement() {
     null,
   );
 
-  const handleEdit = (id: string) => {
+  const { data, isLoading, isError, error } = useSuppliers({ limit: 100 });
+  const deleteSupplier = useDeleteSupplier();
+
+  const suppliers = data?.data ?? [];
+
+  const handleEdit = (id: number) => {
     const supplier = suppliers.find((s) => s.id === id);
     if (supplier) {
       setEditingSupplier(supplier);
@@ -58,7 +40,7 @@ export default function SupplierManagement() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     const supplier = suppliers.find((s) => s.id === id);
     if (supplier) {
       setDeletingSupplier(supplier);
@@ -67,9 +49,14 @@ export default function SupplierManagement() {
   };
 
   const handleConfirmDelete = () => {
-    console.log("Deleting supplier:", deletingSupplier?.id);
-    setDeleteDialogOpen(false);
-    setDeletingSupplier(null);
+    if (!deletingSupplier) return;
+
+    deleteSupplier.mutate(deletingSupplier.id, {
+      onSettled: () => {
+        setDeleteDialogOpen(false);
+        setDeletingSupplier(null);
+      },
+    });
   };
 
   return (
@@ -106,7 +93,44 @@ export default function SupplierManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {suppliers.map((supplier) => (
+            {isLoading && (
+              <TableBodySkeleton
+                rows={6}
+                columns={4}
+                rowClassName="border-[rgba(0,0,0,0.1)]"
+                cellClassNames={["py-3 pl-6", "py-3 pl-6", "py-3 pl-6", "py-3 pr-6"]}
+                renderCell={(columnIndex) => {
+                  if (columnIndex < 3) {
+                    return <Skeleton className="h-4 w-3/4 rounded-lg" />;
+                  }
+
+                  return (
+                    <div className="flex items-center justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                    </div>
+                  );
+                }}
+              />
+            )}
+
+            {isError && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-12 text-center text-sm text-destructive">
+                  {error instanceof Error ? error.message : "Failed to load suppliers"}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading && !isError && suppliers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
+                  No suppliers found
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading && !isError && suppliers.map((supplier) => (
               <TableRow
                 key={supplier.id}
                 className="border-b border-[rgba(0,0,0,0.1)]"
@@ -115,7 +139,7 @@ export default function SupplierManagement() {
                   {supplier.name}
                 </TableCell>
                 <TableCell className="py-3 pl-6 text-sm text-foreground">
-                  {supplier.phone}
+                  {formatPhoneForDisplay(supplier.phone_number)}
                 </TableCell>
                 <TableCell className="py-3 pl-6 text-sm text-foreground">
                   {supplier.address}
@@ -144,13 +168,6 @@ export default function SupplierManagement() {
             ))}
           </TableBody>
         </Table>
-
-        <div className="px-6 py-4 border-t border-[rgba(0,0,0,0.1)]">
-          <p className="text-sm text-muted-foreground italic">
-            Note: Supplier information is not connected to inventory in this
-            version.
-          </p>
-        </div>
       </div>
 
       <SupplierDialog

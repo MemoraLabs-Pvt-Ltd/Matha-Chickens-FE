@@ -10,20 +10,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 import { TaxDialog } from "@/components/admin/dialogs/taxes/TaxDialog";
 import { DeleteTaxDialog } from "@/components/admin/dialogs/taxes/DeleteTaxDialog";
-
-interface Tax {
-  id: string;
-  name: string;
-  percentage: number;
-}
-
-const taxes: Tax[] = [
-  { id: "1", name: "GST 5%", percentage: 5 },
-  { id: "2", name: "GST 12%", percentage: 12 },
-  { id: "3", name: "GST 18%", percentage: 18 },
-];
+import { useDeleteTax, useTaxes } from "@/hooks/useTaxes";
+import type { Tax } from "@/lib/api/taxes";
 
 export default function TaxManagement() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -32,7 +24,12 @@ export default function TaxManagement() {
   const [editingTax, setEditingTax] = useState<Tax | null>(null);
   const [deletingTax, setDeletingTax] = useState<Tax | null>(null);
 
-  const handleEdit = (id: string) => {
+  const { data, isLoading, isError, error } = useTaxes({ limit: 100 });
+  const deleteTax = useDeleteTax();
+
+  const taxes = data?.data ?? [];
+
+  const handleEdit = (id: number) => {
     const tax = taxes.find((t) => t.id === id);
     if (tax) {
       setEditingTax(tax);
@@ -40,7 +37,7 @@ export default function TaxManagement() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     const tax = taxes.find((t) => t.id === id);
     if (tax) {
       setDeletingTax(tax);
@@ -49,9 +46,14 @@ export default function TaxManagement() {
   };
 
   const handleConfirmDelete = () => {
-    console.log("Deleting tax:", deletingTax?.id);
-    setDeleteDialogOpen(false);
-    setDeletingTax(null);
+    if (!deletingTax) return;
+
+    deleteTax.mutate(deletingTax.id, {
+      onSettled: () => {
+        setDeleteDialogOpen(false);
+        setDeletingTax(null);
+      },
+    });
   };
 
   return (
@@ -86,7 +88,44 @@ export default function TaxManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {taxes.map((tax) => (
+              {isLoading && (
+                <TableBodySkeleton
+                  rows={6}
+                  columns={3}
+                  rowClassName="border-[rgba(0,0,0,0.1)]"
+                  cellClassNames={["py-3 pl-2", "py-3 pl-2", "py-3 pr-2"]}
+                  renderCell={(columnIndex) => {
+                    if (columnIndex <= 1) {
+                      return <Skeleton className="h-4 w-3/4 rounded-lg" />;
+                    }
+
+                    return (
+                      <div className="flex items-center justify-end gap-2">
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                      </div>
+                    );
+                  }}
+                />
+              )}
+
+              {isError && (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-12 text-center text-sm text-destructive">
+                    {error instanceof Error ? error.message : "Failed to load taxes"}
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !isError && taxes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-12 text-center text-sm text-muted-foreground">
+                    No taxes found
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !isError && taxes.map((tax) => (
                 <TableRow
                   key={tax.id}
                   className="border-b border-[rgba(0,0,0,0.1)] last:border-0"

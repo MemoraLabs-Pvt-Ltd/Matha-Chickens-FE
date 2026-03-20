@@ -6,9 +6,9 @@ import {
   type ReactNode,
 } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 
-export type AuthRole = 'admin' | 'store_owner';
+export type AuthRole = 'admin' | 'store_owner' | 'user';
 
 export interface AuthUser {
   id: string;
@@ -27,6 +27,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function readRoleFromMetadata(user: User): AuthRole | null {
+  const appRole = user.app_metadata?.role;
+  const userRole = user.user_metadata?.role;
+  const rawRole =
+    typeof appRole === 'string'
+      ? appRole
+      : typeof userRole === 'string'
+        ? userRole
+        : undefined;
+
+  if (rawRole === 'admin' || rawRole === 'store_owner' || rawRole === 'user') {
+    return rawRole;
+  }
+
+  return null;
+}
+
+function toAuthUser(user: User): AuthUser | null {
+  const role = readRoleFromMetadata(user);
+  if (role === null) {
+    console.warn('User missing valid role in metadata');
+    return null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email || '',
+    role,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -35,14 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) {
-        const userMeta = session.user.user_metadata;
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          role: (userMeta?.role as AuthRole) || 'admin',
-        });
-      }
+      setUser(session?.user ? toAuthUser(session.user) : null);
       setIsLoading(false);
     });
 
@@ -50,26 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) {
-        const userMeta = session.user.user_metadata;
-        const role = userMeta?.role as AuthRole | undefined;
-        if (!role) {
-          console.warn('User missing role in metadata, defaulting to admin');
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            role: 'admin',
-          });
-        } else {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            role,
-          });
-        }
-      } else {
-        setUser(null);
-      }
+      setUser(session?.user ? toAuthUser(session.user) : null);
       setIsLoading(false);
     });
 
@@ -88,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: window.location.origin + '/reset-password',
     });
 
     if (error) return { error: error.message };
@@ -119,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

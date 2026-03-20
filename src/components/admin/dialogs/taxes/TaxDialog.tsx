@@ -9,18 +9,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface Tax {
-  id: string;
-  name: string;
-  percentage: number;
-}
+import { useCreateTax, useUpdateTax } from "@/hooks/useTaxes";
+import type { Tax } from "@/lib/api/taxes";
 
 interface TaxDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "add" | "edit";
   tax?: Tax | null;
+}
+
+interface TaxDialogBodyProps {
+  mode: "add" | "edit";
+  tax?: Tax | null;
+  onOpenChange: (open: boolean) => void;
+}
+
+function sanitizeNonNegativeNumberInput(value: string): string {
+  if (!value.trim()) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "";
+  return parsed < 0 ? "0" : value;
 }
 
 export function TaxDialog({
@@ -41,20 +50,10 @@ export function TaxDialog({
   );
 }
 
-interface TaxDialogBodyProps {
-  mode: "add" | "edit";
-  tax?: Tax | null;
-  onOpenChange: (open: boolean) => void;
-}
-
-function sanitizeNonNegativeNumberInput(value: string): string {
-  if (!value.trim()) return "";
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return "";
-  return parsed < 0 ? "0" : value;
-}
-
 function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
+  const createTax = useCreateTax();
+  const updateTax = useUpdateTax();
+
   const [taxName, setTaxName] = useState(
     mode === "edit" && tax ? tax.name : "",
   );
@@ -62,17 +61,36 @@ function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
     mode === "edit" && tax ? tax.percentage.toString() : "",
   );
 
+  const parsedPercentage = Number(percentage);
+
+  const canSubmit =
+    taxName.trim().length > 0 &&
+    percentage.trim().length > 0 &&
+    Number.isFinite(parsedPercentage) &&
+    parsedPercentage >= 0;
+
+  const isPending =
+    mode === "add" ? createTax.isPending : updateTax.isPending;
+
   const handleSubmit = () => {
+    if (!canSubmit) return;
+
+    const payload = {
+      name: taxName.trim(),
+      percentage: parsedPercentage,
+    };
+
     if (mode === "add") {
-      console.log("Create tax:", { taxName, percentage: parseFloat(percentage) });
-    } else {
-      console.log("Update tax:", {
-        id: tax?.id,
-        taxName,
-        percentage: parseFloat(percentage),
-      });
+      createTax.mutate(payload, { onSuccess: () => onOpenChange(false) });
+      return;
     }
-    onOpenChange(false);
+
+    if (!tax) return;
+
+    updateTax.mutate(
+      { id: tax.id, data: payload },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
@@ -107,8 +125,7 @@ function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
           <Input
             id="percentage"
             type="number"
-            min="0"
-            max="100"
+            min={0}
             placeholder="e.g. 5"
             value={percentage}
             onChange={(e) =>
@@ -129,9 +146,10 @@ function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
         </Button>
         <Button
           onClick={handleSubmit}
+          disabled={isPending || !canSubmit}
           className="h-9 px-4 bg-admin text-white hover:bg-admin/90 rounded-lg"
         >
-          {mode === "add" ? "Create" : "Save"}
+          {isPending ? "Saving..." : mode === "add" ? "Create" : "Save"}
         </Button>
       </div>
     </DialogContent>

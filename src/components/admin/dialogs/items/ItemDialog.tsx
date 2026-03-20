@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { useCreateItem, useUpdateItem } from "@/hooks/useItems";
 import { ITEM_IMAGES_BUCKET, supabase } from "@/lib/supabase";
 import {
-  ITEM_UNIT_OPTIONS,
+  UNIT_OPTIONS,
   type CreateItemInput,
   type Item,
 } from "@/lib/api/items";
@@ -350,12 +350,12 @@ function ItemDialogBody({
               <SelectValue placeholder="Select unit" />
             </SelectTrigger>
             <SelectContent>
-              {ITEM_UNIT_OPTIONS.map((unitOption) => (
+              {UNIT_OPTIONS.map((unitOption) => (
                 <SelectItem key={unitOption} value={unitOption}>
                   {unitOption}
                 </SelectItem>
               ))}
-              {!ITEM_UNIT_OPTIONS.includes(unit as (typeof ITEM_UNIT_OPTIONS)[number]) && unit.trim().length > 0 && (
+              {!UNIT_OPTIONS.includes(unit as (typeof UNIT_OPTIONS)[number]) && unit.trim().length > 0 && (
                 <SelectItem value={unit}>
                   {unit} (current)
                 </SelectItem>

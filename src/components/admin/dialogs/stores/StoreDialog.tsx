@@ -1,58 +1,33 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import { Switch } from "@/components/ui/switch";
-import { PinCodesInput } from "@/components/admin/dialogs/stores/PinCodesInput";
-
-interface Store {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  discount: string;
-  tax: string;
-  status: "active" | "inactive";
-  loginId?: string;
-  password?: string;
-  pinCodes?: string[];
-}
+import { useCreateStore, useUpdateStore } from "@/hooks/useStores";
+import {
+  formatPhoneForDisplay,
+  normalizePhoneForPayload,
+  sanitizePhoneForDisplayInput,
+} from "@/lib/phone";
+import type { CreateStoreInput, Store, UpdateStoreInput } from "@/lib/api/stores";
 
 interface StoreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "create" | "edit";
+  mode: "add" | "edit";
   store?: Store | null;
 }
 
-export function StoreDialog({
-  open,
-  onOpenChange,
-  mode,
-  store,
-}: StoreDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <StoreDialogBody
-        key={`${mode}-${store?.id || "new"}-${open ? "open" : "closed"}`}
-        mode={mode}
-        store={store}
-        onOpenChange={onOpenChange}
-      />
-    </Dialog>
-  );
-}
-
 interface StoreDialogBodyProps {
-  mode: "create" | "edit";
+  mode: "add" | "edit";
   store?: Store | null;
   onOpenChange: (open: boolean) => void;
 }
@@ -64,87 +39,138 @@ function sanitizeNonNegativeNumberInput(value: string): string {
   return parsed < 0 ? "0" : value;
 }
 
+export function StoreDialog({
+  open,
+  onOpenChange,
+  mode,
+  store,
+}: StoreDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <StoreDialogBody
+        key={`${mode}-${store?.id ?? "new"}-${open ? "open" : "closed"}`}
+        mode={mode}
+        store={store}
+        onOpenChange={onOpenChange}
+      />
+    </Dialog>
+  );
+}
+
 function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
+  const createStore = useCreateStore();
+  const updateStore = useUpdateStore();
+
   const [storeName, setStoreName] = useState(
     mode === "edit" && store ? store.name : "",
   );
   const [phone, setPhone] = useState(
-    mode === "edit" && store ? store.phone : "",
+    mode === "edit" && store ? formatPhoneForDisplay(store.phone) : "",
   );
   const [address, setAddress] = useState(
     mode === "edit" && store ? store.address : "",
   );
   const [loginId, setLoginId] = useState(
-    mode === "edit" && store ? store.loginId || "" : "",
+    mode === "edit" && store ? store.login_id : "",
   );
-  const [password, setPassword] = useState(
-    mode === "edit" && store ? store.password || "" : "",
-  );
+  const [password, setPassword] = useState("");
   const [enableDiscount, setEnableDiscount] = useState(
-    mode === "edit" && store ? store.discount !== "No Discount" : false,
+    mode === "edit" && store ? store.enable_discount : false,
   );
   const [discountPercentage, setDiscountPercentage] = useState(
-    mode === "edit" && store && store.discount !== "No Discount"
-      ? store.discount.replace("%", "")
-      : "",
+    mode === "edit" && store ? String(store.discount_percent ?? 0) : "0",
   );
-  const [enableTax, setEnableTax] = useState(
-    mode === "edit" && store ? store.tax !== "No Tax (0%)" : false,
+  const [isTaxApplicable, setIsTaxApplicable] = useState(
+    mode === "edit" && store ? store.is_tax_applicable : false,
   );
-  const [taxPercentage, setTaxPercentage] = useState(
-    mode === "edit" && store && store.tax !== "No Tax (0%)"
-      ? store.tax.replace("GST ", "").replace("%", "")
-      : "5",
-  );
-  const [storeStatus, setStoreStatus] = useState(
-    mode === "edit" && store ? store.status === "active" : true,
-  );
-  const [pinCodes, setPinCodes] = useState<string[]>(
-    mode === "edit" && store ? store.pinCodes || ["560001"] : [],
+  const [isActive, setIsActive] = useState(
+    mode === "edit" && store ? store.status !== "inactive" : true,
   );
 
+  const isPending =
+    mode === "add" ? createStore.isPending : updateStore.isPending;
+
+  const emailChanged =
+    mode === "edit" && store ? loginId.trim() !== store.login_id : false;
+
+  const requiresPassword = mode === "add" || emailChanged;
+  const normalizedPhone = normalizePhoneForPayload(phone);
+
+  const canSubmit =
+    storeName.trim().length > 0 &&
+    normalizedPhone.length > 0 &&
+    address.trim().length > 0 &&
+    loginId.trim().length > 0 &&
+    (!requiresPassword || password.trim().length > 0);
+
   const handleSubmit = () => {
-    if (mode === "create") {
-      console.log("Create store:", {
-        storeName,
-        phone,
-        address,
-        loginId,
-        password,
-        enableDiscount,
-        discountPercentage: enableDiscount ? discountPercentage : "No Discount",
-        enableTax,
-        taxPercentage: enableTax ? taxPercentage : "No Tax",
-        storeStatus,
-        pinCodes,
-      });
-    } else {
-      console.log("Update store:", {
-        id: store?.id,
-        storeName,
-        phone,
-        address,
-        loginId,
-        password,
-        enableDiscount,
-        discountPercentage: enableDiscount ? discountPercentage : "No Discount",
-        enableTax,
-        taxPercentage: enableTax ? taxPercentage : "No Tax",
-        storeStatus,
-        pinCodes,
-      });
+    if (!canSubmit) return;
+
+    if (!normalizedPhone.startsWith("+")) {
+      toast.error("Phone must include country code, e.g. +91 98765 43210");
+      return;
     }
-    onOpenChange(false);
+
+    if (normalizedPhone.length < 8 || normalizedPhone.length > 16) {
+      toast.error("Enter a valid phone number");
+      return;
+    }
+
+    if (requiresPassword && password.trim().length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    const parsedDiscountPercent = Number(discountPercentage || "0");
+    if (!Number.isFinite(parsedDiscountPercent) || parsedDiscountPercent < 0) {
+      toast.error("Discount must be a positive number");
+      return;
+    }
+
+    const basePayload = {
+      name: storeName.trim(),
+      phone: normalizedPhone,
+      address: address.trim(),
+      login_id: loginId.trim(),
+      enable_discount: enableDiscount,
+      discount_percent: enableDiscount ? parsedDiscountPercent : 0,
+      is_tax_applicable: isTaxApplicable,
+      status: isActive ? ("active" as const) : ("inactive" as const),
+    };
+
+    if (mode === "add") {
+      const payload: CreateStoreInput = {
+        ...basePayload,
+        password: password.trim(),
+      };
+
+      createStore.mutate(payload, { onSuccess: () => onOpenChange(false) });
+      return;
+    }
+
+    if (!store) return;
+
+    const payload: UpdateStoreInput = {
+      ...basePayload,
+      password: password.trim() ? password.trim() : undefined,
+    };
+
+    updateStore.mutate(
+      { id: store.id, data: payload },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
     <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[512px]! max-h-[85vh] flex flex-col overflow-hidden">
       <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
         <DialogTitle>
-          {mode === "create" ? "Create Store" : "Edit Store"}
+          {mode === "add" ? "Create Store" : "Edit Store"}
         </DialogTitle>
         <DialogDescription>
-          Store information and configuration
+          {mode === "add"
+            ? "Create a new store and login account"
+            : "Update store information and configuration"}
         </DialogDescription>
       </DialogHeader>
 
@@ -165,6 +191,7 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               className="bg-input border-transparent rounded-lg h-9 text-sm"
             />
           </div>
+
           <div className="space-y-2">
             <Label
               htmlFor="phone"
@@ -177,7 +204,7 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               type="tel"
               placeholder="+91 98765 43210"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(sanitizePhoneForDisplayInput(e.target.value))}
               className="bg-input border-transparent rounded-lg h-9 text-sm"
             />
           </div>
@@ -205,27 +232,31 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               htmlFor="loginId"
               className="text-sm font-medium text-foreground"
             >
-              Login ID *
+              Login ID (Email) *
             </Label>
             <Input
               id="loginId"
-              placeholder="Enter login ID"
+              type="email"
+              placeholder="store@example.com"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
               className="bg-input border-transparent rounded-lg h-9 text-sm"
             />
           </div>
+
           <div className="space-y-2">
             <Label
               htmlFor="password"
               className="text-sm font-medium text-foreground"
             >
-              Password *
+              {mode === "add"
+                ? "Password *"
+                : "Password (optional, required if login changes)"}
             </Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter password"
+              placeholder={mode === "add" ? "Enter password" : "Leave blank to keep unchanged"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="bg-input border-transparent rounded-lg h-9 text-sm"
@@ -250,7 +281,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               onCheckedChange={setEnableDiscount}
             />
           </div>
-          {mode === "edit" && (
+
+          {enableDiscount && (
             <div className="space-y-2">
               <Label
                 htmlFor="discountPercentage"
@@ -270,7 +302,6 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
                     sanitizeNonNegativeNumberInput(e.target.value),
                   )
                 }
-                disabled={!enableDiscount}
                 className="bg-input border-transparent rounded-lg h-9 text-sm"
               />
             </div>
@@ -283,40 +314,17 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
           </h4>
           <div className="flex items-center justify-between">
             <Label
-              htmlFor="enableTax"
+              htmlFor="isTaxApplicable"
               className="text-sm font-medium text-foreground"
             >
-              Enable Tax
+              Is Tax Applicable
             </Label>
             <Switch
-              id="enableTax"
-              checked={enableTax}
-              onCheckedChange={setEnableTax}
+              id="isTaxApplicable"
+              checked={isTaxApplicable}
+              onCheckedChange={setIsTaxApplicable}
             />
           </div>
-          {mode === "edit" && (
-            <div className="space-y-2">
-              <Label
-                htmlFor="taxPercentage"
-                className="text-sm font-medium text-foreground"
-              >
-                Tax Percentage
-              </Label>
-              <Input
-                id="taxPercentage"
-                type="number"
-                min={0}
-                max={100}
-                placeholder="Enter percentage"
-                value={taxPercentage}
-                onChange={(e) =>
-                  setTaxPercentage(sanitizeNonNegativeNumberInput(e.target.value))
-                }
-                disabled={!enableTax}
-                className="bg-input border-transparent rounded-lg h-9 text-sm"
-              />
-            </div>
-          )}
         </div>
 
         <div className="border-t border-border pt-4">
@@ -329,13 +337,11 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             </Label>
             <Switch
               id="storeStatus"
-              checked={storeStatus}
-              onCheckedChange={setStoreStatus}
+              checked={isActive}
+              onCheckedChange={setIsActive}
             />
           </div>
         </div>
-
-        <PinCodesInput value={pinCodes} onChange={setPinCodes} />
       </div>
 
       <div className="shrink-0 border-t border-border bg-muted/50 px-6 py-4 flex justify-end gap-2">
@@ -348,9 +354,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         </Button>
         <Button
           onClick={handleSubmit}
+          disabled={isPending || !canSubmit}
           className="h-9 px-4 bg-admin text-primary-foreground hover:bg-admin/90 rounded-lg"
         >
-          {mode === "create" ? "Create" : "Update"}
+          {isPending ? "Saving..." : mode === "add" ? "Create" : "Update"}
         </Button>
       </div>
     </DialogContent>

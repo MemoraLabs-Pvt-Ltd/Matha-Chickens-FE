@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export const ITEM_UNIT_OPTIONS = ["kg", "pack"] as const;
+export const UNIT_OPTIONS = ["kg", "pack", "pcs", "dozen", "liters"] as const;
 
 export interface Item {
   id: number;

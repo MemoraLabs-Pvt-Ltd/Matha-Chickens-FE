@@ -47,6 +47,13 @@ interface TaxDialogBodyProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function sanitizeNonNegativeNumberInput(value: string): string {
+  if (!value.trim()) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "";
+  return parsed < 0 ? "0" : value;
+}
+
 function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
   const [taxName, setTaxName] = useState(
     mode === "edit" && tax ? tax.name : "",
@@ -104,7 +111,9 @@ function TaxDialogBody({ mode, tax, onOpenChange }: TaxDialogBodyProps) {
             max="100"
             placeholder="e.g. 5"
             value={percentage}
-            onChange={(e) => setPercentage(e.target.value)}
+            onChange={(e) =>
+              setPercentage(sanitizeNonNegativeNumberInput(e.target.value))
+            }
             className="bg-input border-transparent rounded-lg h-9 text-sm"
           />
         </div>

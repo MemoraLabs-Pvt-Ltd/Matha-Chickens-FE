@@ -9,4 +9,6 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+export const ITEM_IMAGES_BUCKET =
+  import.meta.env.VITE_SUPABASE_ITEM_IMAGES_BUCKET || "general_storage_bucket";

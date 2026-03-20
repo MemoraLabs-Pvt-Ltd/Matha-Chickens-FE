@@ -57,6 +57,13 @@ interface StoreDialogBodyProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function sanitizeNonNegativeNumberInput(value: string): string {
+  if (!value.trim()) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "";
+  return parsed < 0 ? "0" : value;
+}
+
 function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   const [storeName, setStoreName] = useState(
     mode === "edit" && store ? store.name : "",
@@ -253,9 +260,16 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               </Label>
               <Input
                 id="discountPercentage"
+                type="number"
+                min={0}
+                max={100}
                 placeholder="Enter percentage"
                 value={discountPercentage}
-                onChange={(e) => setDiscountPercentage(e.target.value)}
+                onChange={(e) =>
+                  setDiscountPercentage(
+                    sanitizeNonNegativeNumberInput(e.target.value),
+                  )
+                }
                 disabled={!enableDiscount}
                 className="bg-input border-transparent rounded-lg h-9 text-sm"
               />
@@ -290,9 +304,14 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               </Label>
               <Input
                 id="taxPercentage"
+                type="number"
+                min={0}
+                max={100}
                 placeholder="Enter percentage"
                 value={taxPercentage}
-                onChange={(e) => setTaxPercentage(e.target.value)}
+                onChange={(e) =>
+                  setTaxPercentage(sanitizeNonNegativeNumberInput(e.target.value))
+                }
                 disabled={!enableTax}
                 className="bg-input border-transparent rounded-lg h-9 text-sm"
               />

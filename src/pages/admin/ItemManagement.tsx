@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Filter, Plus } from "lucide-react";
 import { AdminLayout } from "@/components/common/layout";
 import {
@@ -7,6 +7,7 @@ import {
   TableBody,
   TableHead,
   TableRow,
+  TableCell,
 } from "@/components/ui/table";
 import {
   Select,
@@ -29,38 +30,19 @@ import { ItemRow } from "@/components/common/dashboard/ItemRow";
 import { ItemDialog } from "@/components/admin/dialogs/items/ItemDialog";
 import { DeleteItemDialog } from "@/components/admin/dialogs/items/DeleteItemDialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
+import { useCategories } from "@/hooks/useCategories";
+import { useDeleteItem, useItems } from "@/hooks/useItems";
+import type { Item } from "@/lib/api/items";
 
-interface Item {
-  id: string;
+interface DisplayItem {
+  id: number;
   name: string;
   category: string;
   price: string;
   status: "active" | "inactive";
 }
-
-const categories = [
-  { id: "1", name: "Broiler Chicken" },
-  { id: "2", name: "Country Chicken" },
-  { id: "3", name: "Eggs" },
-];
-
-const items: Item[] = [
-  { id: "1", name: "Fresh Chicken Breast", category: "Broiler Chicken", price: "₹280.00/kg", status: "active" },
-  { id: "2", name: "Whole Roast Chicken", category: "Broiler Chicken", price: "₹450.00/kg", status: "active" },
-  { id: "3", name: "Crispy Fried Chicken", category: "Broiler Chicken", price: "₹320.00/kg", status: "active" },
-  { id: "4", name: "Country Chicken - Whole", category: "Country Chicken", price: "₹550.00/kg", status: "active" },
-  { id: "5", name: "Country Chicken - Cut Pieces", category: "Country Chicken", price: "₹580.00/kg", status: "active" },
-  { id: "6", name: "Farm Fresh Eggs (12 pcs)", category: "Eggs", price: "₹84.00/dozen", status: "active" },
-  { id: "7", name: "Farm Fresh Eggs (30 pcs)", category: "Eggs", price: "₹195.00/dozen", status: "active" },
-  { id: "8", name: "Chicken Wings", category: "Broiler Chicken", price: "₹240.00/kg", status: "active" },
-  { id: "9", name: "Chicken Drumsticks", category: "Broiler Chicken", price: "₹260.00/kg", status: "active" },
-  { id: "10", name: "Chicken Liver", category: "Broiler Chicken", price: "₹150.00/kg", status: "inactive" },
-  { id: "11", name: "Chicken Gizzard", category: "Broiler Chicken", price: "₹180.00/kg", status: "active" },
-  { id: "12", name: "Tandoori Chicken", category: "Broiler Chicken", price: "₹380.00/kg", status: "active" },
-  { id: "13", name: "Chicken Tikka", category: "Broiler Chicken", price: "₹400.00/kg", status: "active" },
-  { id: "14", name: "Chicken Keema", category: "Broiler Chicken", price: "₹350.00/kg", status: "active" },
-  { id: "15", name: "Chicken Lolipop", category: "Broiler Chicken", price: "₹300.00/kg", status: "active" },
-];
 
 export default function ItemManagement() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -68,12 +50,54 @@ export default function ItemManagement() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<Item | null>(null);
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>("All Categories");
-  const [selectedStatus, setSelectedStatus] = useState<string>("All Status");
-  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(items);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
-  const handleEdit = (id: string) => {
+  const {
+    data: itemsData,
+    isLoading: isItemsLoading,
+    isError: isItemsError,
+    error: itemsError,
+  } = useItems({ limit: 100 });
+  const { data: categoriesData } = useCategories({ limit: 100 });
+  const deleteItem = useDeleteItem();
+
+  const items = itemsData?.data ?? [];
+  const categories = categoriesData?.data ?? [];
+
+  const categoryNameById = useMemo(
+    () => new Map(categories.map((category) => [category.id, category.name])),
+    [categories],
+  );
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const itemStatus = item.status === "inactive" ? "inactive" : "active";
+      const categoryMatch =
+        selectedCategoryId === "all" ||
+        String(item.category_id) === selectedCategoryId;
+      const statusMatch =
+        selectedStatus === "all" || itemStatus === selectedStatus;
+      return categoryMatch && statusMatch;
+    });
+  }, [items, selectedCategoryId, selectedStatus]);
+
+  const displayItems: DisplayItem[] = useMemo(
+    () =>
+      filteredItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        category: categoryNameById.get(item.category_id) ?? `Category #${item.category_id}`,
+        price: `₹${item.price.toFixed(2)}/${item.unit || "kg"}`,
+        status: item.status === "inactive" ? "inactive" : "active",
+      })),
+    [filteredItems, categoryNameById],
+  );
+
+  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } =
+    usePagination(displayItems);
+
+  const handleEdit = (id: number) => {
     const item = items.find((i) => i.id === id);
     if (item) {
       setEditingItem(item);
@@ -81,7 +105,7 @@ export default function ItemManagement() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     const item = items.find((i) => i.id === id);
     if (item) {
       setDeletingItem(item);
@@ -90,9 +114,13 @@ export default function ItemManagement() {
   };
 
   const handleConfirmDelete = () => {
-    console.log("Deleting item:", deletingItem?.id);
-    setDeleteDialogOpen(false);
-    setDeletingItem(null);
+    if (!deletingItem) return;
+    deleteItem.mutate(deletingItem.id, {
+      onSettled: () => {
+        setDeleteDialogOpen(false);
+        setDeletingItem(null);
+      },
+    });
   };
 
   return (
@@ -115,17 +143,17 @@ export default function ItemManagement() {
           <Filter className="size-5 text-muted-foreground" />
           <div className="flex gap-3">
             <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              value={selectedCategoryId}
+              onValueChange={setSelectedCategoryId}
             >
               <SelectTrigger className="h-9 w-[192px] bg-muted border-transparent rounded-lg text-sm font-medium text-foreground">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Categories">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.name}>
-                    {cat.name}
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -136,9 +164,9 @@ export default function ItemManagement() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Status">All Status</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -165,14 +193,57 @@ export default function ItemManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems.map((item) => (
-              <ItemRow
-                key={item.id}
-                {...item}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+            {isItemsLoading && (
+              <TableBodySkeleton
+                rows={6}
+                columns={5}
+                rowClassName="border-[rgba(0,0,0,0.1)]"
+                cellClassNames={["py-3 pl-6", "py-3", "py-3", "py-3", "py-3 pr-6"]}
+                renderCell={(columnIndex) => {
+                  if (columnIndex <= 2) {
+                    return <Skeleton className="h-4 w-3/4 rounded-lg" />;
+                  }
+
+                  if (columnIndex === 3) {
+                    return <Skeleton className="h-6 w-20 rounded-lg" />;
+                  }
+
+                  return (
+                    <div className="flex items-center justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                    </div>
+                  );
+                }}
               />
-            ))}
+            )}
+
+            {isItemsError && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-12 text-center text-sm text-destructive">
+                  {itemsError instanceof Error ? itemsError.message : "Failed to load items"}
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isItemsLoading && !isItemsError && displayItems.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+                  No items found
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isItemsLoading &&
+              !isItemsError &&
+              currentItems.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  {...item}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
           </TableBody>
         </Table>
 
@@ -204,7 +275,7 @@ export default function ItemManagement() {
                         {page}
                       </PaginationLink>
                     </PaginationItem>
-                  )
+                  ),
                 )}
                 <PaginationItem>
                   <PaginationNext

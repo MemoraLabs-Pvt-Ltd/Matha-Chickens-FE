@@ -23,6 +23,13 @@ interface StockReceiptDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function sanitizeNonNegativeNumberInput(value: string): string {
+  if (!value.trim()) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "";
+  return parsed < 0 ? "0" : value;
+}
+
 export function StockReceiptDialog({
   open,
   onOpenChange,
@@ -138,9 +145,12 @@ export function StockReceiptDialog({
               <Input
                 id="quantity"
                 type="number"
+                min={0}
                 placeholder="Enter quantity"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) =>
+                  setQuantity(sanitizeNonNegativeNumberInput(e.target.value))
+                }
                 className="bg-input border-transparent rounded-lg h-9 text-sm"
               />
             </div>
@@ -179,9 +189,12 @@ export function StockReceiptDialog({
               <Input
                 id="pricePerUnit"
                 type="number"
+                min={0}
                 placeholder="Enter price"
                 value={pricePerUnit}
-                onChange={(e) => setPricePerUnit(e.target.value)}
+                onChange={(e) =>
+                  setPricePerUnit(sanitizeNonNegativeNumberInput(e.target.value))
+                }
                 className="bg-input border-transparent rounded-lg h-9 text-sm pl-8"
               />
             </div>

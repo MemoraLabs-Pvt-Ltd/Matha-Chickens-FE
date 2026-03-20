@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +27,7 @@ import OfflineBillsPage from './pages/store/OfflineBillsPage';
 import NotFound from './pages/NotFound';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import RootLayout from '@/layouts/RootLayout';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +42,20 @@ function StoreRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        queryCache: new QueryCache(),
+        defaultOptions: {
+          queries: {
+            staleTime: 1000 * 30,
+            gcTime: 1000 * 60 * 60 * 24,
+            retry: 2,
+            refetchOnWindowFocus: true,
+          },
+        },
+      }),
+  );
   const { isLoading } = useAuth();
 
   if (isLoading) {
@@ -51,7 +68,8 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
         <Routes>
           <Route element={<RootLayout />}>
             <Route path="/" element={<LoginLanding />} />
@@ -186,7 +204,9 @@ function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </QueryClientProvider>
+      <SonnerToaster />
     </ErrorBoundary>
   );
 }

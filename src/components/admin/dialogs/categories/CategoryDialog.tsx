@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,21 +6,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
-
-interface Category {
-  id: string;
-  name: string;
-  status: "active" | "inactive";
-}
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useState } from 'react';
+import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategories';
+import type { Category } from '@/lib/api/categories';
 
 interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "add" | "edit";
+  mode: 'add' | 'edit';
   category?: Category | null;
 }
 
@@ -33,7 +29,7 @@ export function CategoryDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <CategoryDialogBody
-        key={`${mode}-${category?.id || "new"}-${open ? "open" : "closed"}`}
+        key={`${mode}-${category?.id || 'new'}-${open ? 'open' : 'closed'}`}
         mode={mode}
         category={category}
         onOpenChange={onOpenChange}
@@ -43,7 +39,7 @@ export function CategoryDialog({
 }
 
 interface CategoryDialogBodyProps {
-  mode: "add" | "edit";
+  mode: 'add' | 'edit';
   category?: Category | null;
   onOpenChange: (open: boolean) => void;
 }
@@ -53,36 +49,45 @@ function CategoryDialogBody({
   category,
   onOpenChange,
 }: CategoryDialogBodyProps) {
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+
   const [categoryName, setCategoryName] = useState(
-    mode === "edit" && category ? category.name : "",
+    mode === 'edit' && category ? category.name : '',
   );
   const [isActive, setIsActive] = useState(
-    mode === "edit" && category ? category.status === "active" : true,
+    mode === 'edit' && category ? category.status === 'active' : true,
   );
 
+  const isPending =
+    mode === 'add' ? createCategory.isPending : updateCategory.isPending;
+
   const handleSubmit = () => {
-    if (mode === "add") {
-      console.log("Create category:", { categoryName, isActive });
+    if (!categoryName.trim()) return;
+    const data = {
+      name: categoryName.trim(),
+      status: isActive ? ('active' as const) : ('inactive' as const),
+    };
+    if (mode === 'add') {
+      createCategory.mutate(data, { onSuccess: () => onOpenChange(false) });
     } else {
-      console.log("Update category:", {
-        id: category?.id,
-        name: categoryName,
-        status: isActive ? "active" : "inactive",
-      });
+      updateCategory.mutate(
+        { id: category!.id, data },
+        { onSuccess: () => onOpenChange(false) },
+      );
     }
-    onOpenChange(false);
   };
 
   return (
     <DialogContent className="bg-white rounded-xl border border-[rgba(0,0,0,0.1)] p-6 max-w-[512px]! ">
       <DialogHeader className="mb-4">
         <DialogTitle className="text-xl font-semibold text-[#0a0a0a]  ">
-          {mode === "add" ? "Add Category" : "Edit Category"}
+          {mode === 'add' ? 'Add Category' : 'Edit Category'}
         </DialogTitle>
         <DialogDescription className="text-sm text-[#717182]">
-          {mode === "add"
-            ? "Create a new product category"
-            : "Update category information"}
+          {mode === 'add'
+            ? 'Create a new product category'
+            : 'Update category information'}
         </DialogDescription>
       </DialogHeader>
 
@@ -112,7 +117,7 @@ function CategoryDialogBody({
               Status
             </label>
             <p className="text-sm text-[#525252]">
-              Category is {isActive ? "active" : "inactive"}
+              Category is {isActive ? 'active' : 'inactive'}
             </p>
           </div>
           <Switch
@@ -134,9 +139,10 @@ function CategoryDialogBody({
         </Button>
         <Button
           onClick={handleSubmit}
+          disabled={isPending || !categoryName.trim()}
           className="h-9 px-4 bg-admin text-white hover:bg-admin/90 rounded-lg"
         >
-          {mode === "add" ? "Create" : "Update"}
+          {isPending ? 'Saving...' : mode === 'add' ? 'Create' : 'Update'}
         </Button>
       </DialogFooter>
     </DialogContent>

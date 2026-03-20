@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface Item {
-  id: string;
+  id: number;
   name: string;
   category: string;
   price: string;
@@ -11,8 +11,8 @@ interface Item {
 }
 
 interface ItemRowProps extends Item {
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 export function ItemRow({ id, name, category, price, status, onEdit, onDelete }: ItemRowProps) {

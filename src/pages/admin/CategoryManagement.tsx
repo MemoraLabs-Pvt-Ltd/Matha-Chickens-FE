@@ -7,24 +7,16 @@ import {
   TableBody,
   TableRow,
   TableHead,
+  TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryRow } from "@/components/common/dashboard";
 import { CategoryDialog } from "@/components/admin/dialogs/categories/CategoryDialog";
 import { DeleteCategoryDialog } from "@/components/admin/dialogs/categories/DeleteCategoryDialog";
-
-interface Category {
-  id: string;
-  name: string;
-  status: "active" | "inactive";
-}
-
-const categories: Category[] = [
-  { id: "1", name: "Broiler Chicken", status: "active" },
-  { id: "2", name: "Country Chicken", status: "active" },
-  { id: "3", name: "Eggs", status: "active" },
-  { id: "4", name: "Processed Products", status: "inactive" },
-];
+import { useCategories, useDeleteCategory } from "@/hooks/useCategories";
+import { type Category } from "@/lib/api/categories";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 
 export default function CategoryManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,7 +27,12 @@ export default function CategoryManagement() {
     null,
   );
 
-  const handleEdit = (id: string) => {
+  const { data, isLoading, isError, error } = useCategories({ limit: 100 });
+  const deleteCategory = useDeleteCategory();
+
+  const categories = data?.data ?? [];
+
+  const handleEdit = (id: number) => {
     const category = categories.find((c) => c.id === id);
     if (category) {
       setEditingCategory(category);
@@ -43,7 +40,7 @@ export default function CategoryManagement() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     const category = categories.find((c) => c.id === id);
     if (category) {
       setDeletingCategory(category);
@@ -52,10 +49,13 @@ export default function CategoryManagement() {
   };
 
   const handleConfirmDelete = () => {
-    // TODO: Implement API call
-    console.log("Deleting category:", deletingCategory?.id);
-    setDeleteDialogOpen(false);
-    setDeletingCategory(null);
+    if (!deletingCategory) return;
+    deleteCategory.mutate(deletingCategory.id, {
+      onSettled: () => {
+        setDeleteDialogOpen(false);
+        setDeletingCategory(null);
+      },
+    });
   };
 
   return (
@@ -89,7 +89,49 @@ export default function CategoryManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
+            {isLoading && (
+              <TableBodySkeleton
+                rows={6}
+                columns={3}
+                rowClassName="border-[rgba(0,0,0,0.1)]"
+                cellClassNames={["py-3 pl-6", "py-3", "py-3 pr-6"]}
+                renderCell={(columnIndex) => {
+                  if (columnIndex === 0) {
+                    return (
+                      <div className="flex items-center">
+                        <Skeleton className="h-4 w-3/4 rounded-lg" />
+                      </div>
+                    );
+                  }
+
+                  if (columnIndex === 1) {
+                    return <Skeleton className="h-6 w-24 rounded-lg" />;
+                  }
+
+                  return (
+                    <div className="flex items-center justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                    </div>
+                  );
+                }}
+              />
+            )}
+            {isError && (
+              <TableRow>
+                <TableCell colSpan={3} className="py-12 text-center text-sm text-destructive">
+                  {error instanceof Error ? error.message : "Failed to load categories"}
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && !isError && categories.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="py-12 text-center text-sm text-muted-foreground">
+                  No categories found
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && !isError && categories.map((category) => (
               <CategoryRow
                 key={category.id}
                 {...category}

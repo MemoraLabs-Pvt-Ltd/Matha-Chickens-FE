@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface CategoryRowProps {
-  id: string;
+  id: number;
   name: string;
   status: "active" | "inactive";
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const statusBadgeStyles = {

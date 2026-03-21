@@ -1,6 +1,10 @@
 import { useState } from "react";
+import { Search } from "lucide-react";
 import { StoreLayout } from "@/components/common/layout";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 import {
   Pagination,
   PaginationContent,
@@ -18,70 +22,73 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { usePagination } from "@/hooks/usePagination";
+import {
+  useStoreItemAvailability,
+  useUpdateStoreItemAvailability,
+} from "@/hooks/useStoreItemUnavailability";
 
-interface StoreItem {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  unit: string;
-  isAvailable: boolean;
+const AVAILABILITY_PAGE_LIMIT = 20;
+
+function getPageNumbers(
+  currentPage: number,
+  totalPages: number,
+): (number | "ellipsis")[] {
+  const pages: (number | "ellipsis")[] = [];
+
+  if (totalPages <= 5) {
+    for (let page = 1; page <= totalPages; page += 1) {
+      pages.push(page);
+    }
+    return pages;
+  }
+
+  pages.push(1);
+  if (currentPage > 3) pages.push("ellipsis");
+
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  for (let page = start; page <= end; page += 1) {
+    pages.push(page);
+  }
+
+  if (currentPage < totalPages - 2) pages.push("ellipsis");
+  pages.push(totalPages);
+
+  return pages;
 }
 
-const storeItems: StoreItem[] = [
-  { id: 1, name: "Fresh Chicken Breast", category: "Broiler Chicken", price: 280, unit: "kg", isAvailable: true },
-  { id: 2, name: "Whole Roast Chicken", category: "Broiler Chicken", price: 450, unit: "kg", isAvailable: true },
-  { id: 3, name: "Crispy Fried Chicken", category: "Broiler Chicken", price: 320, unit: "kg", isAvailable: true },
-  { id: 4, name: "Country Chicken - Whole", category: "Country Chicken", price: 550, unit: "kg", isAvailable: false },
-  { id: 5, name: "Country Chicken - Cut Pieces", category: "Country Chicken", price: 580, unit: "kg", isAvailable: true },
-  { id: 6, name: "Farm Fresh Eggs (12 pcs)", category: "Eggs", price: 84, unit: "pcs", isAvailable: true },
-  { id: 7, name: "Farm Fresh Eggs (30 pcs)", category: "Eggs", price: 195, unit: "pcs", isAvailable: true },
-  { id: 8, name: "Chicken Wings", category: "Broiler Chicken", price: 240, unit: "kg", isAvailable: true },
-  { id: 9, name: "Chicken Drumsticks", category: "Broiler Chicken", price: 260, unit: "kg", isAvailable: true },
-  { id: 10, name: "Chicken Liver", category: "Broiler Chicken", price: 150, unit: "kg", isAvailable: true },
-  { id: 11, name: "Chicken Gizzard", category: "Broiler Chicken", price: 180, unit: "kg", isAvailable: true },
-  { id: 12, name: "Chicken Sausages (500g)", category: "Processed", price: 320, unit: "pack", isAvailable: true },
-  { id: 13, name: "Chicken Nuggets (500g)", category: "Processed", price: 350, unit: "pack", isAvailable: true },
-  { id: 14, name: "Chicken Patties (4 pcs)", category: "Processed", price: 280, unit: "pack", isAvailable: false },
-  { id: 15, name: "Tandoori Chicken", category: "Broiler Chicken", price: 380, unit: "kg", isAvailable: true },
-  { id: 16, name: "Chicken Tikka", category: "Broiler Chicken", price: 400, unit: "kg", isAvailable: true },
-  { id: 17, name: "Chicken Keema", category: "Broiler Chicken", price: 350, unit: "kg", isAvailable: true },
-  { id: 18, name: "Chicken Lolipop", category: "Broiler Chicken", price: 300, unit: "kg", isAvailable: true },
-  { id: 19, name: "Duck Meat", category: "Country Chicken", price: 480, unit: "kg", isAvailable: false },
-  { id: 20, name: "Turkey Breast", category: "Country Chicken", price: 520, unit: "kg", isAvailable: true },
-  { id: 21, name: "Quail Eggs (12 pcs)", category: "Eggs", price: 120, unit: "pcs", isAvailable: true },
-  { id: 22, name: "Duck Eggs (6 pcs)", category: "Eggs", price: 90, unit: "pcs", isAvailable: true },
-  { id: 23, name: "Chicken Salami (250g)", category: "Processed", price: 250, unit: "pack", isAvailable: true },
-  { id: 24, name: "Chicken Bacon (250g)", category: "Processed", price: 300, unit: "pack", isAvailable: true },
-  { id: 25, name: "Marinated Chicken Breast", category: "Broiler Chicken", price: 340, unit: "kg", isAvailable: true },
-  { id: 26, name: "Chicken Spring Chicken", category: "Broiler Chicken", price: 380, unit: "kg", isAvailable: true },
-  { id: 27, name: "Country Chicken Eggs (12 pcs)", category: "Eggs", price: 150, unit: "pcs", isAvailable: true },
-  { id: 28, name: "Organic Chicken", category: "Broiler Chicken", price: 450, unit: "kg", isAvailable: true },
-  { id: 29, name: "Chicken Feet", category: "Broiler Chicken", price: 120, unit: "kg", isAvailable: true },
-  { id: 30, name: "Chicken Neck", category: "Broiler Chicken", price: 100, unit: "kg", isAvailable: true },
-  { id: 31, name: "Chicken Wings - Spicy", category: "Broiler Chicken", price: 280, unit: "kg", isAvailable: true },
-  { id: 32, name: "Chicken Malai Tikka", category: "Broiler Chicken", price: 420, unit: "kg", isAvailable: false },
-  { id: 33, name: "Chicken Seekh Kebab", category: "Broiler Chicken", price: 360, unit: "kg", isAvailable: true },
-  { id: 34, name: "Chicken Biryani Cut", category: "Broiler Chicken", price: 290, unit: "kg", isAvailable: true },
-  { id: 35, name: "Chicken Boneless", category: "Broiler Chicken", price: 360, unit: "kg", isAvailable: true },
-  { id: 36, name: "Chicken Mince (Keema)", category: "Broiler Chicken", price: 340, unit: "kg", isAvailable: true },
-  { id: 37, name: "Pickled Chicken", category: "Processed", price: 280, unit: "pack", isAvailable: true },
-  { id: 38, name: "Chicken Stock (1L)", category: "Processed", price: 150, unit: "bottle", isAvailable: true },
-  { id: 39, name: "Chicken Bouillon (10 cubes)", category: "Processed", price: 80, unit: "pack", isAvailable: true },
-  { id: 40, name: "Frozen Chicken (1kg)", category: "Broiler Chicken", price: 250, unit: "pack", isAvailable: false },
-];
-
 export default function ItemAvailabilityPage() {
-  const [items, setItems] = useState<StoreItem[]>(storeItems);
-  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(items);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pendingItemId, setPendingItemId] = useState<number | null>(null);
 
-  const toggleAvailability = (id: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isAvailable: !item.isAvailable } : item,
-      ),
-    );
+  const {
+    data: availabilityData,
+    isLoading,
+    isError,
+    error,
+  } = useStoreItemAvailability({
+    page: currentPage,
+    limit: AVAILABILITY_PAGE_LIMIT,
+    search: searchQuery.trim() || undefined,
+  });
+
+  const updateAvailabilityMutation = useUpdateStoreItemAvailability();
+
+  const items = availabilityData?.data ?? [];
+  const totalPages = Math.max(availabilityData?.pagination?.totalPages ?? 1, 1);
+  const safeCurrentPage = availabilityData?.pagination?.page ?? currentPage;
+
+  const toggleAvailability = async (itemId: number, nextAvailable: boolean) => {
+    setPendingItemId(itemId);
+    try {
+      await updateAvailabilityMutation.mutateAsync({
+        available: nextAvailable ? [itemId] : [],
+        unavailable: nextAvailable ? [] : [itemId],
+      });
+    } finally {
+      setPendingItemId(null);
+    }
   };
 
   return (
@@ -95,6 +102,21 @@ export default function ItemAvailabilityPage() {
             Items marked as "Out of Stock" will be hidden from customers in the
             mobile app
           </p>
+        </div>
+
+        <div className="bg-card border border-border rounded-[10px] p-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Search item..."
+              className="pl-9 bg-muted border-transparent rounded-lg h-9"
+            />
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-[10px] overflow-hidden">
@@ -119,47 +141,104 @@ export default function ItemAvailabilityPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((item) => (
-                <TableRow key={item.id} className="border-b border-border">
-                  <TableCell className="py-3 pl-4">
-                    <span className="text-sm font-medium text-foreground">
-                      {item.name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3 pl-4">
-                    <span className="text-sm text-foreground">
-                      {item.category}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3 pl-4">
-                    <span className="text-sm text-foreground">
-                      ₹{item.price.toFixed(2)}/{item.unit}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3 pl-4">
-                    {item.isAvailable ? (
-                      <span className="inline-flex items-center px-2 py-1 bg-[#dcfce7] rounded text-xs font-medium text-[#016630]">
-                        Available
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 bg-[#ffe2e2] rounded text-xs font-medium text-[#9f0712]">
-                        Out of Stock
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-3 pr-4">
-                    <div className="flex items-center justify-end gap-3">
-                      <span className="text-sm text-muted-foreground">
-                        {item.isAvailable ? "Available" : "Out of Stock"}
-                      </span>
-                      <Switch
-                        checked={item.isAvailable}
-                        onCheckedChange={() => toggleAvailability(item.id)}
-                      />
-                    </div>
+              {isLoading && (
+                <TableBodySkeleton
+                  rows={8}
+                  columns={5}
+                  rowClassName="border-b border-border"
+                  cellClassNames={["py-4 pl-4", "py-4 pl-4", "py-4 pl-4", "py-4 pl-4", "py-4 pr-4"]}
+                  renderCell={(columnIndex) => {
+                    if (columnIndex === 4) {
+                      return (
+                        <div className="flex justify-end">
+                          <Skeleton className="h-6 w-12 rounded-full" />
+                        </div>
+                      );
+                    }
+
+                    if (columnIndex === 3) {
+                      return <Skeleton className="h-6 w-24 rounded-lg" />;
+                    }
+
+                    return <Skeleton className="h-4 w-3/4 rounded-lg" />;
+                  }}
+                />
+              )}
+
+              {isError && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-destructive">
+                    {error instanceof Error
+                      ? error.message
+                      : "Failed to load item availability"}
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+
+              {!isLoading && !isError && items.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+                    No items found
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading &&
+                !isError &&
+                items.map((item) => {
+                  const isToggling =
+                    updateAvailabilityMutation.isPending &&
+                    pendingItemId === item.id;
+
+                  return (
+                    <TableRow key={item.id} className="border-b border-border">
+                      <TableCell className="py-3 pl-4">
+                        <span className="text-sm font-medium text-foreground">
+                          {item.name}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3 pl-4">
+                        <span className="text-sm text-foreground">
+                          {item.category_id ? `Category #${item.category_id}` : "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3 pl-4">
+                        <span className="text-sm text-foreground">
+                          ₹{Number(item.price).toFixed(2)}/{item.unit}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3 pl-4">
+                        {item.available ? (
+                          <span className="inline-flex items-center px-2 py-1 bg-[#dcfce7] rounded text-xs font-medium text-[#016630]">
+                            Available
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 bg-[#ffe2e2] rounded text-xs font-medium text-[#9f0712]">
+                            Out of Stock
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3 pr-4">
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="text-sm text-muted-foreground">
+                            {isToggling
+                              ? "Updating..."
+                              : item.available
+                                ? "Available"
+                                : "Out of Stock"}
+                          </span>
+                          <Switch
+                            checked={item.available}
+                            disabled={isToggling}
+                            onCheckedChange={(checked) =>
+                              toggleAvailability(item.id, checked)
+                            }
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
@@ -176,16 +255,20 @@ export default function ItemAvailabilityPage() {
           </p>
         </div>
 
-        {totalPages > 1 && (
+        {totalPages >= 1 && (
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  className={
+                    safeCurrentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
-              {getPageNumbers().map((page, index) =>
+              {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
                     <PaginationEllipsis />
@@ -193,19 +276,25 @@ export default function ItemAvailabilityPage() {
                 ) : (
                   <PaginationItem key={page}>
                     <PaginationLink
-                      isActive={currentPage === page}
+                      isActive={safeCurrentPage === page}
                       onClick={() => setCurrentPage(page)}
                       className="cursor-pointer"
                     >
                       {page}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                ),
               )}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                  className={
+                    safeCurrentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>

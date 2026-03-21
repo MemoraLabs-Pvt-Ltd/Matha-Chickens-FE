@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { DollarSign, ShoppingCart, Calculator, Package, TrendingUp, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableHeader,
@@ -8,7 +10,18 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { StoreLayout } from "@/components/common/layout";
+import { useOrders } from "@/hooks/useOrders";
+import type { OrderStatus } from "@/lib/api/orders";
 
 const stats = [
   {
@@ -55,28 +68,61 @@ const stats = [
   },
 ];
 
-const orders = [
-  {
-    id: "ORD001",
-    customer: "Priya Sharma",
-    phone: "+91 98765 00001",
-    amount: "₹642.39",
-    status: "Order Received" as const,
-    statusBg: "bg-[#dbeafe]",
-    statusColor: "text-[#1447e6]",
-    date: "24/02/2026",
-  },
-  {
-    id: "ORD002",
-    customer: "Rajesh Kumar",
-    phone: "+91 98765 00002",
-    amount: "₹448.88",
-    status: "Dispatched" as const,
-    statusBg: "bg-[#febebe]",
-    statusColor: "text-[#bb4d00]",
-    date: "23/02/2026",
-  },
-];
+const DASHBOARD_ORDERS_LIMIT = 5;
+
+const orderStatusStyles: Record<OrderStatus, string> = {
+  order_received: "bg-[#dbeafe] text-[#1447e6]",
+  dispatched: "bg-[#febebe] text-[#bb4d00]",
+  delivered: "bg-[#dcfce7] text-[#016630]",
+};
+
+const orderStatusLabels: Record<OrderStatus, string> = {
+  order_received: "Order Received",
+  dispatched: "Dispatched",
+  delivered: "Delivered",
+};
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function getPageNumbers(
+  currentPage: number,
+  totalPages: number,
+): (number | "ellipsis")[] {
+  const pages: (number | "ellipsis")[] = [];
+
+  if (totalPages <= 5) {
+    for (let page = 1; page <= totalPages; page += 1) pages.push(page);
+    return pages;
+  }
+
+  pages.push(1);
+  if (currentPage > 3) pages.push("ellipsis");
+
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  for (let page = start; page <= end; page += 1) pages.push(page);
+
+  if (currentPage < totalPages - 2) pages.push("ellipsis");
+  pages.push(totalPages);
+  return pages;
+}
 
 const orderStatuses = [
   { label: "Pending", value: 1, icon: Clock, bgColor: "bg-[#dbeafe]", iconColor: "text-[#1447e6]" },
@@ -97,6 +143,21 @@ const performanceItems = [
 ];
 
 export default function StoreDashboard() {
+  const [ordersPage, setOrdersPage] = useState(1);
+  const {
+    data: ordersData,
+    isLoading: ordersLoading,
+    isError: ordersError,
+    error: ordersErrorMessage,
+  } = useOrders({
+    page: ordersPage,
+    limit: DASHBOARD_ORDERS_LIMIT,
+  });
+
+  const recentOrders = ordersData?.data ?? [];
+  const totalOrderPages = Math.max(ordersData?.pagination?.totalPages ?? 1, 1);
+  const safeOrdersPage = ordersData?.pagination?.page ?? ordersPage;
+
   return (
     <StoreLayout title="Dashboard">
       <div className="grid grid-cols-4 gap-6 mb-6">
@@ -161,42 +222,135 @@ export default function StoreDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id} className="h-[76.5px]">
-                  <TableCell className="pl-6 py-4">
-                    <p className="text-base font-semibold text-foreground tracking-wide">
-                      {order.id}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <p className="text-base font-normal text-foreground tracking-wide">
-                      {order.customer}
-                    </p>
-                    <p className="text-sm font-normal text-muted-foreground">
-                      {order.phone}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-right py-4 pr-6">
-                    <p className="text-base font-bold text-foreground tracking-wide">
-                      {order.amount}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-center py-4">
-                    <span
-                      className={`inline-flex items-center justify-center h-7 rounded-full px-4 text-sm font-medium ${order.statusBg} ${order.statusColor}`}
-                    >
-                      {order.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right py-4 pr-6">
-                    <p className="text-sm font-normal text-muted-foreground">
-                      {order.date}
-                    </p>
+              {ordersLoading &&
+                Array.from({ length: 4 }).map((_, index) => (
+                  <TableRow key={index} className="h-[76.5px]">
+                    <TableCell className="pl-6 py-4">
+                      <Skeleton className="h-4 w-16 rounded-lg" />
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Skeleton className="h-4 w-28 rounded-lg mb-2" />
+                      <Skeleton className="h-3 w-24 rounded-lg" />
+                    </TableCell>
+                    <TableCell className="text-right py-4 pr-6">
+                      <Skeleton className="h-4 w-20 rounded-lg ml-auto" />
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      <Skeleton className="h-7 w-24 rounded-full mx-auto" />
+                    </TableCell>
+                    <TableCell className="text-right py-4 pr-6">
+                      <Skeleton className="h-4 w-20 rounded-lg ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+              {ordersError && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-sm text-destructive">
+                    {ordersErrorMessage instanceof Error
+                      ? ordersErrorMessage.message
+                      : "Failed to load recent orders"}
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+
+              {!ordersLoading && !ordersError && recentOrders.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                    No recent online orders
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!ordersLoading &&
+                !ordersError &&
+                recentOrders.map((order) => (
+                  <TableRow key={order.id} className="h-[76.5px]">
+                    <TableCell className="pl-6 py-4">
+                      <p className="text-base font-semibold text-foreground tracking-wide">
+                        #{order.id}
+                      </p>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <p className="text-base font-normal text-foreground tracking-wide">
+                        {order.customer_name}
+                      </p>
+                      <p className="text-sm font-normal text-muted-foreground">
+                        {order.customer_phone}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-right py-4 pr-6">
+                      <p className="text-base font-bold text-foreground tracking-wide">
+                        {formatCurrency(order.total_amount)}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      <span
+                        className={`inline-flex items-center justify-center h-7 rounded-full px-4 text-sm font-medium ${orderStatusStyles[order.status]}`}
+                      >
+                        {orderStatusLabels[order.status]}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right py-4 pr-6">
+                      <p className="text-sm font-normal text-muted-foreground">
+                        {formatDate(order.created_at)}
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
+          {totalOrderPages >= 1 && (
+            <div className="py-4 px-6 border-t border-border">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        setOrdersPage((page) => Math.max(1, page - 1))
+                      }
+                      className={
+                        safeOrdersPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  {getPageNumbers(safeOrdersPage, totalOrderPages).map((page, index) =>
+                    page === "ellipsis" ? (
+                      <PaginationItem key={`dashboard-ellipsis-${index}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          isActive={safeOrdersPage === page}
+                          onClick={() => setOrdersPage(page)}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setOrdersPage((page) =>
+                          Math.min(totalOrderPages, page + 1),
+                        )
+                      }
+                      className={
+                        safeOrdersPage === totalOrderPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 

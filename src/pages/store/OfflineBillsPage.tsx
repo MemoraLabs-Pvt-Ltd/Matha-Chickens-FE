@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Eye } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { StoreLayout } from "@/components/common/layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 import {
   Table,
   TableHeader,
@@ -19,58 +22,117 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { usePagination } from "@/hooks/usePagination";
+import { useOfflineBills } from "@/hooks/useOfflineBills";
 import { BillDetailsSheet } from "./BillDetailsSheet";
+import type { PaymentMode } from "@/lib/api/offlineBills";
 
-interface BillItem {
-  name: string;
-  quantity: number;
-  price: number;
+const OFFLINE_BILLS_PAGE_LIMIT = 20;
+
+const paymentLabels: Record<PaymentMode, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  card: "Card",
+  cheque: "Cheque",
+  other: "Other",
+};
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-interface OfflineBill {
-  billNumber: string;
-  date: string;
-  time: string;
-  items: BillItem[];
-  subtotal: number;
-  discount: number;
-  tax: number;
-  total: number;
-  paymentMethod: "Cash" | "UPI" | "Card" | "Other";
+function formatDateTime(value: string): { date: string; time: string } {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { date: "-", time: "-" };
+  }
+
+  return {
+    date: date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
 }
 
-const offlineBills: OfflineBill[] = [
-  { billNumber: "MG-001", date: "25/02/2026", time: "11:20:00", items: [{ name: "Crispy Fried Chicken", quantity: 2, price: 320 }, { name: "Chicken Wings", quantity: 1, price: 240 }], subtotal: 880, discount: 44, tax: 41.8, total: 877.8, paymentMethod: "Cash" },
-  { billNumber: "MG-002", date: "25/02/2026", time: "15:45:00", items: [{ name: "Whole Roast Chicken", quantity: 1, price: 450 }, { name: "Farm Fresh Eggs (12 pcs)", quantity: 2, price: 84 }], subtotal: 618, discount: 30.9, tax: 29.38, total: 616.48, paymentMethod: "UPI" },
-  { billNumber: "MG-003", date: "25/02/2026", time: "18:30:00", items: [{ name: "Fresh Chicken Breast", quantity: 2.5, price: 280 }], subtotal: 700, discount: 35, tax: 33.25, total: 698.25, paymentMethod: "Card" },
-  { billNumber: "MG-004", date: "24/02/2026", time: "09:15:00", items: [{ name: "Chicken Tikka", quantity: 1.5, price: 400 }, { name: "Chicken Naan", quantity: 6, price: 60 }], subtotal: 960, discount: 48, tax: 45.6, total: 957.6, paymentMethod: "UPI" },
-  { billNumber: "MG-005", date: "24/02/2026", time: "12:40:00", items: [{ name: "Country Chicken - Cut Pieces", quantity: 1, price: 580 }], subtotal: 580, discount: 29, tax: 27.55, total: 578.55, paymentMethod: "Cash" },
-  { billNumber: "MG-006", date: "24/02/2026", time: "16:20:00", items: [{ name: "Tandoori Chicken", quantity: 2, price: 380 }, { name: "Chicken Seekh Kebab", quantity: 1, price: 360 }], subtotal: 1120, discount: 56, tax: 53.2, total: 1117.2, paymentMethod: "UPI" },
-  { billNumber: "MG-007", date: "23/02/2026", time: "10:00:00", items: [{ name: "Chicken Wings", quantity: 3, price: 240 }], subtotal: 720, discount: 36, tax: 34.2, total: 718.2, paymentMethod: "Card" },
-  { billNumber: "MG-008", date: "23/02/2026", time: "14:55:00", items: [{ name: "Chicken Lolipop", quantity: 4, price: 300 }, { name: "Chicken Drumsticks", quantity: 2, price: 260 }], subtotal: 1720, discount: 86, tax: 81.7, total: 1715.7, paymentMethod: "UPI" },
-  { billNumber: "MG-009", date: "23/02/2026", time: "19:30:00", items: [{ name: "Farm Fresh Eggs (30 pcs)", quantity: 2, price: 195 }], subtotal: 390, discount: 19.5, tax: 18.53, total: 389.03, paymentMethod: "Cash" },
-  { billNumber: "MG-010", date: "22/02/2026", time: "11:10:00", items: [{ name: "Whole Roast Chicken", quantity: 2, price: 450 }, { name: "Chicken Gizzard", quantity: 1, price: 180 }], subtotal: 1080, discount: 54, tax: 51.3, total: 1077.3, paymentMethod: "UPI" },
-  { billNumber: "MG-011", date: "22/02/2026", time: "15:45:00", items: [{ name: "Chicken Keema", quantity: 2, price: 350 }], subtotal: 700, discount: 35, tax: 33.25, total: 698.25, paymentMethod: "Card" },
-  { billNumber: "MG-012", date: "22/02/2026", time: "20:00:00", items: [{ name: "Crispy Fried Chicken", quantity: 1.5, price: 320 }, { name: "Chicken Fries", quantity: 2, price: 180 }], subtotal: 840, discount: 42, tax: 39.9, total: 837.9, paymentMethod: "UPI" },
-];
+function getPageNumbers(
+  currentPage: number,
+  totalPages: number,
+): (number | "ellipsis")[] {
+  const pages: (number | "ellipsis")[] = [];
+
+  if (totalPages <= 5) {
+    for (let page = 1; page <= totalPages; page += 1) {
+      pages.push(page);
+    }
+    return pages;
+  }
+
+  pages.push(1);
+  if (currentPage > 3) pages.push("ellipsis");
+
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  for (let page = start; page <= end; page += 1) {
+    pages.push(page);
+  }
+
+  if (currentPage < totalPages - 2) pages.push("ellipsis");
+  pages.push(totalPages);
+
+  return pages;
+}
 
 export default function OfflineBillsPage() {
-  const [selectedBill, setSelectedBill] = useState<OfflineBill | null>(null);
+  const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { currentPage, setCurrentPage, totalPages, currentItems, getPageNumbers } = usePagination(offlineBills);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleViewBill = (bill: OfflineBill) => {
-    setSelectedBill(bill);
+  const {
+    data: billsData,
+    isLoading,
+    isError,
+    error,
+  } = useOfflineBills({
+    page: currentPage,
+    limit: OFFLINE_BILLS_PAGE_LIMIT,
+    search: searchQuery.trim() || undefined,
+  });
+
+  const bills = billsData?.data ?? [];
+  const totalPages = Math.max(billsData?.pagination?.totalPages ?? 1, 1);
+  const safeCurrentPage = billsData?.pagination?.page ?? currentPage;
+
+  const handleViewBill = (billId: number) => {
+    setSelectedBillId(billId);
     setIsSheetOpen(true);
   };
 
   return (
     <StoreLayout title="Offline Bills History">
       <div className="space-y-6">
-        <p className="text-base text-foreground">
-          View all offline bills generated from manual billing
-        </p>
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by customer name or phone..."
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-9 bg-muted border-transparent rounded-lg h-9"
+          />
+        </div>
 
         <div className="bg-card border border-border rounded-[10px] overflow-hidden">
           <Table>
@@ -103,68 +165,118 @@ export default function OfflineBillsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((bill) => (
-                <TableRow key={bill.billNumber} className="border-b border-border">
-                  <TableCell className="py-4 pl-4">
-                    <span className="text-sm font-medium text-foreground">
-                      {bill.billNumber}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <div className="text-sm text-foreground">{bill.date}</div>
-                    <div className="text-xs text-muted-foreground">{bill.time}</div>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <span className="text-sm text-foreground">
-                      ₹{bill.subtotal.toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <span className="text-sm text-[#00a63e]">
-                      -₹{bill.discount.toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <span className="text-sm text-foreground">
-                      ₹{bill.tax.toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <span className="text-sm font-semibold text-foreground">
-                      ₹{bill.total.toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pl-4">
-                    <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-foreground">
-                      {bill.paymentMethod}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-4 pr-4 text-right">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-8 hover:bg-muted"
-                      onClick={() => handleViewBill(bill)}
-                    >
-                      <Eye className="size-4 text-muted-foreground" />
-                    </Button>
+              {isLoading && (
+                <TableBodySkeleton
+                  rows={8}
+                  columns={8}
+                  rowClassName="border-b border-border"
+                  cellClassNames={[
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pr-4",
+                  ]}
+                  renderCell={(columnIndex) => {
+                    if (columnIndex === 7) {
+                      return (
+                        <div className="flex justify-end">
+                          <Skeleton className="h-8 w-8 rounded-lg" />
+                        </div>
+                      );
+                    }
+
+                    if (columnIndex === 6) {
+                      return <Skeleton className="h-6 w-16 rounded-lg" />;
+                    }
+
+                    return <Skeleton className="h-4 w-3/4 rounded-lg" />;
+                  }}
+                />
+              )}
+
+              {isError && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-destructive">
+                    {error instanceof Error ? error.message : "Failed to load offline bills"}
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+
+              {!isLoading && !isError && bills.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                    No offline bills found
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading &&
+                !isError &&
+                bills.map((bill) => {
+                  const createdAt = formatDateTime(bill.created_at);
+                  return (
+                    <TableRow key={bill.id} className="border-b border-border">
+                      <TableCell className="py-4 pl-4">
+                        <span className="text-sm font-medium text-foreground">
+                          #{bill.id}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4 pl-4">
+                        <div className="text-sm text-foreground">{createdAt.date}</div>
+                        <div className="text-xs text-muted-foreground">{createdAt.time}</div>
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-sm text-foreground">
+                        {formatCurrency(bill.subtotal)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-sm text-[#00a63e]">
+                        -{formatCurrency(bill.discount)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-sm text-foreground">
+                        {formatCurrency(bill.tax)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-sm font-semibold text-foreground">
+                        {formatCurrency(bill.total_amount)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4">
+                        <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-foreground">
+                          {paymentLabels[bill.payment_mode]}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4 pr-4 text-right">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 hover:bg-muted"
+                          onClick={() => handleViewBill(bill.id)}
+                        >
+                          <Eye className="size-4 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
 
-        {totalPages > 1 && (
+        {totalPages >= 1 && (
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  className={
+                    safeCurrentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
-              {getPageNumbers().map((page, index) =>
+              {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
                     <PaginationEllipsis />
@@ -172,19 +284,25 @@ export default function OfflineBillsPage() {
                 ) : (
                   <PaginationItem key={page}>
                     <PaginationLink
-                      isActive={currentPage === page}
+                      isActive={safeCurrentPage === page}
                       onClick={() => setCurrentPage(page)}
                       className="cursor-pointer"
                     >
                       {page}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                ),
               )}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                  className={
+                    safeCurrentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -193,7 +311,7 @@ export default function OfflineBillsPage() {
       </div>
 
       <BillDetailsSheet
-        bill={selectedBill}
+        billId={selectedBillId}
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
         subtitle="Offline bill transaction"

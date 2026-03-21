@@ -1,6 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { LuLayoutDashboard, LuTag, LuBox, LuTruck } from "react-icons/lu";
-import { Store, Receipt, ShoppingCart, FileText, Users, Box } from "lucide-react";
+import {
+  Store,
+  Receipt,
+  ShoppingCart,
+  FileText,
+  Users,
+  Box,
+  Percent,
+  AlertTriangle,
+} from "lucide-react";
 import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Header } from "@/components/common/layout/Header";
 import { Watermark } from "@/components/ui/watermark";
@@ -20,9 +29,11 @@ const adminNavItems = [
   { icon: LuBox, label: "Items", href: "/admin/items" },
   { icon: LuTruck, label: "Suppliers", href: "/admin/suppliers" },
   { icon: Box, label: "Stock Management", href: "/admin/stocks" },
+  { icon: AlertTriangle, label: "Out of Stock Alerts", href: "/admin/out-of-stock" },
   { icon: Users, label: "Vendors", href: "/admin/vendors" },
   { icon: Store, label: "Stores", href: "/admin/stores" },
   { icon: Receipt, label: "Taxes", href: "/admin/taxes" },
+  { icon: Percent, label: "Discounts", href: "/admin/discounts" },
   { icon: ShoppingCart, label: "Online Orders", href: "/admin/orders" },
   { icon: FileText, label: "Offline Bills", href: "/admin/bills" },
 ];

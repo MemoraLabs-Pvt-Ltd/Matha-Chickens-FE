@@ -1,4 +1,4 @@
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPut } from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
 export type OrderStatus = "order_received" | "dispatched" | "delivered";
@@ -42,11 +42,16 @@ export interface OrdersQueryParams {
   search?: string;
 }
 
+export interface UpdateOrderStatusInput {
+  status: OrderStatus;
+}
+
 export interface OrderListResponse extends ApiResponse<Order[]> {
   pagination: PaginationMeta;
 }
 
 export type OrderResponse = ApiResponse<OrderDetail>;
+export type OrderUpdateResponse = ApiResponse<Order>;
 
 function toPositiveInt(value: number | undefined, fallback: number): number {
   if (!value || !Number.isFinite(value)) return fallback;
@@ -74,4 +79,11 @@ export async function getOrders(params?: OrdersQueryParams): Promise<OrderListRe
 
 export async function getOrder(id: number): Promise<OrderResponse> {
   return apiGet<OrderResponse>(`/orders/${id}`);
+}
+
+export async function updateOrderStatus(
+  id: number,
+  data: UpdateOrderStatusInput,
+): Promise<OrderUpdateResponse> {
+  return apiPut<OrderUpdateResponse>(`/orders/${id}`, data);
 }

@@ -15,6 +15,8 @@ import ItemManagement from './pages/admin/ItemManagement';
 import SupplierManagement from './pages/admin/SupplierManagement';
 import StoreManagement from './pages/admin/StoreManagement';
 import TaxManagement from './pages/admin/TaxManagement';
+import DiscountManagement from './pages/admin/DiscountManagement';
+import OutOfStockAlerts from './pages/admin/OutOfStockAlerts';
 import OnlineOrders from './pages/admin/OnlineOrders';
 import OfflineBills from './pages/admin/OfflineBills';
 import Vendors from './pages/admin/Vendors';
@@ -125,6 +127,22 @@ function App() {
             element={
               <AdminRoute>
                 <TaxManagement />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/discounts"
+            element={
+              <AdminRoute>
+                <DiscountManagement />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/out-of-stock"
+            element={
+              <AdminRoute>
+                <OutOfStockAlerts />
               </AdminRoute>
             }
           />

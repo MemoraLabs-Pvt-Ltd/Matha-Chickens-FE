@@ -221,17 +221,17 @@ export default function ManualBillingPage() {
           onValueChange={(value) => setActiveTab(value as typeof activeTab)}
           className="flex-1 flex flex-col h-full overflow-hidden"
         >
-          <TabsList className="mb-4 bg-muted h-9 rounded-full w-auto">
+          <TabsList className="mb-4 h-10 rounded-full w-auto border border-border/60 bg-[#eceef1] p-1">
             <TabsTrigger
               value="create"
-              className="rounded-full px-4 h-7 data-[state=active]:bg-white"
+              className="rounded-full px-4 h-8 text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
             >
               <Receipt className="size-4 mr-2" />
               Create Bill
             </TabsTrigger>
             <TabsTrigger
               value="completed"
-              className="rounded-full px-4 h-7 data-[state=active]:bg-white"
+              className="rounded-full px-4 h-8  text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
             >
               <FileText className="size-4 mr-2" />
               Completed Bills ({totalCompletedBills})

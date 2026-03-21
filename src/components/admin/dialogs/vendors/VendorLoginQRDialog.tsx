@@ -61,14 +61,6 @@ export function VendorLoginQRDialog({
                 {loginId}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                Portal URL:
-              </span>
-              <span className="text-sm font-normal text-admin">
-                vendor.mathachickens.com
-              </span>
-            </div>
           </div>
 
           <p className="text-xs text-muted-foreground text-center">

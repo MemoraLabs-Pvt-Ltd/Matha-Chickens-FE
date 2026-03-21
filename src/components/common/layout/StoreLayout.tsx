@@ -35,7 +35,7 @@ export function StoreLayout({
 
   const handleLogout = async () => {
     await logout();
-    navigate("/store/login");
+    navigate("/");
   };
 
   return (

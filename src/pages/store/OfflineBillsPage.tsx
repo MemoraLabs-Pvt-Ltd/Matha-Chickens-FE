@@ -1,18 +1,7 @@
-import { useState } from "react";
-import { Eye, Search } from "lucide-react";
 import { StoreLayout } from "@/components/common/layout";
+import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -22,11 +11,22 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useOfflineBills } from "@/hooks/useOfflineBills";
-import { BillDetailsSheet } from "./BillDetailsSheet";
 import type { PaymentMode } from "@/lib/api/offlineBills";
 import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import { getPaginationPageNumbers } from "@/lib/display/pagination";
+import { Eye, Search } from "lucide-react";
+import { useState } from "react";
+import { BillDetailsSheet } from "./BillDetailsSheet";
 
 const OFFLINE_BILLS_PAGE_LIMIT = 20;
 
@@ -80,6 +80,7 @@ export default function OfflineBillsPage() {
         </div>
 
         <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border">
@@ -145,15 +146,23 @@ export default function OfflineBillsPage() {
 
               {isError && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-destructive">
-                    {error instanceof Error ? error.message : "Failed to load offline bills"}
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-sm text-destructive"
+                  >
+                    {error instanceof Error
+                      ? error.message
+                      : "Failed to load offline bills"}
                   </TableCell>
                 </TableRow>
               )}
 
               {!isLoading && !isError && bills.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-sm text-muted-foreground"
+                  >
                     No offline bills found
                   </TableCell>
                 </TableRow>
@@ -171,8 +180,12 @@ export default function OfflineBillsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="py-4 pl-4">
-                        <div className="text-sm text-foreground">{createdAt.date}</div>
-                        <div className="text-xs text-muted-foreground">{createdAt.time}</div>
+                        <div className="text-sm text-foreground">
+                          {createdAt.date}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {createdAt.time}
+                        </div>
                       </TableCell>
                       <TableCell className="py-4 pl-4 text-sm text-foreground">
                         {formatInr(bill.subtotal)}
@@ -206,6 +219,7 @@ export default function OfflineBillsPage() {
                 })}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         {totalPages >= 1 && (
@@ -213,7 +227,9 @@ export default function OfflineBillsPage() {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
                   className={
                     safeCurrentPage === 1
                       ? "pointer-events-none opacity-50"
@@ -221,22 +237,23 @@ export default function OfflineBillsPage() {
                   }
                 />
               </PaginationItem>
-              {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
-                page === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={safeCurrentPage === page}
-                      onClick={() => setCurrentPage(page)}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
+              {getPaginationPageNumbers(safeCurrentPage, totalPages).map(
+                (page, index) =>
+                  page === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        isActive={safeCurrentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
               )}
               <PaginationItem>
                 <PaginationNext

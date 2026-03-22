@@ -1,11 +1,4 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useOrder, useUpdateOrderStatus } from "@/hooks/useOrders";
-import type { OrderStatus } from "@/lib/api/orders";
-import { formatPhoneForDisplay } from "@/lib/display/phone";
-import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import {
   Select,
   SelectContent,
@@ -13,6 +6,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useOrder, useUpdateOrderStatus } from "@/hooks/useOrders";
+import type { OrderStatus } from "@/lib/api/orders";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
+import { X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface OrderDetailsSheetProps {
   orderId: number | null;
@@ -39,12 +39,7 @@ export function OrderDetailsSheet({
 }: OrderDetailsSheetProps) {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
 
-  const {
-    data: orderData,
-    isLoading,
-    isError,
-    error,
-  } = useOrder(orderId ?? 0);
+  const { data: orderData, isLoading, isError, error } = useOrder(orderId ?? 0);
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const order = orderData?.data;
   const createdAt = order ? splitIsoDateTime(order.created_at) : null;
@@ -72,9 +67,9 @@ export function OrderDetailsSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute right-0 top-0 h-full w-[375px] bg-card border-l border-border shadow-xl flex flex-col">
+      <div className="absolute right-0 top-0 flex h-full w-full max-w-full flex-col border-l border-border bg-card shadow-xl md:w-[375px] md:max-w-[375px]">
         <div className="border-b border-[#d4d4d4] px-4 pt-4 pb-5">
           <div className="flex items-start justify-between">
             <div>
@@ -108,7 +103,9 @@ export function OrderDetailsSheet({
           {isError && (
             <div className="rounded-[10px] border border-destructive/20 bg-destructive/5 p-4">
               <p className="text-sm text-destructive">
-                {error instanceof Error ? error.message : "Failed to load order details"}
+                {error instanceof Error
+                  ? error.message
+                  : "Failed to load order details"}
               </p>
             </div>
           )}
@@ -121,16 +118,20 @@ export function OrderDetailsSheet({
                 </h3>
                 <div className="bg-muted rounded-[10px] p-4 space-y-1">
                   <p className="text-sm text-foreground">
-                    <span className="font-bold">Name:</span> {order.customer_name}
+                    <span className="font-bold">Name:</span>{" "}
+                    {order.customer_name}
                   </p>
                   <p className="text-sm text-foreground">
-                    <span className="font-bold">Phone:</span> {formatPhoneForDisplay(order.customer_phone)}
+                    <span className="font-bold">Phone:</span>{" "}
+                    {formatPhoneForDisplay(order.customer_phone)}
                   </p>
                   <p className="text-sm text-foreground">
-                    <span className="font-bold">Address:</span> {order.delivery_address}
+                    <span className="font-bold">Address:</span>{" "}
+                    {order.delivery_address}
                   </p>
                   <p className="text-sm text-foreground">
-                    <span className="font-bold">Date:</span> {createdAt?.date} {createdAt?.time}
+                    <span className="font-bold">Date:</span> {createdAt?.date}{" "}
+                    {createdAt?.time}
                   </p>
                 </div>
               </div>
@@ -150,7 +151,8 @@ export function OrderDetailsSheet({
                           {item.item_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity} {item.unit} x {formatInr(item.price)}
+                          Qty: {item.quantity} {item.unit} x{" "}
+                          {formatInr(item.price)}
                         </p>
                       </div>
                       <p className="text-sm font-semibold text-foreground">
@@ -168,18 +170,26 @@ export function OrderDetailsSheet({
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Subtotal:</span>
-                    <span className="text-sm text-foreground">{formatInr(order.subtotal)}</span>
+                    <span className="text-sm text-foreground">
+                      {formatInr(order.subtotal)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-[#00a63e]">Discount:</span>
-                    <span className="text-sm text-[#00a63e]">-{formatInr(order.discount)}</span>
+                    <span className="text-sm text-[#00a63e]">
+                      -{formatInr(order.discount)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Tax:</span>
-                    <span className="text-sm text-foreground">{formatInr(order.tax)}</span>
+                    <span className="text-sm text-foreground">
+                      {formatInr(order.tax)}
+                    </span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between">
-                    <span className="text-base font-bold text-foreground">Total:</span>
+                    <span className="text-base font-bold text-foreground">
+                      Total:
+                    </span>
                     <span className="text-lg font-bold text-foreground">
                       {formatInr(order.total_amount)}
                     </span>
@@ -200,13 +210,17 @@ export function OrderDetailsSheet({
 
                   <Select
                     value={selectedStatus}
-                    onValueChange={(value) => setSelectedStatus(value as OrderStatus)}
+                    onValueChange={(value) =>
+                      setSelectedStatus(value as OrderStatus)
+                    }
                   >
                     <SelectTrigger className="bg-muted border-transparent rounded-lg h-9">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="order_received">Order Received</SelectItem>
+                      <SelectItem value="order_received">
+                        Order Received
+                      </SelectItem>
                       <SelectItem value="dispatched">Dispatched</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                     </SelectContent>

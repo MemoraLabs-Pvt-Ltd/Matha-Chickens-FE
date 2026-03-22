@@ -1,21 +1,21 @@
-import { useNavigate } from "react-router-dom";
-import { LuLayoutDashboard, LuTag, LuBox, LuTruck } from "react-icons/lu";
-import {
-  Store,
-  Receipt,
-  ShoppingCart,
-  FileText,
-  Users,
-  Box,
-  Percent,
-  AlertTriangle,
-} from "lucide-react";
-import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Header } from "@/components/common/layout/Header";
+import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Watermark } from "@/components/ui/watermark";
 import { useAuth } from "@/hooks/useAuth";
-import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
+import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
+import {
+  AlertTriangle,
+  Box,
+  FileText,
+  Percent,
+  Receipt,
+  ShoppingCart,
+  Store,
+  Users,
+} from "lucide-react";
+import { LuBox, LuLayoutDashboard, LuTag, LuTruck } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
 interface AdminLayoutProps {
   title: string;
@@ -55,9 +55,9 @@ export function AdminLayout({
     useSidebarCollapsed("matha-admin-sidebar-collapsed");
   const fromAuth = getDisplayForLoggedInUser(user);
 
-  const userName =
-    userNameOverride ?? fromAuth?.displayName ?? "User";
+  const userName = userNameOverride ?? fromAuth?.displayName ?? "User";
   const userEmail = userEmailOverride ?? user?.email ?? "";
+  const roleLabel = fromAuth?.roleLabel ?? "—";
 
   const handleLogout = async () => {
     await logout();
@@ -78,7 +78,9 @@ export function AdminLayout({
           title={title}
           userName={userName}
           userEmail={userEmail}
+          roleLabel={roleLabel}
           isLoading={authLoading && !userNameOverride}
+          onLogout={handleLogout}
         />
         <div className="flex-1 p-8 overflow-auto z-10">{children}</div>
         <Watermark />

@@ -1,16 +1,6 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
 import { StoreLayout } from "@/components/common/layout";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
+import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -21,12 +11,20 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   useStoreItemAvailability,
@@ -34,6 +32,8 @@ import {
 } from "@/hooks/useStoreItemUnavailability";
 import type { ItemAvailability } from "@/lib/api/storeItemUnavailability";
 import { getPaginationPageNumbers } from "@/lib/display/pagination";
+import { Search } from "lucide-react";
+import { useState } from "react";
 
 const AVAILABILITY_PAGE_LIMIT = 20;
 
@@ -80,7 +80,10 @@ export default function ItemAvailabilityPage() {
   const totalPages = Math.max(availabilityData?.pagination?.totalPages ?? 1, 1);
   const safeCurrentPage = availabilityData?.pagination?.page ?? currentPage;
 
-  const setItemAvailability = async (itemId: number, availability: ItemAvailability) => {
+  const setItemAvailability = async (
+    itemId: number,
+    availability: ItemAvailability,
+  ) => {
     setPendingItemId(itemId);
     try {
       await updateAvailabilityMutation.mutateAsync({
@@ -99,8 +102,8 @@ export default function ItemAvailabilityPage() {
             Manage item availability for your store
           </h2>
           <p className="text-sm text-muted-foreground italic">
-            In stock and low stock items appear in the app; out of stock items are hidden from
-            customers for your store.
+            In stock and low stock items appear in the app; out of stock items
+            are hidden from customers for your store.
           </p>
         </div>
 
@@ -120,6 +123,7 @@ export default function ItemAvailabilityPage() {
         </div>
 
         <div className="bg-card border border-border rounded-[10px] overflow-hidden">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border">
@@ -146,7 +150,13 @@ export default function ItemAvailabilityPage() {
                   rows={8}
                   columns={5}
                   rowClassName="border-b border-border"
-                  cellClassNames={["py-4 pl-4", "py-4 pl-4", "py-4 pl-4", "py-4 pl-4", "py-4 pr-4"]}
+                  cellClassNames={[
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pl-4",
+                    "py-4 pr-4",
+                  ]}
                   renderCell={(columnIndex) => {
                     if (columnIndex === 4) {
                       return (
@@ -167,7 +177,10 @@ export default function ItemAvailabilityPage() {
 
               {isError && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-sm text-destructive">
+                  <TableCell
+                    colSpan={5}
+                    className="py-12 text-center text-sm text-destructive"
+                  >
                     {error instanceof Error
                       ? error.message
                       : "Failed to load item availability"}
@@ -177,7 +190,10 @@ export default function ItemAvailabilityPage() {
 
               {!isLoading && !isError && items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="py-12 text-center text-sm text-muted-foreground"
+                  >
                     No items found
                   </TableCell>
                 </TableRow>
@@ -187,19 +203,25 @@ export default function ItemAvailabilityPage() {
                 !isError &&
                 items.map((item) => {
                   const isToggling =
-                    updateAvailabilityMutation.isPending && pendingItemId === item.id;
+                    updateAvailabilityMutation.isPending &&
+                    pendingItemId === item.id;
                   const label =
-                    AVAILABILITY_OPTIONS.find((o) => o.value === item.availability)?.label ??
-                    item.availability;
+                    AVAILABILITY_OPTIONS.find(
+                      (o) => o.value === item.availability,
+                    )?.label ?? item.availability;
 
                   return (
                     <TableRow key={item.id} className="border-b border-border">
                       <TableCell className="py-3 pl-4">
-                        <span className="text-sm font-medium text-foreground">{item.name}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {item.name}
+                        </span>
                       </TableCell>
                       <TableCell className="py-3 pl-4">
                         <span className="text-sm text-foreground">
-                          {item.category_id ? `Category #${item.category_id}` : "-"}
+                          {item.category_id
+                            ? `Category #${item.category_id}`
+                            : "-"}
                         </span>
                       </TableCell>
                       <TableCell className="py-3 pl-4">
@@ -223,7 +245,10 @@ export default function ItemAvailabilityPage() {
                             value={item.availability}
                             disabled={isToggling}
                             onValueChange={(value) =>
-                              setItemAvailability(item.id, value as ItemAvailability)
+                              setItemAvailability(
+                                item.id,
+                                value as ItemAvailability,
+                              )
                             }
                           >
                             <SelectTrigger className="w-[min(100%,10rem)] h-9 ml-auto">
@@ -244,14 +269,16 @@ export default function ItemAvailabilityPage() {
                 })}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         <div className="bg-[#eff6ff] border border-[#bedbff] rounded-[10px] px-4 py-4">
           <p className="text-sm text-[#1c398e]">
             <span className="font-semibold">Note:</span>{" "}
             <span className="font-normal">
-              Out of stock hides the item from the customer app for your store. Low stock still
-              lists the item but signals limited quantity. In stock means fully available.
+              Out of stock hides the item from the customer app for your store.
+              Low stock still lists the item but signals limited quantity. In
+              stock means fully available.
             </span>
           </p>
         </div>
@@ -261,7 +288,9 @@ export default function ItemAvailabilityPage() {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
                   className={
                     safeCurrentPage === 1
                       ? "pointer-events-none opacity-50"
@@ -269,22 +298,23 @@ export default function ItemAvailabilityPage() {
                   }
                 />
               </PaginationItem>
-              {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
-                page === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={safeCurrentPage === page}
-                      onClick={() => setCurrentPage(page)}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
+              {getPaginationPageNumbers(safeCurrentPage, totalPages).map(
+                (page, index) =>
+                  page === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        isActive={safeCurrentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
               )}
               <PaginationItem>
                 <PaginationNext

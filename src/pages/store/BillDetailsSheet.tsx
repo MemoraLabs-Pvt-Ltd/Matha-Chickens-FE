@@ -1,4 +1,3 @@
-import { X, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOfflineBill } from "@/hooks/useOfflineBills";
@@ -9,6 +8,7 @@ import {
 } from "@/lib/billing/itemDiscount";
 import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
 import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { Printer, X } from "lucide-react";
 
 interface BillDetailsSheetProps {
   billId: number | null;
@@ -46,9 +46,9 @@ export function BillDetailsSheet({
   const createdAt = bill ? splitIsoDateTime(bill.created_at) : null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute right-0 top-0 h-full w-[384px] bg-card border-l border-border shadow-xl flex flex-col">
+      <div className="absolute right-0 top-0 flex h-full w-full max-w-full flex-col border-l border-border bg-card shadow-xl md:w-[384px] md:max-w-[384px]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
@@ -78,7 +78,9 @@ export function BillDetailsSheet({
           {isError && (
             <div className="rounded-[10px] border border-destructive/20 bg-destructive/5 p-4">
               <p className="text-sm text-destructive">
-                {error instanceof Error ? error.message : "Failed to load bill details"}
+                {error instanceof Error
+                  ? error.message
+                  : "Failed to load bill details"}
               </p>
             </div>
           )}
@@ -86,7 +88,9 @@ export function BillDetailsSheet({
           {!isLoading && !isError && bill && (
             <>
               <div className="bg-muted rounded-xl p-4">
-                <p className="text-sm text-muted-foreground mb-1">Date & Time</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Date & Time
+                </p>
                 <p className="text-base font-medium text-foreground">
                   {createdAt?.date} at {createdAt?.time}
                 </p>
@@ -98,12 +102,16 @@ export function BillDetailsSheet({
                   {bill.customer_name?.trim() || "—"}
                 </p>
                 {bill.customer_phone?.trim() ? (
-                  <p className="text-sm text-muted-foreground mt-1">{bill.customer_phone}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {bill.customer_phone}
+                  </p>
                 ) : null}
               </div>
 
               <div>
-                <h3 className="text-base font-medium text-foreground mb-3">Bill Items</h3>
+                <h3 className="text-base font-medium text-foreground mb-3">
+                  Bill Items
+                </h3>
                 <div className="space-y-2">
                   {bill.bill_items.map((item) => {
                     const discountPerUnit = computeItemDiscount(
@@ -160,7 +168,9 @@ export function BillDetailsSheet({
               </div>
 
               <div>
-                <h3 className="text-base font-medium text-foreground mb-3">Bill Summary</h3>
+                <h3 className="text-base font-medium text-foreground mb-3">
+                  Bill Summary
+                </h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Subtotal:</span>
@@ -181,7 +191,9 @@ export function BillDetailsSheet({
                     </span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between">
-                    <span className="text-base font-bold text-foreground">Total:</span>
+                    <span className="text-base font-bold text-foreground">
+                      Total:
+                    </span>
                     <span className="text-lg font-bold text-foreground">
                       {formatInr(bill.total_amount)}
                     </span>

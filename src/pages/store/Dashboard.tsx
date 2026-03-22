@@ -1,26 +1,14 @@
-import { useMemo } from "react";
-import {
-  DollarSign,
-  ShoppingCart,
-  Calculator,
-  Package,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Layers,
-} from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { StoreLayout } from "@/components/common/layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { StoreLayout } from "@/components/common/layout";
 import { useStoreDashboard } from "@/hooks/useDashboard";
 import type { OrderStatus } from "@/lib/api/orders";
 import {
@@ -29,6 +17,18 @@ import {
   formatTrendVsYesterday,
 } from "@/lib/display/formatting";
 import { formatPhoneForDisplay } from "@/lib/display/phone";
+import {
+  AlertTriangle,
+  Calculator,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Layers,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
+import { useMemo } from "react";
 
 const orderStatusStyles: Record<OrderStatus, string> = {
   order_received: "bg-[#dbeafe] text-[#1447e6]",
@@ -52,7 +52,9 @@ export default function StoreDashboard() {
       {
         title: "Today's Collection",
         value: k ? formatInr(k.today_collection.amount) : "—",
-        trend: k ? formatTrendVsYesterday(k.today_collection.change_percent) : undefined,
+        trend: k
+          ? formatTrendVsYesterday(k.today_collection.change_percent)
+          : undefined,
         iconBg: "bg-[#e0f2fe] border border-[#bedbff]",
         icon: DollarSign,
         iconColor: "bg-[#2b7fff]",
@@ -182,18 +184,22 @@ export default function StoreDashboard() {
 
   return (
     <StoreLayout title="Dashboard">
-      <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 mb-6">
         {stats.map((stat) => (
           <div
             key={stat.title}
             className={`border rounded-[14px] p-6 flex items-center justify-between shadow-sm ${stat.iconBg}`}
           >
             <div className="flex flex-col gap-1">
-              <p className={`text-sm font-medium leading-5 ${stat.labelColor}`}>{stat.title}</p>
+              <p className={`text-sm font-medium leading-5 ${stat.labelColor}`}>
+                {stat.title}
+              </p>
               {isLoading ? (
                 <Skeleton className="h-9 w-24 mt-1 rounded-lg" />
               ) : (
-                <p className={`text-[30px] font-bold leading-9 tracking-wide ${stat.valueColor}`}>
+                <p
+                  className={`text-[30px] font-bold leading-9 tracking-wide ${stat.valueColor}`}
+                >
                   {stat.value}
                 </p>
               )}
@@ -202,7 +208,9 @@ export default function StoreDashboard() {
                   {stat.trend && (
                     <>
                       <TrendingUp className="size-4 text-[#00a63e]" />
-                      <p className="text-sm font-medium leading-5 text-[#00a63e]">{stat.trend}</p>
+                      <p className="text-sm font-medium leading-5 text-[#00a63e]">
+                        {stat.trend}
+                      </p>
                     </>
                   )}
                   {stat.subtitle && (
@@ -231,6 +239,7 @@ export default function StoreDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
@@ -276,7 +285,10 @@ export default function StoreDashboard() {
 
               {!isLoading && recentOrders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
                     No recent online orders
                   </TableCell>
                 </TableRow>
@@ -309,7 +321,8 @@ export default function StoreDashboard() {
                       <span
                         className={`inline-flex items-center justify-center h-7 rounded-full px-4 text-sm font-medium ${orderStatusStyles[order.status as OrderStatus]}`}
                       >
-                        {orderStatusLabels[order.status as OrderStatus] ?? order.status}
+                        {orderStatusLabels[order.status as OrderStatus] ??
+                          order.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right py-4 pr-6">
@@ -321,10 +334,11 @@ export default function StoreDashboard() {
                 ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="rounded-xl border border-border shadow-sm">
           <CardHeader className="px-6 pt-6 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">
@@ -334,9 +348,14 @@ export default function StoreDashboard() {
           <CardContent className="px-6">
             <div className="flex flex-col gap-4">
               {orderStatuses.map((item) => (
-                <div key={item.label} className="flex items-center justify-between h-10">
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between h-10"
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`size-10 rounded-xl flex items-center justify-center ${item.bgColor}`}>
+                    <div
+                      className={`size-10 rounded-xl flex items-center justify-center ${item.bgColor}`}
+                    >
                       <item.icon className={`size-5 ${item.iconColor}`} />
                     </div>
                     <p className="text-base font-normal text-muted-foreground">
@@ -344,7 +363,11 @@ export default function StoreDashboard() {
                     </p>
                   </div>
                   <div className="text-xl font-bold text-foreground">
-                    {isLoading ? <Skeleton className="h-7 w-8 inline-block" /> : item.value}
+                    {isLoading ? (
+                      <Skeleton className="h-7 w-8 inline-block" />
+                    ) : (
+                      item.value
+                    )}
                   </div>
                 </div>
               ))}
@@ -361,9 +384,14 @@ export default function StoreDashboard() {
           <CardContent className="px-6">
             <div className="flex flex-col gap-4">
               {inventoryItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between h-10">
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between h-10"
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`size-10 rounded-xl flex items-center justify-center ${item.bgColor}`}>
+                    <div
+                      className={`size-10 rounded-xl flex items-center justify-center ${item.bgColor}`}
+                    >
                       <item.icon className={`size-5 ${item.iconColor}`} />
                     </div>
                     <p className="text-base font-normal text-muted-foreground">
@@ -371,7 +399,11 @@ export default function StoreDashboard() {
                     </p>
                   </div>
                   <div className="text-xl font-bold text-foreground">
-                    {isLoading ? <Skeleton className="h-7 w-8 inline-block" /> : item.value}
+                    {isLoading ? (
+                      <Skeleton className="h-7 w-8 inline-block" />
+                    ) : (
+                      item.value
+                    )}
                   </div>
                 </div>
               ))}
@@ -388,12 +420,19 @@ export default function StoreDashboard() {
           <CardContent className="px-6">
             <div className="flex flex-col gap-4">
               {performanceItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between h-7">
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between h-7"
+                >
                   <p className="text-base font-normal text-muted-foreground">
                     {item.label}
                   </p>
                   <div className={`text-xl font-bold ${item.valueColor}`}>
-                    {isLoading ? <Skeleton className="h-7 w-20 inline-block" /> : item.value}
+                    {isLoading ? (
+                      <Skeleton className="h-7 w-20 inline-block" />
+                    ) : (
+                      item.value
+                    )}
                   </div>
                 </div>
               ))}

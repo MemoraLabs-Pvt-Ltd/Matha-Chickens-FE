@@ -1,26 +1,7 @@
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { Plus, Minus, Search, FileText, Receipt, Eye } from "lucide-react";
+import { StoreLayout } from "@/components/common/layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -30,35 +11,54 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { StoreLayout } from "@/components/common/layout";
-import { BillDetailsSheet } from "./BillDetailsSheet";
-import { useItems } from "@/hooks/useItems";
-import { useOfflineBills, useCreateOfflineBill } from "@/hooks/useOfflineBills";
-import { useMyStore } from "@/hooks/useStores";
-import { useActiveCampaignDiscount } from "@/hooks/useDiscounts";
-import { useAuth } from "@/hooks/useAuth";
-import type { OfflineBillDetail, PaymentMode } from "@/lib/api/offlineBills";
-import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
 import {
-  computeCartLineDetails,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { useActiveCampaignDiscount } from "@/hooks/useDiscounts";
+import { useItems } from "@/hooks/useItems";
+import { useCreateOfflineBill, useOfflineBills } from "@/hooks/useOfflineBills";
+import { useMyStore } from "@/hooks/useStores";
+import type { OfflineBillDetail, PaymentMode } from "@/lib/api/offlineBills";
+import {
+  computeItemDiscount,
+  describeItemDiscountLabel,
+} from "@/lib/billing/itemDiscount";
+import {
   computeAdditionalDiscount,
   computeCampaignDiscountFromApi,
+  computeCartLineDetails,
   computeOfflineBillTotalAmount,
   computeStoreDiscount,
   computeSubtotalAndTaxFromGrossLines,
   computeVendorDiscount,
   isStoreTaxApplicable,
 } from "@/lib/billing/offlineBillMath";
-import {
-  computeItemDiscount,
-  describeItemDiscountLabel,
-} from "@/lib/billing/itemDiscount";
+import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 import {
   normalizeIndianPhonePayloadFromLocal,
   sanitizeIndianPhoneLocalInput,
 } from "@/lib/display/phone";
-import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
-import { getPaginationPageNumbers } from "@/lib/display/pagination";
+import { Eye, FileText, Minus, Plus, Receipt, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { BillDetailsSheet } from "./BillDetailsSheet";
 
 interface CartItem {
   id: number;
@@ -305,11 +305,11 @@ export default function ManualBillingPage() {
 
   return (
     <StoreLayout title="Manual Billing" disableScroll>
-      <div className="flex gap-4 h-full overflow-hidden">
+      <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto lg:h-full lg:flex-row lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as typeof activeTab)}
-          className="flex-1 flex flex-col h-full overflow-hidden"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden lg:h-full"
         >
           <TabsList className="mb-4 h-10 rounded-full w-auto border border-border/60 bg-[#eceef1] p-1">
             <TabsTrigger
@@ -336,6 +336,7 @@ export default function ManualBillingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-border">
@@ -465,6 +466,7 @@ export default function ManualBillingPage() {
                       })}
                   </TableBody>
                 </Table>
+                </div>
 
                 {billsTotalPages >= 1 && (
                   <div className="py-4 px-4 border-t border-border">
@@ -526,9 +528,9 @@ export default function ManualBillingPage() {
 
           <TabsContent
             value="create"
-            className="flex-1 min-h-0 mt-0 flex gap-4"
+            className="mt-0 flex min-h-0 flex-1 flex-col gap-4 lg:flex-row"
           >
-            <div className="bg-card border border-border rounded-xl w-full max-w-[519px] overflow-hidden flex flex-col">
+            <div className="flex max-h-[min(70vh,520px)] min-h-[280px] w-full max-w-[519px] flex-col overflow-hidden rounded-xl border border-border bg-card lg:max-h-none lg:min-h-0 lg:flex-1">
               <div className="px-6 pt-5 pb-3 shrink-0">
                 <h2 className="text-base font-medium text-foreground">
                   Select Items
@@ -728,7 +730,7 @@ export default function ManualBillingPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 w-full max-w-[519px] h-full overflow-hidden">
+            <div className="flex min-h-0 w-full max-w-[519px] flex-col gap-4 overflow-hidden lg:h-full lg:flex-1">
               <div className="bg-card border border-border rounded-xl px-6 py-5 overflow-hidden flex flex-col">
                 <h2 className="text-base font-medium text-foreground mb-4 shrink-0">
                   Bill Details

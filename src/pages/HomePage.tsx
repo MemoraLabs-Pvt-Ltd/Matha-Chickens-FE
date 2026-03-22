@@ -263,7 +263,10 @@ function StoreDownloadButtons({ fullWidth = false }: { fullWidth?: boolean }) {
           <img
             src={appleStoreIcon}
             alt=""
-            className={cn("shrink-0 object-contain", fullWidth ? "size-8" : "size-7")}
+            className={cn(
+              "shrink-0 object-contain",
+              fullWidth ? "size-8" : "size-7",
+            )}
             aria-hidden
           />
           <span className="min-w-0 text-left leading-tight">
@@ -285,7 +288,10 @@ function StoreDownloadButtons({ fullWidth = false }: { fullWidth?: boolean }) {
           <img
             src={playStoreIcon}
             alt=""
-            className={cn("shrink-0 object-contain", fullWidth ? "size-8" : "size-7")}
+            className={cn(
+              "shrink-0 object-contain",
+              fullWidth ? "size-8" : "size-7",
+            )}
             aria-hidden
           />
           <span className="min-w-0 text-left leading-tight">
@@ -569,18 +575,6 @@ export default function HomePage() {
                 </article>
               ))}
             </div>
-
-            <div className="mt-8 rounded-2xl border border-[#E7000B]/15 bg-[#FFFFFF] p-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-6">
-              <p className="text-sm text-muted-foreground">
-                Looking for boneless, skinless, or custom cuts for bulk orders?
-              </p>
-              <Button
-                asChild
-                className="mt-3 bg-[#E7000B] text-[#FFFFFF] hover:bg-[#E7000B]/90 sm:mt-0"
-              >
-                <a href="#contact">Talk to our team</a>
-              </Button>
-            </div>
           </div>
         </section>
 
@@ -606,38 +600,6 @@ export default function HomePage() {
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {description}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="how-it-works"
-          className="border-y border-border bg-linear-to-br from-[#FFF8F8] via-[#FFFFFF] to-[#FFF2F2] py-14 sm:py-16"
-        >
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#E7000B]">
-              How it works
-            </p>
-            <h2 className="mt-2 text-2xl font-black uppercase text-foreground sm:text-3xl">
-              3 simple steps to get fresh chicken
-            </h2>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {ORDER_FLOW.map((step, index) => (
-                <article
-                  key={step.title}
-                  className="rounded-2xl border border-border bg-card p-6 shadow-sm"
-                >
-                  <p className="inline-flex rounded-full bg-[#E7000B] px-3 py-1 text-xs font-bold text-[#FFFFFF]">
-                    Step {index + 1}
-                  </p>
-                  <h3 className="mt-4 text-lg font-bold text-foreground">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {step.description}
                   </p>
                 </article>
               ))}
@@ -691,6 +653,37 @@ export default function HomePage() {
                       {item.description}
                     </p>
                   </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section
+          id="how-it-works"
+          className="border-y border-border bg-linear-to-br from-[#FFF8F8] via-[#FFFFFF] to-[#FFF2F2] py-14 sm:py-16"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#E7000B]">
+              How it works
+            </p>
+            <h2 className="mt-2 text-2xl font-black uppercase text-foreground sm:text-3xl">
+              3 simple steps to get fresh chicken
+            </h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {ORDER_FLOW.map((step, index) => (
+                <article
+                  key={step.title}
+                  className="rounded-2xl border border-border bg-card p-6 shadow-sm"
+                >
+                  <p className="inline-flex rounded-full bg-[#E7000B] px-3 py-1 text-xs font-bold text-[#FFFFFF]">
+                    Step {index + 1}
+                  </p>
+                  <h3 className="mt-4 text-lg font-bold text-foreground">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {step.description}
+                  </p>
                 </article>
               ))}
             </div>

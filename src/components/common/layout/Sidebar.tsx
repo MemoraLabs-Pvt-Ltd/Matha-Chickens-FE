@@ -3,6 +3,7 @@ import type { IconType } from "react-icons";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import LogoMetal from "@/assets/LogoMetal.png";
 
 interface NavItem {
@@ -18,6 +19,8 @@ interface SidebarProps {
   bgColor?: string;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export function Sidebar({
@@ -26,14 +29,27 @@ export function Sidebar({
   bgColor = "bg-white",
   collapsed = false,
   onToggleCollapse,
+  mobileOpen = false,
+  onMobileClose,
 }: SidebarProps) {
+  const isMdUp = useMediaQuery("(min-width: 768px)");
+  const effectiveCollapsed = collapsed && isMdUp;
+
   return (
     <aside
       className={cn(
         bgColor,
-        "relative flex shrink-0 flex-col border-r transition-[width] duration-200 ease-out",
-        "sticky top-0 h-screen min-h-0",
-        collapsed ? "w-[72px]" : "w-[256px]",
+        "flex shrink-0 flex-col border-r border-[rgba(0,0,0,0.1)] transition-[transform,width] duration-200 ease-out",
+        "h-screen min-h-0",
+        isMdUp
+          ? cn(
+              "sticky top-0 translate-x-0",
+              effectiveCollapsed ? "w-[72px]" : "w-[256px]",
+            )
+          : cn(
+              "fixed inset-y-0 left-0 z-50 w-[min(256px,85vw)] max-w-[280px] shadow-xl",
+              mobileOpen ? "translate-x-0" : "-translate-x-full",
+            ),
       )}
     >
       <div className="relative shrink-0 border-b border-[rgba(0,0,0,0.1)] px-3 pb-4 pt-4">
@@ -43,14 +59,14 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             className={cn(
-              "absolute z-10 h-8 w-8 text-muted-foreground hover:text-foreground",
-              collapsed ? "right-1 top-3" : "right-2 top-3",
+              "absolute z-10 hidden h-8 w-8 text-muted-foreground hover:text-foreground md:flex",
+              effectiveCollapsed ? "right-1 top-3" : "right-2 top-3",
             )}
             onClick={onToggleCollapse}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!effectiveCollapsed}
+            aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? (
+            {effectiveCollapsed ? (
               <ChevronRight className="size-4" />
             ) : (
               <ChevronLeft className="size-4" />
@@ -60,7 +76,7 @@ export function Sidebar({
         <div
           className={cn(
             "flex items-center",
-            collapsed ? "justify-center pr-6" : "px-3",
+            effectiveCollapsed ? "justify-center pr-6" : "px-3",
           )}
         >
           <img
@@ -68,11 +84,11 @@ export function Sidebar({
             alt="Matha Chickens"
             className={cn(
               "rounded-lg",
-              collapsed ? "h-9 w-9 object-contain" : "h-12 w-[85px]",
+              effectiveCollapsed ? "h-9 w-9 object-contain" : "h-12 w-[85px]",
             )}
           />
         </div>
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <p className="mt-4 px-3 text-xs text-[#525252]">Admin Portal</p>
         )}
       </div>
@@ -82,11 +98,12 @@ export function Sidebar({
           <NavLink
             key={item.href}
             to={item.href}
-            title={collapsed ? item.label : undefined}
+            title={effectiveCollapsed ? item.label : undefined}
+            onClick={() => onMobileClose?.()}
             className={({ isActive }) =>
               cn(
                 "flex h-10 items-center rounded-xl text-sm font-medium transition-colors",
-                collapsed ? "justify-center px-0" : "gap-3 pl-4",
+                effectiveCollapsed ? "justify-center px-0" : "gap-3 pl-4",
                 isActive || item.active
                   ? "bg-admin text-white"
                   : "text-black hover:bg-muted",
@@ -94,7 +111,7 @@ export function Sidebar({
             }
           >
             <item.icon className="size-5 shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
+            {!effectiveCollapsed && <span className="truncate">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
@@ -103,15 +120,18 @@ export function Sidebar({
         <Button
           type="button"
           variant="ghost"
-          title={collapsed ? "Logout" : undefined}
+          title={effectiveCollapsed ? "Logout" : undefined}
           className={cn(
             "h-9 w-full text-sm font-medium text-black hover:bg-muted",
-            collapsed ? "justify-center px-0" : "justify-start gap-3 pl-3",
+            effectiveCollapsed ? "justify-center px-0" : "justify-start gap-3 pl-3",
           )}
-          onClick={onLogout}
+          onClick={() => {
+            onLogout?.();
+            onMobileClose?.();
+          }}
         >
           <LogOut className="size-4 shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          {!effectiveCollapsed && <span>Logout</span>}
         </Button>
       </div>
     </aside>

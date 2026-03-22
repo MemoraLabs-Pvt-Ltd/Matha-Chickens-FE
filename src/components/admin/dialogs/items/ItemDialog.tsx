@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,14 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 import { useCreateItem, useUpdateItem } from "@/hooks/useItems";
 import { ITEM_IMAGES_BUCKET, supabase } from "@/lib/supabase";
 import {
@@ -271,8 +278,8 @@ function ItemDialogBody({
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[512px]! max-h-[85vh] flex flex-col overflow-hidden">
-      <DialogHeader className="px-5 pt-5 pb-4 border-b border-border shrink-0">
+    <DialogContent className={adminDialogContentClass()}>
+      <DialogHeader className={adminDialogHeaderClass}>
         <DialogTitle className="text-lg font-semibold text-foreground">
           {mode === "add" ? "Add Item" : "Edit Item"}
         </DialogTitle>
@@ -283,8 +290,8 @@ function ItemDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-0">
-        <div className="grid grid-cols-2 gap-4">
+      <div className={cn(adminDialogBodyScrollClass, "space-y-3")}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label
               htmlFor="itemName"
@@ -445,7 +452,7 @@ function ItemDialogBody({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label
                 htmlFor="discountType"
@@ -607,22 +614,28 @@ function ItemDialogBody({
         </div>
       </div>
 
-      <DialogFooter className="shrink-0 border-t border-border px-5 py-6 bg-muted/50 gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-border text-foreground rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "border border-border px-4 text-foreground",
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !canSubmit || isUploadingImage}
-          className="h-9 px-4 bg-admin text-primary-foreground hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin px-4 text-primary-foreground hover:bg-admin/90",
+          )}
         >
           {isPending ? "Saving..." : mode === "add" ? "Create" : "Update"}
         </Button>
-      </DialogFooter>
+      </div>
     </DialogContent>
   );
 }

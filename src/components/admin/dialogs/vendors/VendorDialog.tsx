@@ -5,7 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -34,6 +33,14 @@ import type {
   VendorDiscountType,
   VendorStatus,
 } from "@/lib/api/vendors";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 
 interface VendorDialogProps {
   open: boolean;
@@ -181,8 +188,10 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
   };
 
   return (
-    <DialogContent className="max-w-[512px]! p-0 gap-0 shadow-none">
-      <DialogHeader className="px-6 pt-6 pb-2 gap-2">
+    <DialogContent
+      className={adminDialogContentClass({ variant: "plain", className: "gap-0" })}
+    >
+      <DialogHeader className={cn(adminDialogHeaderClass, "gap-2 sm:pb-2")}>
         <DialogTitle className="text-lg font-semibold text-foreground">
           {mode === "add" ? "Add Vendor" : "Edit Vendor"}
         </DialogTitle>
@@ -193,8 +202,8 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
         </DialogDescription>
       </DialogHeader>
 
-      <div className="px-6 py-4 flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className={cn(adminDialogBodyScrollClass, "flex flex-col gap-4")}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">
               Business Name *
@@ -219,7 +228,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">
               Phone *
@@ -257,7 +266,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
           />
         </div>
 
-        <div className="border-t pt-4 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">Login ID *</Label>
             <Input
@@ -296,7 +305,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
           </div>
         </div>
 
-        <div className="border-t pt-4 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">
               Billing Mode *
@@ -345,7 +354,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">
               Discount Value *
@@ -358,7 +367,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
               className="bg-muted border-0 h-9"
             />
           </div>
-          <div className="flex items-center justify-between pt-7">
+          <div className="flex items-center justify-between pt-0 sm:pt-7">
             <div className="flex flex-col gap-1">
               <Label className="text-sm font-medium text-foreground">Status</Label>
               <p className="text-xs text-muted-foreground">
@@ -375,22 +384,25 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
         </div>
       </div>
 
-      <DialogFooter className="px-6 py-4 border-t bg-muted/50 gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
-          className="border-border"
+          className={cn(adminDialogFooterButtonClass, "border-border")}
           onClick={() => onOpenChange(false)}
         >
           Cancel
         </Button>
         <Button
-          className="bg-admin hover:bg-admin/90 text-white"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin text-white hover:bg-admin/90",
+          )}
           onClick={handleSubmit}
           disabled={!canSubmit || isPending}
         >
           {isPending ? "Saving..." : mode === "add" ? "Create" : "Save Changes"}
         </Button>
-      </DialogFooter>
+      </div>
     </DialogContent>
   );
 }

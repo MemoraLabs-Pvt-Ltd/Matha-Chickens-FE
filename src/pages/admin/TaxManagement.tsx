@@ -60,19 +60,20 @@ export default function TaxManagement() {
     <AdminLayout title="Tax Management">
       <div className="bg-[#fafafa]">
         <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[10px] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-[18px] border-b border-[rgba(0,0,0,0.1)]">
+          <div className="flex flex-col gap-3 border-b border-[rgba(0,0,0,0.1)] px-4 py-[18px] sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="text-base text-[#525252]">
               Manage tax types and rates
             </p>
             <Button
               onClick={() => setAddDialogOpen(true)}
-              className="flex items-center gap-2 h-9 px-4 bg-admin text-white text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+              className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-white transition-colors hover:bg-admin/90 sm:w-auto"
             >
               <Plus className="size-4" />
               <span>Add Tax Type</span>
             </Button>
           </div>
 
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
@@ -160,9 +161,10 @@ export default function TaxManagement() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
 
-        <p className="text-sm text-[#737373] italic mt-5 ml-1">
+        <p className="mt-5 ml-1 text-sm italic text-[#737373]">
           Note: One tax type per store, applied after discount. 0% is allowed.
         </p>
       </div>

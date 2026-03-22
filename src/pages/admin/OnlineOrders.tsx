@@ -105,8 +105,8 @@ export default function OnlineOrders() {
           </p>
 
           <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[10px] px-4 py-3 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative min-w-0 flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by customer name or phone..."
@@ -126,7 +126,7 @@ export default function OnlineOrders() {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-[192px] bg-[#f3f3f5] border-transparent rounded-lg h-9 text-sm font-medium text-[#0a0a0a]">
+                <SelectTrigger className="h-9 w-full bg-[#f3f3f5] border-transparent rounded-lg text-sm font-medium text-[#0a0a0a] sm:w-[192px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,7 +146,7 @@ export default function OnlineOrders() {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-[192px] bg-[#f3f3f5] border-transparent rounded-lg h-9 text-sm font-medium text-[#0a0a0a]">
+                <SelectTrigger className="h-9 w-full bg-[#f3f3f5] border-transparent rounded-lg text-sm font-medium text-[#0a0a0a] sm:w-[192px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -163,6 +163,7 @@ export default function OnlineOrders() {
           </div>
 
           <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[10px] overflow-hidden">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
@@ -299,6 +300,7 @@ export default function OnlineOrders() {
                   })}
               </TableBody>
             </Table>
+            </div>
 
             {totalPages > 1 && (
               <div className="py-4 px-4 border-t border-[rgba(0,0,0,0.1)]">

@@ -2,6 +2,7 @@ import { Header } from "@/components/common/layout/Header";
 import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Watermark } from "@/components/ui/watermark";
 import { useAuth } from "@/hooks/useAuth";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
 import {
@@ -15,7 +16,8 @@ import {
   Users,
 } from "lucide-react";
 import { LuBox, LuLayoutDashboard, LuTag, LuTruck } from "react-icons/lu";
-import { useNavigate } from "react-router-dom";
+import { useEffect, startTransition, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface AdminLayoutProps {
   title: string;
@@ -50,14 +52,33 @@ export function AdminLayout({
   bgColor = "bg-white",
 }: AdminLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isLoading: authLoading } = useAuth();
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
     useSidebarCollapsed("matha-admin-sidebar-collapsed");
+  const isMdUp = useMediaQuery("(min-width: 768px)");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const fromAuth = getDisplayForLoggedInUser(user);
 
   const userName = userNameOverride ?? fromAuth?.displayName ?? "User";
   const userEmail = userEmailOverride ?? user?.email ?? "";
   const roleLabel = fromAuth?.roleLabel ?? "—";
+
+  useEffect(() => {
+    startTransition(() => {
+      setMobileNavOpen(false);
+    });
+  }, [location.pathname, isMdUp]);
+
+  useEffect(() => {
+    if (mobileNavOpen && !isMdUp) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [mobileNavOpen, isMdUp]);
 
   const handleLogout = async () => {
     await logout();
@@ -66,14 +87,24 @@ export function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
+      {mobileNavOpen && !isMdUp && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
       <Sidebar
         navItems={adminNavItems}
         onLogout={handleLogout}
         bgColor={bgColor}
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
       />
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+      <div className="flex min-w-0 flex-1 flex-col min-h-screen overflow-y-auto">
         <Header
           title={title}
           userName={userName}
@@ -81,8 +112,9 @@ export function AdminLayout({
           roleLabel={roleLabel}
           isLoading={authLoading && !userNameOverride}
           onLogout={handleLogout}
+          onMenuClick={() => setMobileNavOpen(true)}
         />
-        <div className="flex-1 p-8 overflow-auto z-10">{children}</div>
+        <div className="flex-1 overflow-auto z-10 p-4 md:p-8">{children}</div>
         <Watermark />
       </div>
     </div>

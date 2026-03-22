@@ -61,19 +61,20 @@ export default function CategoryManagement() {
   return (
     <AdminLayout title="Category Management">
       <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.1)]">
+        <div className="flex flex-col gap-3 border-b border-[rgba(0,0,0,0.1)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-base text-muted-foreground">
             Manage product categories
           </p>
           <Button
             onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-2 h-9 px-4 bg-admin text-white text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+            className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-white transition-colors hover:bg-admin/90 sm:w-auto"
           >
             <Plus className="size-4" />
             <span>Add Category</span>
           </Button>
         </div>
 
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-[#fafafa] border-b border-[rgba(0,0,0,0.1)]">
@@ -141,6 +142,7 @@ export default function CategoryManagement() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <CategoryDialog

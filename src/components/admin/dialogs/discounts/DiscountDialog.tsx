@@ -35,6 +35,14 @@ import type {
 } from "@/lib/api/discounts";
 import { parseApiDate } from "@/lib/display/formatting";
 import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 
 interface DiscountDialogProps {
   open: boolean;
@@ -327,8 +335,8 @@ function DiscountDialogBody({
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[600px]!">
-      <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+    <DialogContent className={adminDialogContentClass({ maxWidth: 600 })}>
+      <DialogHeader className={adminDialogHeaderClass}>
         <DialogTitle>
           {mode === "add" ? "Add Discount Campaign" : "Edit Discount Campaign"}
         </DialogTitle>
@@ -339,7 +347,7 @@ function DiscountDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+      <div className={cn(adminDialogBodyScrollClass, "space-y-4")}>
         <div className="space-y-2">
           <Label htmlFor="discountTitle" className="text-sm font-medium text-foreground">
             Title *
@@ -366,7 +374,7 @@ function DiscountDialogBody({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Discount Type *</Label>
             <Select
@@ -555,18 +563,24 @@ function DiscountDialogBody({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border bg-muted/50 px-6 py-4 flex justify-end gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-border text-foreground rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "border border-border px-4 text-foreground",
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !canSubmit || isUploadingBanner}
-          className="h-9 px-4 bg-admin text-white hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin px-4 text-white hover:bg-admin/90",
+          )}
         >
           {isPending ? "Saving..." : mode === "add" ? "Create" : "Save"}
         </Button>

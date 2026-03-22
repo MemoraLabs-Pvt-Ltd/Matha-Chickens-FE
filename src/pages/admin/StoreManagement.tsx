@@ -61,19 +61,20 @@ export default function StoreManagement() {
   return (
     <AdminLayout title="Store Management">
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-base text-muted-foreground">
             Manage store locations and configuration
           </p>
           <Button
             onClick={() => setAddDialogOpen(true)}
-            className="flex items-center gap-2 h-9 px-4 bg-admin text-primary-foreground text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+            className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-admin/90 sm:w-auto"
           >
             <Plus className="size-4" />
             <span>Create Store</span>
           </Button>
         </div>
 
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-border">
@@ -223,6 +224,7 @@ export default function StoreManagement() {
             })}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <StoreDialog

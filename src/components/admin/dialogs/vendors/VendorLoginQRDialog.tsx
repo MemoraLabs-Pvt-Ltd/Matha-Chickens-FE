@@ -3,11 +3,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 import type { Vendor } from "@/lib/api/vendors";
 
 interface VendorLoginQRDialogProps {
@@ -25,8 +32,10 @@ export function VendorLoginQRDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[512px]! p-0 gap-0 shadow-none">
-        <DialogHeader className="px-6 pt-6 pb-2 gap-2">
+      <DialogContent
+        className={adminDialogContentClass({ variant: "plain", className: "gap-0" })}
+      >
+        <DialogHeader className={cn(adminDialogHeaderClass, "gap-2 sm:pb-2")}>
           <DialogTitle className="text-lg font-semibold text-foreground">
             Vendor Login - QR Code
           </DialogTitle>
@@ -38,50 +47,56 @@ export function VendorLoginQRDialog({
           </p>
         </DialogHeader>
 
-        <div className="px-6 py-4 flex flex-col gap-4">
+        <div className={cn(adminDialogBodyScrollClass, "flex flex-col gap-4")}>
           <div className="flex justify-center">
-            <div className="border-4 border-admin rounded-[10px] size-[256px] flex items-center justify-center p-1">
-              <div className="size-full flex flex-col items-center justify-center p-1">
-                <div className="bg-gray-200 border-2 border-dashed rounded-xl size-32 flex items-center justify-center">
+            <div className="flex size-[min(256px,calc(100vw-3rem))] max-h-[min(256px,calc(100vw-3rem))] items-center justify-center rounded-[10px] border-4 border-admin p-1">
+              <div className="flex size-full flex-col items-center justify-center p-1">
+                <div className="flex size-32 items-center justify-center rounded-xl border-2 border-dashed bg-gray-200">
                   <QrCode className="size-24 text-admin" />
                 </div>
-                <p className="mt-4 text-sm font-medium text-foreground text-center">
+                <p className="mt-4 text-center text-sm font-medium text-foreground">
                   Scan to Login
                 </p>
-                <p className="text-xs text-muted-foreground text-center mt-1">
+                <p className="mt-1 text-center text-xs text-muted-foreground">
                   Vendor portal access
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-muted border border-border rounded-[10px] p-4 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 rounded-[10px] border border-border bg-muted p-4">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium text-muted-foreground">
                 Login ID:
               </span>
-              <span className="text-sm font-semibold text-foreground">
+              <span className="shrink-0 text-sm font-semibold text-foreground">
                 {loginId}
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-center text-xs text-muted-foreground">
             Share this QR code with the vendor to grant portal access
           </p>
-          <DialogFooter className="px-6 py-4 border-t bg-muted/50 gap-2">
-            <Button
-              variant="outline"
-              className="border-border"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
-            <Button className="hover:cursor-pointer bg-admin hover:bg-admin/90 text-white">
-              <Download className="w-4 h-4 mr-2" />
-              Download QR Code
-            </Button>
-          </DialogFooter>
+        </div>
+
+        <div className={adminDialogFooterClass}>
+          <Button
+            variant="outline"
+            className={cn(adminDialogFooterButtonClass, "border-border")}
+            onClick={() => onOpenChange(false)}
+          >
+            Close
+          </Button>
+          <Button
+            className={cn(
+              adminDialogFooterButtonClass,
+              "bg-admin text-white hover:cursor-pointer hover:bg-admin/90",
+            )}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download QR Code
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

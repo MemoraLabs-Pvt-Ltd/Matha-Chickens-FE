@@ -3,10 +3,17 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from '@/lib/adminDialogContent';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useState } from 'react';
@@ -79,8 +86,13 @@ function CategoryDialogBody({
   };
 
   return (
-    <DialogContent className="bg-white rounded-xl border border-[rgba(0,0,0,0.1)] p-6 max-w-[512px]! ">
-      <DialogHeader className="mb-4">
+    <DialogContent
+      className={adminDialogContentClass({
+        className:
+          'border-[rgba(0,0,0,0.1)] bg-white',
+      })}
+    >
+      <DialogHeader className={adminDialogHeaderClass}>
         <DialogTitle className="text-xl font-semibold text-[#0a0a0a]  ">
           {mode === 'add' ? 'Add Category' : 'Edit Category'}
         </DialogTitle>
@@ -91,7 +103,7 @@ function CategoryDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4">
+      <div className={cn(adminDialogBodyScrollClass, 'space-y-4')}>
         <div className="space-y-2">
           <label
             htmlFor="categoryName"
@@ -129,22 +141,28 @@ function CategoryDialogBody({
         </div>
       </div>
 
-      <DialogFooter className="mt-6 gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-[rgba(0,0,0,0.1)] text-[#0a0a0a] rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            'border border-[rgba(0,0,0,0.1)] px-4 text-[#0a0a0a]',
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !categoryName.trim()}
-          className="h-9 px-4 bg-admin text-white hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            'bg-admin px-4 text-white hover:bg-admin/90',
+          )}
         >
           {isPending ? 'Saving...' : mode === 'add' ? 'Create' : 'Update'}
         </Button>
-      </DialogFooter>
+      </div>
     </DialogContent>
   );
 }

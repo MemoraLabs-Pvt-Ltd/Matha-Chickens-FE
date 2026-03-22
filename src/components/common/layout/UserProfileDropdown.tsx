@@ -16,7 +16,6 @@ interface UserProfileDropdownProps {
   variant: UserProfileDropdownVariant;
   headerPrimary: string;
   headerSecondary?: string;
-  headerSecondaryClassName?: string;
   accountName: string;
   accountEmail: string;
   roleLabel: string;
@@ -34,7 +33,6 @@ export function UserProfileDropdown({
   variant,
   headerPrimary,
   headerSecondary,
-  headerSecondaryClassName,
   accountName,
   accountEmail,
   roleLabel,
@@ -48,37 +46,23 @@ export function UserProfileDropdown({
         <Button
           type="button"
           variant="ghost"
-          className="h-auto shrink-0 gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/80 md:gap-3 md:px-2"
-          aria-label="Open profile menu"
+          className="h-auto shrink-0 gap-1.5 rounded-lg px-1.5 py-1.5 hover:bg-muted/80 sm:gap-2"
+          aria-label="Open account menu"
         >
-          <div className="min-w-0 max-w-[min(200px,42vw)] text-right sm:max-w-none sm:min-w-[120px] md:min-w-[140px]">
-            {isLoading ? (
-              <>
-                <Skeleton className="mb-1.5 ml-auto h-4 w-32 rounded-md" />
-                <Skeleton className="ml-auto h-3 w-24 rounded-md" />
-              </>
-            ) : (
-              <>
-                <p className="truncate text-sm font-medium text-foreground">
-                  {headerPrimary}
-                </p>
-                {headerSecondary ? (
-                  <p
-                    className={cn(
-                      "truncate text-xs",
-                      variant === "admin" && "text-muted-foreground",
-                      variant === "store" && "text-[#00a63e]",
-                      headerSecondaryClassName,
-                    )}
-                  >
-                    {variant === "store"
+          <span className="sr-only">
+            {isLoading
+              ? "Loading account"
+              : [
+                  headerPrimary,
+                  headerSecondary
+                    ? variant === "store"
                       ? `● ${headerSecondary}`
-                      : headerSecondary}
-                  </p>
-                ) : null}
-              </>
-            )}
-          </div>
+                      : headerSecondary
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+          </span>
           <div
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-full",

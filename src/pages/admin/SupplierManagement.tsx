@@ -62,19 +62,20 @@ export default function SupplierManagement() {
   return (
     <AdminLayout title="Supplier Management">
       <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.1)]">
+        <div className="flex flex-col gap-3 border-b border-[rgba(0,0,0,0.1)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-base text-muted-foreground">
             Manage supplier information
           </p>
           <Button
             onClick={() => setAddDialogOpen(true)}
-            className="flex items-center gap-2 h-9 px-4 bg-admin text-white text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+            className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-white transition-colors hover:bg-admin/90 sm:w-auto"
           >
             <Plus className="size-4" />
             <span>Add Supplier</span>
           </Button>
         </div>
 
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
@@ -168,6 +169,7 @@ export default function SupplierManagement() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <SupplierDialog

@@ -7,6 +7,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -157,9 +165,11 @@ function StockReceiptDialogBody({
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[512px]!">
-      <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
-        <DialogTitle>{mode === "add" ? "Add Stock Receipt" : "Edit Stock Receipt"}</DialogTitle>
+    <DialogContent className={adminDialogContentClass()}>
+      <DialogHeader className={adminDialogHeaderClass}>
+        <DialogTitle>
+          {mode === "add" ? "Add Stock Receipt" : "Edit Stock Receipt"}
+        </DialogTitle>
         <DialogDescription>
           {mode === "add"
             ? "Add new stock received from supplier"
@@ -167,7 +177,7 @@ function StockReceiptDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="px-6 py-4 space-y-4">
+      <div className={cn(adminDialogBodyScrollClass, "space-y-4")}>
         <div className="space-y-2">
           <Label
             htmlFor="receiptCode"
@@ -226,8 +236,8 @@ function StockReceiptDialogBody({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="min-w-0 space-y-2">
             <Label
               htmlFor="quantity"
               className="text-sm font-medium text-foreground"
@@ -243,10 +253,10 @@ function StockReceiptDialogBody({
               onChange={(e) =>
                 setQuantity(sanitizeNonNegativeNumberInput(e.target.value))
               }
-              className="bg-input border-transparent rounded-lg h-9 text-sm"
+              className="h-9 rounded-lg border-transparent bg-input text-sm"
             />
           </div>
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label
               htmlFor="unit"
               className="text-sm font-medium text-foreground"
@@ -331,18 +341,24 @@ function StockReceiptDialogBody({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border bg-muted/50 px-6 py-4 flex justify-end gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-border text-foreground rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "border border-border px-4 text-foreground",
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !canSubmit}
-          className="h-9 px-4 bg-admin text-primary-foreground hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin px-4 text-primary-foreground hover:bg-admin/90",
+          )}
         >
           {isPending ? "Saving..." : mode === "add" ? "Add Receipt" : "Update Receipt"}
         </Button>

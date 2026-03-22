@@ -8,6 +8,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -158,8 +166,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-border p-0 max-w-[512px]! max-h-[85vh] flex flex-col overflow-hidden">
-      <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+    <DialogContent className={adminDialogContentClass()}>
+      <DialogHeader className={adminDialogHeaderClass}>
         <DialogTitle>
           {mode === "add" ? "Create Store" : "Edit Store"}
         </DialogTitle>
@@ -170,8 +178,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
-        <div className="grid grid-cols-2 gap-4 min-w-0">
+      <div className={cn(adminDialogBodyScrollClass, "space-y-4")}>
+        <div className="grid grid-cols-1 gap-4 min-w-0 sm:grid-cols-2">
           <div className="space-y-2">
             <Label
               htmlFor="storeName"
@@ -227,7 +235,7 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 min-w-0">
+        <div className="grid grid-cols-1 gap-4 min-w-0 sm:grid-cols-2">
           <div className="space-y-2">
             <Label
               htmlFor="loginId"
@@ -345,18 +353,24 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border bg-muted/50 px-6 py-4 flex justify-end gap-2">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-border text-foreground rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "border border-border px-4 text-foreground",
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !canSubmit}
-          className="h-9 px-4 bg-admin text-primary-foreground hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin px-4 text-primary-foreground hover:bg-admin/90",
+          )}
         >
           {isPending ? "Saving..." : mode === "add" ? "Create" : "Update"}
         </Button>

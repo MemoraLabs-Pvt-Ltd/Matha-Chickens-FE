@@ -2,6 +2,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
+  adminDialogBodyScrollClass,
+  adminDialogContentClass,
+  adminDialogFooterButtonClass,
+  adminDialogFooterClass,
+  adminDialogHeaderClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -108,8 +116,10 @@ function SupplierDialogBody({
   };
 
   return (
-    <DialogContent className="bg-card rounded-xl border border-text-muted p-6 max-w-[512px]!">
-      <DialogHeader className="space-y-1.5">
+    <DialogContent
+      className={adminDialogContentClass({ className: "border-text-muted" })}
+    >
+      <DialogHeader className={cn(adminDialogHeaderClass, "space-y-1.5")}>
         <DialogTitle className="text-lg font-semibold text-foreground">
           {mode === "add" ? "Add Supplier" : "Edit Supplier"}
         </DialogTitle>
@@ -120,7 +130,7 @@ function SupplierDialogBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4">
+      <div className={cn(adminDialogBodyScrollClass, "space-y-4")}>
         <div className="space-y-2">
           <Label
             htmlFor="supplierName"
@@ -176,18 +186,24 @@ function SupplierDialogBody({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
+      <div className={adminDialogFooterClass}>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="h-9 px-4 border border-border text-foreground rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "border border-border px-4 text-foreground",
+          )}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={isPending || !canSubmit}
-          className="h-9 px-4 bg-admin text-white hover:bg-admin/90 rounded-lg"
+          className={cn(
+            adminDialogFooterButtonClass,
+            "bg-admin px-4 text-white hover:bg-admin/90",
+          )}
         >
           {isPending ? "Saving..." : mode === "add" ? "Create" : "Update"}
         </Button>

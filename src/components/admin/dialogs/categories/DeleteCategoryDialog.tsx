@@ -4,9 +4,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  adminDialogContentClass,
+  adminDialogDeleteFooterClass,
+  adminDialogDeleteHeaderClass,
+  adminDialogDeleteMessageClass,
+  adminDialogFooterButtonClass,
+} from "@/lib/adminDialogContent";
+import { cn } from "@/lib/utils";
 
 interface DeleteCategoryDialogProps {
   open: boolean;
@@ -28,8 +35,8 @@ export function DeleteCategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card rounded-xl border border-border p-6 max-w-[512px]! ">
-        <DialogHeader className="mb-2">
+      <DialogContent className={adminDialogContentClass()}>
+        <DialogHeader className={cn(adminDialogDeleteHeaderClass, "pb-0 sm:pb-0")}>
           <DialogTitle className="text-xl font-semibold text-foreground">
             Delete Item
           </DialogTitle>
@@ -38,28 +45,34 @@ export function DeleteCategoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-2">
-          <p className="text-sm font-medium text-foreground">
+        <div className={adminDialogDeleteMessageClass}>
+          <p>
             Are you sure you want to delete{" "}
             <span className="font-semibold">"{categoryName}"</span>?
           </p>
         </div>
 
-        <DialogFooter className="mt-4 gap-2">
+        <div className={adminDialogDeleteFooterClass}>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-9 px-4 border border-border text-foreground rounded-lg"
+            className={cn(
+              adminDialogFooterButtonClass,
+              "border border-border px-4 text-foreground",
+            )}
           >
             Cancel
           </Button>
           <Button
             onClick={handleDelete}
-            className="h-9 px-4 bg-destructive text-primary-foreground hover:bg-destructive/90 rounded-lg"
+            className={cn(
+              adminDialogFooterButtonClass,
+              "bg-destructive px-4 text-primary-foreground hover:bg-destructive/90",
+            )}
           >
             Delete
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

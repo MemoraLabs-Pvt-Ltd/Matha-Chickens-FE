@@ -91,36 +91,42 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <AdminLayout title="Dashboard">
-      <div className="flex-1 p-6 overflow-auto z-10">
-        <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="min-w-0 space-y-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-6">
           {stats.map((stat) => (
             <StatCard key={`stat-${stat.title}`} {...stat} />
           ))}
         </div>
 
-        <div className="bg-linear-to-r from-[#009689] to-[#00BBA7] rounded-2xl p-4 mb-6 shadow-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="bg-linear-to-r from-[#009689] to-[#00BBA7] flex flex-col gap-4 rounded-2xl p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 shrink-0">
             <FaChartLine className="size-5 text-white" />
             <p className="text-base font-semibold text-white tracking-wide">
               EXECUTIVE SUMMARY
             </p>
           </div>
-          <div className="flex gap-8">
-            <p className="text-sm text-white opacity-90">
+          <div className="flex min-w-0 flex-col gap-3 text-sm text-white/90 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-8 sm:gap-y-2">
+            <p>
               Stock value:{" "}
-              <span className="font-bold">{executiveSummary.stockValue}</span>
+              <span className="font-bold text-white">
+                {executiveSummary.stockValue}
+              </span>
             </p>
-            <p className="text-sm text-white opacity-90">
+            <p>
               Pending:{" "}
-              <span className="font-bold">{executiveSummary.pending}</span>
+              <span className="font-bold text-white">
+                {executiveSummary.pending}
+              </span>
             </p>
-            <p className="text-sm text-white opacity-90">
+            <p>
               Delivered:{" "}
-              <span className="font-bold">{executiveSummary.delivered}</span>
+              <span className="font-bold text-white">
+                {executiveSummary.delivered}
+              </span>
             </p>
-            <p className="text-sm text-white opacity-90">
+            <p>
               Active Customers:{" "}
-              <span className="font-bold">
+              <span className="font-bold text-white">
                 {executiveSummary.activeCustomers}
               </span>
             </p>
@@ -134,6 +140,7 @@ export function DashboardLayout({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-[#fafafa]">
@@ -195,6 +202,7 @@ export function DashboardLayout({
                   ))}
               </TableBody>
             </Table>
+            </div>
             {ordersTotalPages > 1 && (
               <div className="py-4 px-6 border-t border-[#e5e5e5]">
                 <Pagination>
@@ -252,7 +260,7 @@ export function DashboardLayout({
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="rounded-2xl border-[#e5e5e5] shadow-sm p-6">
             <CardHeader className="px-0 pb-4">
               <CardTitle className="text-base font-semibold text-[#171717]">

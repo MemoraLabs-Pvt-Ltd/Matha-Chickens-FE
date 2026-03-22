@@ -128,27 +128,27 @@ export default function ItemManagement() {
   return (
     <AdminLayout title="Item Management">
       <div className="bg-white border border-text-muted rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-text-muted">
+        <div className="flex flex-col gap-3 px-6 py-4 border-b border-text-muted sm:flex-row sm:items-center sm:justify-between">
           <p className="text-base text-muted-foreground">
             Manage product items
           </p>
           <Button
             onClick={() => setAddDialogOpen(true)}
-            className="flex items-center gap-2 h-9 px-4 bg-admin text-white text-sm font-medium rounded-lg hover:bg-admin/90 transition-colors"
+            className="flex h-9 w-full shrink-0 items-center justify-center gap-2 px-4 bg-admin text-sm font-medium text-white rounded-lg transition-colors hover:bg-admin/90 sm:w-auto"
           >
             <Plus className="size-4" />
             <span>Add Item</span>
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-text-muted">
-          <Filter className="size-5 text-muted-foreground" />
-          <div className="flex gap-3">
+        <div className="flex flex-col gap-3 px-6 py-4 border-b border-text-muted sm:flex-row sm:items-center">
+          <Filter className="size-5 shrink-0 text-muted-foreground" />
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Select
               value={selectedCategoryId}
               onValueChange={setSelectedCategoryId}
             >
-              <SelectTrigger className="h-9 w-[192px] bg-muted border-transparent rounded-lg text-sm font-medium text-foreground">
+              <SelectTrigger className="h-9 w-full bg-muted border-transparent rounded-lg text-sm font-medium text-foreground sm:w-[192px]">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +162,7 @@ export default function ItemManagement() {
             </Select>
 
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="h-9 w-[192px] bg-muted border-transparent rounded-lg text-sm font-medium text-foreground">
+              <SelectTrigger className="h-9 w-full bg-muted border-transparent rounded-lg text-sm font-medium text-foreground sm:w-[192px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -174,6 +174,7 @@ export default function ItemManagement() {
           </div>
         </div>
 
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted border-b border-text-muted">
@@ -249,8 +250,9 @@ export default function ItemManagement() {
               ))}
           </TableBody>
         </Table>
+        </div>
 
-        <div className="px-6 py-4 border-t border-text-muted flex items-center justify-between">
+        <div className="flex flex-col gap-4 border-t border-text-muted px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground italic">
             Note: Items are available unless store marks them Out of Stock.
           </p>

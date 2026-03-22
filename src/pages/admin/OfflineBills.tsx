@@ -106,6 +106,7 @@ export default function OfflineBills() {
           </div>
 
           <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[10px] overflow-hidden">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
@@ -259,6 +260,7 @@ export default function OfflineBills() {
                   })}
               </TableBody>
             </Table>
+            </div>
 
             {totalPages > 1 && (
               <div className="py-4 px-4 border-t border-[rgba(0,0,0,0.1)]">

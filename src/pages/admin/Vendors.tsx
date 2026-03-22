@@ -142,7 +142,7 @@ export default function Vendors() {
 
       <AdminLayout title="Vendor Management">
         <div>
-          <div className="grid grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 mb-6">
             <div className="bg-card border border-border rounded-xl p-6 flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -199,12 +199,12 @@ export default function Vendors() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base text-muted-foreground">
               Manage vendors for bulk large orders
             </p>
             <Button
-              className="bg-admin hover:bg-admin/90 text-primary-foreground rounded-lg h-9 px-4"
+              className="bg-admin hover:bg-admin/90 shrink-0 text-primary-foreground rounded-lg h-9 px-4 w-full sm:w-auto"
               onClick={() => setAddDialogOpen(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -228,6 +228,7 @@ export default function Vendors() {
           </div>
 
           <div className="bg-card border border-border rounded-xl overflow-hidden mb-6">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-border">
@@ -390,6 +391,7 @@ export default function Vendors() {
                   ))}
               </TableBody>
             </Table>
+            </div>
 
             {totalPages > 1 && (
               <div className="py-4 px-4 border-t border-border">

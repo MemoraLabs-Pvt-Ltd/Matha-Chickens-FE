@@ -163,20 +163,20 @@ export default function StockManagement() {
   return (
     <AdminLayout title="Stock Management">
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-base text-muted-foreground">
             Track stock received from suppliers
           </p>
           <Button
             onClick={() => setAddDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-600/90 text-white rounded-lg h-9 px-4"
+            className="h-9 w-full shrink-0 rounded-lg bg-green-600 px-4 text-white hover:bg-green-600/90 sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Stock Receipt
           </Button>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
           <div className="bg-blue-50 border-2 border-blue-200 rounded-[14px] p-2">
             <div className="px-4 pt-6 pb-4">
               <div className="flex items-center justify-between mb-4">
@@ -235,8 +235,8 @@ export default function StockManagement() {
         </div>
 
         <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[14px] p-4 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative min-w-0 flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#717182]" />
               <Input
                 placeholder="Search by receipt code or notes..."
@@ -256,7 +256,7 @@ export default function StockManagement() {
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="w-[220px] bg-[#f3f3f5] border-0 rounded-lg h-9">
+              <SelectTrigger className="h-9 w-full bg-[#f3f3f5] border-0 rounded-lg sm:w-[220px]">
                 <SelectValue placeholder="All Suppliers" />
               </SelectTrigger>
               <SelectContent>
@@ -271,7 +271,7 @@ export default function StockManagement() {
 
             <Button
               variant="outline"
-              className="border-border rounded-lg h-9 px-4"
+              className="h-9 w-full shrink-0 border-border rounded-lg px-4 sm:w-auto"
               onClick={() =>
                 exportReceiptsToCSV(filteredReceipts, supplierNameById, itemNameById)
               }
@@ -289,6 +289,7 @@ export default function StockManagement() {
             </h3>
           </div>
 
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-[rgba(0,0,0,0.1)]">
@@ -466,6 +467,7 @@ export default function StockManagement() {
                 })}
             </TableBody>
           </Table>
+          </div>
 
           {totalPages > 1 && (
             <div className="py-4 px-6 border-t border-[rgba(0,0,0,0.1)]">

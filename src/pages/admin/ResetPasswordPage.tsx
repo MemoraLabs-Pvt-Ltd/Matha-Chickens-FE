@@ -52,6 +52,24 @@ function parseHashRecovery(): boolean {
   );
 }
 
+/** Supabase puts auth errors in the hash, e.g. #error=access_denied&error_code=otp_expired */
+function parseHashAuthError(): {
+  error: string;
+  errorCode: string | null;
+  errorDescription: string | null;
+} | null {
+  const hash = window.location.hash.replace(/^#/, "");
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const err = params.get("error");
+  if (!err) return null;
+  return {
+    error: err,
+    errorCode: params.get("error_code"),
+    errorDescription: params.get("error_description"),
+  };
+}
+
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -66,6 +84,9 @@ export default function ResetPasswordPage() {
 
   const [recoveryReady, setRecoveryReady] = useState(false);
   const [recoveryChecked, setRecoveryChecked] = useState(false);
+  const [hashAuthError] = useState<ReturnType<typeof parseHashAuthError>>(() =>
+    parseHashAuthError(),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +94,13 @@ export default function ResetPasswordPage() {
     const finish = () => {
       if (!cancelled) setRecoveryChecked(true);
     };
+
+    if (hashAuthError) {
+      finish();
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const {
       data: { subscription },
@@ -119,9 +147,12 @@ export default function ResetPasswordPage() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [hashAuthError]);
 
   const showInvalid = recoveryChecked && !recoveryReady && !isSuccess;
+  const isOtpExpired =
+    hashAuthError?.errorCode === "otp_expired" ||
+    hashAuthError?.errorDescription?.toLowerCase().includes("expired");
 
   if (!recoveryChecked) {
     return (
@@ -133,9 +164,30 @@ export default function ResetPasswordPage() {
 
   if (showInvalid) {
     return (
-      <AuthCardShell title="Password Reset">
+      <AuthCardShell
+        title="Password Reset"
+        subtitle={
+          isOtpExpired
+            ? "This link is no longer valid"
+            : undefined
+        }
+      >
         <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-          Invalid or expired password reset link. Please request a new one.
+          {isOtpExpired ? (
+            <>
+              <p className="font-medium">The reset link could not be used.</p>
+              <p className="mt-2 text-destructive/90">
+                That usually means the one-time token was already used, expired,
+                or was opened automatically by your email app or a security
+                scanner before you clicked it—so it is not the same as the
+                email &quot;being old.&quot; Request a new link, open it in a
+                private window, and use the latest email only (a new request
+                invalidates older links).
+              </p>
+            </>
+          ) : (
+            "Invalid or expired password reset link. Please request a new one."
+          )}
         </div>
         <Button
           className="h-9 w-full rounded-lg bg-admin text-white hover:bg-admin/90"

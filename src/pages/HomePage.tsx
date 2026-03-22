@@ -13,16 +13,17 @@ import {
   ShoppingBag,
   Store,
   UtensilsCrossed,
+  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { HomePhoneMockup } from "@/components/marketing/HomePhoneMockup";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/ui/logo";
 import {
   TestimonialsColumn,
   type TestimonialItem,
 } from "@/components/ui/testimonials-columns-1";
 import { cn } from "@/lib/utils";
+import LogoMetal from "@/assets/LogoMetal.png";
 import appleStoreIcon from "@/assets/apple_store.svg";
 import playStoreIcon from "@/assets/play_store.svg";
 import familyPackImage from "@/assets/family-pack.png";
@@ -238,48 +239,172 @@ const FIRST_COLUMN = TESTIMONIALS.slice(0, 3);
 const SECOND_COLUMN = TESTIMONIALS.slice(3, 6);
 const THIRD_COLUMN = TESTIMONIALS.slice(6, 9);
 
+function StoreDownloadButtons({ fullWidth = false }: { fullWidth?: boolean }) {
+  const btnClass = cn(
+    "justify-start gap-2 border-border/80 text-[#E7000B] shadow-sm hover:bg-muted/60",
+    fullWidth
+      ? "h-auto min-h-11 w-full min-w-0 px-3 py-2.5"
+      : "h-9 max-w-[140px] shrink-0 px-2.5 py-1",
+  );
+
+  return (
+    <div
+      className={cn(
+        "flex gap-2",
+        fullWidth ? "w-full flex-col" : "items-center",
+      )}
+    >
+      <Button variant="outline" size="sm" className={btnClass} asChild>
+        <a
+          href="#"
+          onClick={(e) => e.preventDefault()}
+          aria-label="Download on the App Store — coming soon"
+        >
+          <img
+            src={appleStoreIcon}
+            alt=""
+            className={cn("shrink-0 object-contain", fullWidth ? "size-8" : "size-7")}
+            aria-hidden
+          />
+          <span className="min-w-0 text-left leading-tight">
+            <span className="block text-[9px] font-medium text-[#E7000B]/85">
+              Download on the
+            </span>
+            <span className="block text-sm font-semibold tracking-tight">
+              App Store
+            </span>
+          </span>
+        </a>
+      </Button>
+      <Button variant="outline" size="sm" className={btnClass} asChild>
+        <a
+          href="#"
+          onClick={(e) => e.preventDefault()}
+          aria-label="Get it on Google Play — coming soon"
+        >
+          <img
+            src={playStoreIcon}
+            alt=""
+            className={cn("shrink-0 object-contain", fullWidth ? "size-8" : "size-7")}
+            aria-hidden
+          />
+          <span className="min-w-0 text-left leading-tight">
+            <span className="block text-[9px] font-medium uppercase text-[#E7000B]/85">
+              Get it on
+            </span>
+            <span className="block text-sm font-semibold tracking-tight">
+              Google Play
+            </span>
+          </span>
+        </a>
+      </Button>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [heroIndex, setHeroIndex] = useState(0);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b border-border/80 bg-[#FFFFFF]/95 shadow-sm backdrop-blur-md supports-backdrop-filter:bg-[#FFFFFF]/90">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:h-20 sm:px-6">
+        <div className="relative mx-auto flex h-16 max-w-7xl items-center px-4 sm:h-20 sm:px-6">
           <Link
             to="/"
-            className="relative flex h-11 w-14 shrink-0 items-center sm:h-14 sm:w-[70px]"
+            className="relative z-10 flex shrink-0 items-center py-1"
           >
-            <Logo className="pointer-events-none size-full rounded-lg object-cover" />
+            <img
+              src={LogoMetal}
+              alt="Matha Chickens"
+              className="pointer-events-none h-10 w-[85px] rounded-lg object-contain sm:h-12"
+            />
           </Link>
 
-          <nav className="hidden items-center gap-7 md:flex">
+          <nav
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 md:flex lg:gap-7"
+            aria-label="Primary"
+          >
             {NAV_LINKS.map((item) => (
-              <a
+              <Button
                 key={item.href}
-                href={item.href}
-                className="text-sm font-semibold uppercase tracking-wide text-foreground/90 transition hover:text-[#E7000B]"
+                variant="ghost"
+                className="text-sm font-semibold uppercase tracking-wide text-foreground/90 hover:text-[#E7000B]"
+                asChild
               >
-                {item.label}
-              </a>
+                <a href={item.href}>{item.label}</a>
+              </Button>
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="relative z-10 ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="hidden lg:flex">
+              <StoreDownloadButtons />
+            </div>
+
             <Button
               variant="ghost"
               size="icon"
               className="text-foreground/80 md:hidden"
-              asChild
+              type="button"
+              aria-expanded={mobileNavOpen}
+              aria-controls="mobile-site-nav"
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileNavOpen((open) => !open)}
             >
-              <a href="#menu" aria-label="Menu">
+              {mobileNavOpen ? (
+                <X className="size-5" />
+              ) : (
                 <Menu className="size-5" />
-              </a>
+              )}
             </Button>
           </div>
         </div>
+
+        {mobileNavOpen ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              className="fixed inset-x-0 bottom-0 top-16 z-40 h-auto min-h-0 rounded-none border-0 bg-black/40 p-0 hover:bg-black/50 sm:top-20 md:hidden"
+              aria-label="Dismiss menu"
+              onClick={() => setMobileNavOpen(false)}
+            />
+            <div
+              id="mobile-site-nav"
+              className="absolute left-0 right-0 top-full z-50 border-b border-border bg-[#FFFFFF] shadow-lg md:hidden"
+            >
+              <nav
+                className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:px-6"
+                aria-label="Mobile primary"
+              >
+                {NAV_LINKS.map((item) => (
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    className="h-auto justify-start rounded-lg px-3 py-3 text-sm font-semibold uppercase tracking-wide text-foreground/90 hover:text-[#E7000B]"
+                    asChild
+                  >
+                    <a href={item.href} onClick={() => setMobileNavOpen(false)}>
+                      {item.label}
+                    </a>
+                  </Button>
+                ))}
+                <div className="mt-4 border-t border-border pt-4">
+                  <p className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Get the app
+                  </p>
+                  <div className="mt-3 px-0">
+                    <StoreDownloadButtons fullWidth />
+                  </div>
+                </div>
+              </nav>
+            </div>
+          </>
+        ) : null}
       </header>
 
-      <main>
+      <main className="font-sans [&_h1]:font-display [&_h2]:font-display [&_h3]:font-display">
         <section
           className="relative overflow-hidden bg-linear-to-br from-[#E7000B] via-[#c9000a] to-[#8c0606] px-4 pb-14 pt-16 text-[#FFFFFF] sm:pb-16 sm:pt-20 md:pb-20 md:pt-24"
           aria-label="Featured campaign"
@@ -334,16 +459,17 @@ export default function HomePage() {
 
               <div className="mt-10 flex gap-2">
                 {HERO_SLIDES.map((_, i) => (
-                  <button
+                  <Button
                     key={i}
                     type="button"
+                    variant="ghost"
                     aria-label={`Slide ${i + 1}`}
                     onClick={() => setHeroIndex(i)}
                     className={cn(
-                      "h-2 rounded-full transition-all",
+                      "h-2 min-h-0 min-w-0 shrink-0 rounded-full p-0 transition-all hover:bg-[#FFFFFF]/70",
                       i === heroIndex
-                        ? "w-8 bg-[#FFFFFF]"
-                        : "w-2 bg-[#FFFFFF]/40 hover:bg-[#FFFFFF]/70",
+                        ? "w-8 bg-[#FFFFFF] hover:bg-[#FFFFFF]"
+                        : "w-2 bg-[#FFFFFF]/40",
                     )}
                   />
                 ))}
@@ -430,13 +556,16 @@ export default function HomePage() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     {subtitle}
                   </p>
-                  <a
-                    href="#contact"
-                    className="mt-4 inline-flex items-center text-xs font-semibold uppercase tracking-wide text-[#E7000B] opacity-90 transition hover:opacity-100"
+                  <Button
+                    variant="link"
+                    asChild
+                    className="mt-4 h-auto p-0 text-xs font-semibold uppercase tracking-wide text-[#E7000B] opacity-90 hover:opacity-100"
                   >
-                    Check availability
-                    <ArrowRight className="ml-1 size-3.5" />
-                  </a>
+                    <a href="#contact">
+                      Check availability
+                      <ArrowRight className="ml-1 size-3.5" />
+                    </a>
+                  </Button>
                 </article>
               ))}
             </div>
@@ -582,70 +711,61 @@ export default function HomePage() {
                   store.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="inline-flex min-h-[52px] max-w-full items-center gap-3 rounded-xl border border-[#FFFFFF]/15 bg-[#FFFFFF] px-4 py-2.5 text-[#E7000B] shadow-lg transition hover:bg-[#FFFFFF]/95"
-                    aria-label="Download on the App Store — coming soon"
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="min-h-[52px] w-full max-w-full justify-start gap-3 rounded-xl border border-[#FFFFFF]/15 bg-[#FFFFFF] px-4 py-2.5 text-[#E7000B] shadow-lg hover:bg-[#FFFFFF]/95 sm:w-auto"
+                    asChild
                   >
-                    <img
-                      src={appleStoreIcon}
-                      alt=""
-                      className="size-9 shrink-0 object-contain"
-                      aria-hidden
-                    />
-                    <span className="min-w-0 text-left leading-tight">
-                      <span className="block text-[10px] font-medium text-[#E7000B]/85">
-                        Download on the
+                    <a
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      aria-label="Download on the App Store — coming soon"
+                    >
+                      <img
+                        src={appleStoreIcon}
+                        alt=""
+                        className="size-9 shrink-0 object-contain"
+                        aria-hidden
+                      />
+                      <span className="min-w-0 text-left leading-tight">
+                        <span className="block text-[10px] font-medium text-[#E7000B]/85">
+                          Download on the
+                        </span>
+                        <span className="block text-lg font-semibold tracking-tight">
+                          App Store
+                        </span>
                       </span>
-                      <span className="block text-lg font-semibold tracking-tight">
-                        App Store
-                      </span>
-                    </span>
-                  </a>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="inline-flex min-h-[52px] max-w-full items-center gap-3 rounded-xl border border-[#FFFFFF]/15 bg-[#FFFFFF] px-4 py-2.5 text-[#E7000B] shadow-lg transition hover:bg-[#FFFFFF]/95"
-                    aria-label="Get it on Google Play — coming soon"
+                    </a>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="min-h-[52px] w-full max-w-full justify-start gap-3 rounded-xl border border-[#FFFFFF]/15 bg-[#FFFFFF] px-4 py-2.5 text-[#E7000B] shadow-lg hover:bg-[#FFFFFF]/95 sm:w-auto"
+                    asChild
                   >
-                    <img
-                      src={playStoreIcon}
-                      alt=""
-                      className="size-9 shrink-0 object-contain"
-                      aria-hidden
-                    />
-                    <span className="min-w-0 text-left leading-tight">
-                      <span className="block text-[10px] font-medium uppercase text-[#E7000B]/85">
-                        Get it on
+                    <a
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      aria-label="Get it on Google Play — coming soon"
+                    >
+                      <img
+                        src={playStoreIcon}
+                        alt=""
+                        className="size-9 shrink-0 object-contain"
+                        aria-hidden
+                      />
+                      <span className="min-w-0 text-left leading-tight">
+                        <span className="block text-[10px] font-medium uppercase text-[#E7000B]/85">
+                          Get it on
+                        </span>
+                        <span className="block text-lg font-semibold tracking-tight">
+                          Google Play
+                        </span>
                       </span>
-                      <span className="block text-lg font-semibold tracking-tight">
-                        Google Play
-                      </span>
-                    </span>
-                  </a>
+                    </a>
+                  </Button>
                 </div>
-              </div>
-
-              <div className="rounded-3xl border border-[#FFFFFF]/20 bg-[#FFFFFF]/10 p-6 text-[#FFFFFF] shadow-2xl backdrop-blur-sm">
-                <p className="inline-flex rounded-full bg-[#FFFFFF]/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest">
-                  Asset status
-                </p>
-                <ul className="mt-5 space-y-3 text-sm text-[#FFFFFF]/90">
-                  <li>Product card images integrated from assets</li>
-                  <li>Hero food photograph (1 image, 16:9)</li>
-                  <li>App store preview shots (3 images, 9:19.5)</li>
-                </ul>
-                <Button
-                  variant="secondary"
-                  className="mt-6 bg-[#FFFFFF] text-[#E7000B] hover:bg-[#FFFFFF]/90"
-                  asChild
-                >
-                  <a href="#contact">
-                    Share launch photos
-                    <ArrowRight className="size-4" />
-                  </a>
-                </Button>
               </div>
             </div>
           </div>
@@ -751,19 +871,31 @@ export default function HomePage() {
               </p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a href="#contact" className="hover:text-[#FFFFFF]">
-                    Contact us
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#contact">Contact us</a>
+                  </Button>
                 </li>
                 <li>
-                  <a href="#why-us" className="hover:text-[#FFFFFF]">
-                    Our quality promise
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#why-us">Our quality promise</a>
+                  </Button>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#FFFFFF]">
-                    Privacy
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#">Privacy</a>
+                  </Button>
                 </li>
               </ul>
             </div>
@@ -773,19 +905,31 @@ export default function HomePage() {
               </p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a href="#menu" className="hover:text-[#FFFFFF]">
-                    Menu
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#menu">Menu</a>
+                  </Button>
                 </li>
                 <li>
-                  <a href="#how-it-works" className="hover:text-[#FFFFFF]">
-                    How it works
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#how-it-works">How it works</a>
+                  </Button>
                 </li>
                 <li>
-                  <Link to="/portal" className="hover:text-[#FFFFFF]">
-                    Staff portal
-                  </Link>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <Link to="/portal">Staff portal</Link>
+                  </Button>
                 </li>
               </ul>
             </div>
@@ -795,19 +939,31 @@ export default function HomePage() {
               </p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a href="#why-us" className="hover:text-[#FFFFFF]">
-                    Sourcing &amp; hygiene
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#why-us">Sourcing &amp; hygiene</a>
+                  </Button>
                 </li>
                 <li>
-                  <a href="#find-us" className="hover:text-[#FFFFFF]">
-                    Partner stores
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#find-us">Partner stores</a>
+                  </Button>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#FFFFFF]">
-                    FAQs
-                  </a>
+                  <Button
+                    variant="link"
+                    asChild
+                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
+                  >
+                    <a href="#">FAQs</a>
+                  </Button>
                 </li>
               </ul>
             </div>

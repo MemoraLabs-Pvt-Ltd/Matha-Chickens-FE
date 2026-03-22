@@ -33,6 +33,9 @@ export function VendorLoginQRDialog({
           <DialogDescription className="text-sm text-muted-foreground">
             {vendor?.business_name || "Vendor"}
           </DialogDescription>
+          <p className="text-xs font-medium text-foreground">
+            Login via vendor app only
+          </p>
         </DialogHeader>
 
         <div className="px-6 py-4 flex flex-col gap-4">
@@ -46,7 +49,7 @@ export function VendorLoginQRDialog({
                   Scan to Login
                 </p>
                 <p className="text-xs text-muted-foreground text-center mt-1">
-                  Vendor Portal Access
+                  Vendor portal access
                 </p>
               </div>
             </div>

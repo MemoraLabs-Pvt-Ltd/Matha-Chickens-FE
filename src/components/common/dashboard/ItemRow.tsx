@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
 
 interface Item {
   id: number;
@@ -8,6 +9,7 @@ interface Item {
   category: string;
   price: string;
   status: "active" | "inactive";
+  imageUrl?: string | null;
 }
 
 interface ItemRowProps extends Item {
@@ -15,7 +17,16 @@ interface ItemRowProps extends Item {
   onDelete: (id: number) => void;
 }
 
-export function ItemRow({ id, name, category, price, status, onEdit, onDelete }: ItemRowProps) {
+export function ItemRow({
+  id,
+  name,
+  category,
+  price,
+  status,
+  imageUrl,
+  onEdit,
+  onDelete,
+}: ItemRowProps) {
   return (
     <tr className="border-b border-[rgba(0,0,0,0.1)] hover:bg-muted/50 transition-colors">
       <td className="py-3 pl-6 pr-2">
@@ -41,6 +52,11 @@ export function ItemRow({ id, name, category, price, status, onEdit, onDelete }:
       </td>
       <td className="py-3 px-2">
         <div className="flex items-center justify-end gap-2 pr-4">
+          <ImagePreviewButton
+            src={imageUrl}
+            variant="icon"
+            dialogTitle={`${name} — item image`}
+          />
           <Button
             variant="ghost"
             size="icon"

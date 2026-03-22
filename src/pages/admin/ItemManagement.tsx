@@ -42,6 +42,7 @@ interface DisplayItem {
   category: string;
   price: string;
   status: "active" | "inactive";
+  imageUrl: string | null;
 }
 
 export default function ItemManagement() {
@@ -90,6 +91,7 @@ export default function ItemManagement() {
         category: categoryNameById.get(item.category_id) ?? `Category #${item.category_id}`,
         price: `₹${item.price.toFixed(2)}/${item.unit || "kg"}`,
         status: item.status === "inactive" ? "inactive" : "active",
+        imageUrl: item.image_url,
       })),
     [filteredItems, categoryNameById],
   );
@@ -210,6 +212,7 @@ export default function ItemManagement() {
 
                   return (
                     <div className="flex items-center justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
                     </div>

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
 import { useCreateItem, useUpdateItem } from "@/hooks/useItems";
 import { ITEM_IMAGES_BUCKET, supabase } from "@/lib/supabase";
 import {
@@ -565,7 +566,7 @@ function ItemDialogBody({
           <Label className="text-sm font-medium text-foreground">
             Upload Image (optional)
           </Label>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -576,6 +577,10 @@ function ItemDialogBody({
               <Upload className="size-4 mr-2" />
               {isUploadingImage ? "Uploading..." : imageUrl ? "Replace Image" : "Upload"}
             </Button>
+            <ImagePreviewButton
+              src={imageUrl}
+              dialogTitle="Item image preview"
+            />
             {imageUrl && (
               <Button
                 type="button"

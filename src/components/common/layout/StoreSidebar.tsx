@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { IconType } from "react-icons";
-import { LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import LogoMetal from "@/assets/LogoMetal.png";
@@ -15,47 +15,100 @@ interface NavItem {
 interface StoreSidebarProps {
   navItems: NavItem[];
   onLogout?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function StoreSidebar({
   navItems,
   onLogout,
+  collapsed = false,
+  onToggleCollapse,
 }: StoreSidebarProps) {
   return (
-    <aside className="w-[256px] shrink-0 sticky top-0 h-screen bg-card border-r border-border">
-      <div className="border-b border-border h-[121px] px-6 pt-6">
-        <img src={LogoMetal} alt="Matha Chickens" className="h-12 w-[85px] rounded-lg" />
-        <p className="text-xs text-muted-foreground mt-4">Store Portal</p>
+    <aside
+      className={cn(
+        "relative flex shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ease-out",
+        "sticky top-0 h-screen min-h-0",
+        collapsed ? "w-[72px]" : "w-[256px]",
+      )}
+    >
+      <div className="relative shrink-0 border-b border-border px-3 pb-4 pt-4">
+        {onToggleCollapse && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "absolute z-10 h-8 w-8 text-muted-foreground hover:text-foreground",
+              collapsed ? "right-1 top-3" : "right-2 top-3",
+            )}
+            onClick={onToggleCollapse}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <ChevronRight className="size-4" />
+            ) : (
+              <ChevronLeft className="size-4" />
+            )}
+          </Button>
+        )}
+        <div
+          className={cn(
+            "flex items-center",
+            collapsed ? "justify-center pr-6" : "px-3",
+          )}
+        >
+          <img
+            src={LogoMetal}
+            alt="Matha Chickens"
+            className={cn(
+              "rounded-lg",
+              collapsed ? "h-9 w-9 object-contain" : "h-12 w-[85px]",
+            )}
+          />
+        </div>
+        {!collapsed && (
+          <p className="mt-4 px-3 text-xs text-muted-foreground">Store Portal</p>
+        )}
       </div>
 
-      <nav className="flex flex-col gap-1 p-5">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
+            title={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 h-10 pl-4 rounded-xl text-sm font-medium transition-colors",
+                "flex h-10 items-center rounded-xl text-sm font-medium transition-colors",
+                collapsed ? "justify-center px-0" : "gap-3 pl-4",
                 isActive || item.active
                   ? "bg-store text-white shadow-sm"
-                  : "text-foreground hover:bg-muted"
+                  : "text-foreground hover:bg-muted",
               )
             }
           >
-            <item.icon className="size-5" />
-            <span>{item.label}</span>
+            <item.icon className="size-5 shrink-0" />
+            {!collapsed && <span className="truncate">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      <div className="absolute bottom-0 w-[256px] px-4 py-[17px] border-t border-border">
+      <div className="shrink-0 border-t border-border px-2 py-[17px]">
         <Button
+          type="button"
           variant="ghost"
-          className="flex items-center gap-3 h-9 w-full text-sm font-medium text-foreground hover:bg-muted rounded-lg pl-3 justify-start"
+          title={collapsed ? "Logout" : undefined}
+          className={cn(
+            "h-9 w-full text-sm font-medium text-foreground hover:bg-muted",
+            collapsed ? "justify-center px-0" : "justify-start gap-3 pl-3",
+          )}
           onClick={onLogout}
         >
-          <LogOut className="size-4" />
-          <span>Logout</span>
+          <LogOut className="size-4 shrink-0" />
+          {!collapsed && <span>Logout</span>}
         </Button>
       </div>
     </aside>

@@ -34,6 +34,7 @@ import type {
   DiscountType,
 } from "@/lib/api/discounts";
 import { parseApiDate } from "@/lib/display/formatting";
+import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
 
 interface DiscountDialogProps {
   open: boolean;
@@ -496,7 +497,7 @@ function DiscountDialogBody({
           <Label className="text-sm font-medium text-foreground">
             Banner (optional)
           </Label>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -511,6 +512,10 @@ function DiscountDialogBody({
                   ? "Replace Banner"
                   : "Upload Banner"}
             </Button>
+            <ImagePreviewButton
+              src={bannerUrl}
+              dialogTitle="Discount banner preview"
+            />
             {bannerUrl && (
               <Button
                 type="button"

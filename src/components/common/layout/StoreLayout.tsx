@@ -6,6 +6,7 @@ import { Watermark } from "@/components/ui/watermark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
+import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 
 interface StoreLayoutProps {
   title: string;
@@ -36,6 +37,8 @@ export function StoreLayout({
 }: StoreLayoutProps) {
   const navigate = useNavigate();
   const { user, logout, isLoading: authLoading } = useAuth();
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
+    useSidebarCollapsed("matha-store-sidebar-collapsed");
 
   const fromAuth = getDisplayForLoggedInUser(user);
   const headerLoading = authLoading && !storeNameOverride;
@@ -56,6 +59,8 @@ export function StoreLayout({
       <StoreSidebar
         navItems={storeNavItems}
         onLogout={handleLogout}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         <header className="bg-card border-b border-border h-[85px] px-8 py-4 shrink-0 z-10">

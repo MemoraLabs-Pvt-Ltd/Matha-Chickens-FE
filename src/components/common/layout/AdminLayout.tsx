@@ -15,6 +15,7 @@ import { Header } from "@/components/common/layout/Header";
 import { Watermark } from "@/components/ui/watermark";
 import { useAuth } from "@/hooks/useAuth";
 import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
+import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 
 interface AdminLayoutProps {
   title: string;
@@ -50,6 +51,8 @@ export function AdminLayout({
 }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { user, logout, isLoading: authLoading } = useAuth();
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
+    useSidebarCollapsed("matha-admin-sidebar-collapsed");
   const fromAuth = getDisplayForLoggedInUser(user);
 
   const userName =
@@ -63,7 +66,13 @@ export function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar navItems={adminNavItems} onLogout={handleLogout} bgColor={bgColor} />
+      <Sidebar
+        navItems={adminNavItems}
+        onLogout={handleLogout}
+        bgColor={bgColor}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
+      />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
         <Header
           title={title}

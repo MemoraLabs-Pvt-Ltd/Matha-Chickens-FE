@@ -18,6 +18,7 @@ import { DeleteDiscountDialog } from "@/components/admin/dialogs/discounts/Delet
 import { useDeleteDiscount, useDiscounts } from "@/hooks/useDiscounts";
 import type { Discount, DiscountStatus, DiscountType } from "@/lib/api/discounts";
 import { formatDateRange } from "@/lib/display/formatting";
+import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
 
 const typeLabels: Record<DiscountType, string> = {
   none: "None",
@@ -152,6 +153,7 @@ export default function DiscountManagement() {
                       <div className="flex items-center justify-end gap-2">
                         <Skeleton className="h-8 w-8 rounded-lg" />
                         <Skeleton className="h-8 w-8 rounded-lg" />
+                        <Skeleton className="h-8 w-8 rounded-lg" />
                       </div>
                     );
                   }}
@@ -213,6 +215,11 @@ export default function DiscountManagement() {
                     </TableCell>
                     <TableCell className="py-3 pr-2">
                       <div className="flex items-center justify-end gap-2">
+                        <ImagePreviewButton
+                          src={discount.banner_url}
+                          variant="icon"
+                          dialogTitle={`${discount.title} — banner`}
+                        />
                         <Button
                           variant="ghost"
                           size="icon"

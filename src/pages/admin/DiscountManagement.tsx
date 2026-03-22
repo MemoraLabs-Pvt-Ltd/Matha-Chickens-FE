@@ -17,38 +17,7 @@ import { DiscountDialog } from "@/components/admin/dialogs/discounts/DiscountDia
 import { DeleteDiscountDialog } from "@/components/admin/dialogs/discounts/DeleteDiscountDialog";
 import { useDeleteDiscount, useDiscounts } from "@/hooks/useDiscounts";
 import type { Discount, DiscountStatus, DiscountType } from "@/lib/api/discounts";
-
-function parseApiDate(value: string): Date | undefined {
-  const raw = value.trim();
-  if (!raw) return undefined;
-
-  const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date;
-}
-
-function formatDateRange(startDate: string, endDate: string): string {
-  const start = parseApiDate(startDate);
-  const end = parseApiDate(endDate);
-
-  if (!start || !end) {
-    return "-";
-  }
-
-  const startText = start.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-  const endText = end.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-
-  return `${startText} - ${endText}`;
-}
+import { formatDateRange } from "@/lib/display/formatting";
 
 const typeLabels: Record<DiscountType, string> = {
   none: "None",

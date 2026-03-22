@@ -32,6 +32,9 @@ import {
 import { useOrders } from "@/hooks/useOrders";
 import { OrderDetailsSheet } from "./OrderDetailsSheet";
 import type { OrderStatus } from "@/lib/api/orders";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const ORDERS_PAGE_LIMIT = 20;
 
@@ -46,62 +49,6 @@ const statusLabels: Record<OrderStatus, string> = {
   dispatched: "Dispatched",
   delivered: "Delivered",
 };
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function getPageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 5) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pages.push(page);
-    }
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let page = start; page <= end; page += 1) {
-    pages.push(page);
-  }
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-
-  return pages;
-}
 
 export default function OnlineOrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -249,7 +196,7 @@ export default function OnlineOrdersPage() {
               {!isLoading &&
                 !isError &&
                 filteredOrders.map((order) => {
-                  const createdAt = formatDateTime(order.created_at);
+                  const createdAt = splitIsoDateTime(order.created_at);
 
                   return (
                     <TableRow key={order.id} className="border-b border-border">
@@ -265,7 +212,7 @@ export default function OnlineOrdersPage() {
                       </TableCell>
                       <TableCell className="py-4 pl-4">
                         <span className="text-sm text-foreground">
-                          {order.customer_phone}
+                          {formatPhoneForDisplay(order.customer_phone)}
                         </span>
                       </TableCell>
                       <TableCell className="py-4 pl-4">
@@ -274,7 +221,7 @@ export default function OnlineOrdersPage() {
                       </TableCell>
                       <TableCell className="py-4 pl-4">
                         <span className="text-sm font-semibold text-foreground">
-                          {formatCurrency(order.total_amount)}
+                          {formatInr(order.total_amount)}
                         </span>
                       </TableCell>
                       <TableCell className="py-4 pl-4">
@@ -314,7 +261,7 @@ export default function OnlineOrdersPage() {
                   }
                 />
               </PaginationItem>
-              {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+              {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
                     <PaginationEllipsis />

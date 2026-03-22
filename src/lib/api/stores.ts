@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
 export interface Store {
@@ -63,6 +63,11 @@ export async function getStores(params?: StoresQueryParams): Promise<StoreListRe
 
 export async function getStore(id: number): Promise<StoreResponse> {
   return apiGet<StoreResponse>(`/stores/${id}`);
+}
+
+/** Billing store: same row as offline-bills (`login_id` = JWT email). Store owners only. */
+export async function getMyStore(): Promise<StoreResponse> {
+  return apiGet<StoreResponse>("/stores/me");
 }
 
 export async function createStore(data: CreateStoreInput): Promise<StoreResponse> {

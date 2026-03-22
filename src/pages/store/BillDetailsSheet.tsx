@@ -3,55 +3,35 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOfflineBill } from "@/hooks/useOfflineBills";
 import type { PaymentMode } from "@/lib/api/offlineBills";
+import {
+  computeItemDiscount,
+  describeItemDiscountLabel,
+} from "@/lib/billing/itemDiscount";
+import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 
 interface BillDetailsSheetProps {
   billId: number | null;
   isOpen: boolean;
   onClose: () => void;
   subtitle?: string;
+  /** Printed on the receipt header (e.g. store name from /stores/me). */
+  storeName?: string | null;
 }
 
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
   card: "Card",
-  cheque: "Cheque",
   other: "Other",
 };
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
 
 export function BillDetailsSheet({
   billId,
   isOpen,
   onClose,
   subtitle = "Completed manual bill transaction",
+  storeName,
 }: BillDetailsSheetProps) {
   const {
     data: billData,
@@ -63,7 +43,7 @@ export function BillDetailsSheet({
   if (!isOpen || !billId) return null;
 
   const bill = billData?.data;
-  const createdAt = bill ? formatDateTime(bill.created_at) : null;
+  const createdAt = bill ? splitIsoDateTime(bill.created_at) : null;
 
   return (
     <div className="fixed inset-0 z-50">
@@ -112,27 +92,70 @@ export function BillDetailsSheet({
                 </p>
               </div>
 
+              <div className="bg-muted rounded-xl p-4">
+                <p className="text-sm text-muted-foreground mb-1">Customer</p>
+                <p className="text-base font-medium text-foreground">
+                  {bill.customer_name?.trim() || "—"}
+                </p>
+                {bill.customer_phone?.trim() ? (
+                  <p className="text-sm text-muted-foreground mt-1">{bill.customer_phone}</p>
+                ) : null}
+              </div>
+
               <div>
                 <h3 className="text-base font-medium text-foreground mb-3">Bill Items</h3>
                 <div className="space-y-2">
-                  {bill.bill_items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-muted rounded p-3 flex items-start justify-between"
-                    >
-                      <div>
-                        <p className="text-base font-medium text-foreground">
-                          {item.item_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity} {item.unit} x {formatCurrency(item.price)}
+                  {bill.bill_items.map((item) => {
+                    const discountPerUnit = computeItemDiscount(
+                      item.price,
+                      item.discount_type,
+                      item.discount_value,
+                    );
+                    const lineItemDiscount = discountPerUnit * item.quantity;
+                    const netPerUnit = item.price - discountPerUnit;
+                    const itemDiscLabel = describeItemDiscountLabel(
+                      item.discount_type,
+                      item.discount_value,
+                      formatInr,
+                    );
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-muted rounded p-3 flex items-start justify-between gap-3"
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-base font-medium text-foreground">
+                            {item.item_name}
+                          </p>
+                          {discountPerUnit > 0 ? (
+                            <>
+                              <p className="text-sm text-muted-foreground">
+                                Qty {item.quantity} {item.unit} · List{" "}
+                                {formatInr(item.price)}/{item.unit}
+                              </p>
+                              <p className="text-sm text-[#00a63e]">
+                                Item discount −{formatInr(lineItemDiscount)}
+                                {itemDiscLabel ? ` (${itemDiscLabel})` : ""}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Net {formatInr(netPerUnit)}/{item.unit} x{" "}
+                                {item.quantity}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Qty: {item.quantity} {item.unit} x{" "}
+                              {formatInr(item.price)}/{item.unit}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-base font-semibold text-foreground shrink-0">
+                          {formatInr(item.total)}
                         </p>
                       </div>
-                      <p className="text-base font-semibold text-foreground">
-                        {formatCurrency(item.total)}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -142,25 +165,25 @@ export function BillDetailsSheet({
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Subtotal:</span>
                     <span className="text-sm text-foreground">
-                      {formatCurrency(bill.subtotal)}
+                      {formatInr(bill.subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-[#00a63e]">Discount:</span>
                     <span className="text-sm text-[#00a63e]">
-                      -{formatCurrency(bill.discount)}
+                      -{formatInr(bill.discount)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Tax:</span>
                     <span className="text-sm text-foreground">
-                      {formatCurrency(bill.tax)}
+                      {formatInr(bill.tax)}
                     </span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between">
                     <span className="text-base font-bold text-foreground">Total:</span>
                     <span className="text-lg font-bold text-foreground">
-                      {formatCurrency(bill.total_amount)}
+                      {formatInr(bill.total_amount)}
                     </span>
                   </div>
                 </div>
@@ -179,7 +202,16 @@ export function BillDetailsSheet({
         </div>
 
         <div className="p-6 border-t border-border">
-          <Button className="w-full h-9 bg-store hover:bg-store/90 rounded-lg text-white">
+          <Button
+            type="button"
+            className="w-full h-9 bg-store hover:bg-store/90 rounded-lg text-white"
+            disabled={!bill}
+            onClick={() => {
+              if (bill) {
+                printOfflineBillReceipt(bill, { storeName });
+              }
+            }}
+          >
             <Printer className="size-4 mr-2" />
             Print Bill
           </Button>

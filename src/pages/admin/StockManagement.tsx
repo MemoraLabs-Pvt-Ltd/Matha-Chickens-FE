@@ -49,24 +49,9 @@ import {
 } from "@/hooks/useStockReceipts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import type { StockReceipt } from "@/lib/api/stockReceipts";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const STOCK_PAGE_LIMIT = 20;
-
-function getPageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-  if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i += 1) pages.push(i);
-  } else {
-    pages.push(1);
-    if (currentPage > 3) pages.push("ellipsis");
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-    for (let i = start; i <= end; i += 1) pages.push(i);
-    if (currentPage < totalPages - 2) pages.push("ellipsis");
-    pages.push(totalPages);
-  }
-  return pages;
-}
 
 export default function StockManagement() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -496,7 +481,7 @@ export default function StockManagement() {
                       }
                     />
                   </PaginationItem>
-                  {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+                  {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                     page === "ellipsis" ? (
                       <PaginationItem key={`ellipsis-${index}`}>
                         <PaginationEllipsis />

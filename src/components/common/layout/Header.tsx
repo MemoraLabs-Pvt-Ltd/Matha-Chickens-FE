@@ -1,10 +1,13 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface HeaderProps {
   title: string;
   userName?: string;
   userEmail?: string;
+  isLoading?: boolean;
 }
 
-export function Header({ title, userName, userEmail }: HeaderProps) {
+export function Header({ title, userName, userEmail, isLoading }: HeaderProps) {
   const initials = userName
     ? userName
         .split(" ")
@@ -24,18 +27,31 @@ export function Header({ title, userName, userEmail }: HeaderProps) {
           </h1>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#171717]">
-              {userName}
-            </p>
-            {userEmail && (
-              <p className="text-xs text-[#737373]">{userEmail}</p>
+          <div className="text-right min-w-[140px]">
+            {isLoading ? (
+              <>
+                <Skeleton className="h-4 w-32 ml-auto mb-2 rounded-md" />
+                <Skeleton className="h-3 w-44 ml-auto rounded-md" />
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-[#171717]">
+                  {userName}
+                </p>
+                {userEmail ? (
+                  <p className="text-xs text-[#737373]">{userEmail}</p>
+                ) : null}
+              </>
             )}
           </div>
-          <div className="bg-admin rounded-full size-10 flex items-center justify-center">
-            <span className="text-base font-semibold text-white">
-              {initials}
-            </span>
+          <div className="bg-admin rounded-full size-10 flex items-center justify-center shrink-0">
+            {isLoading ? (
+              <Skeleton className="size-10 rounded-full bg-admin/20" />
+            ) : (
+              <span className="text-base font-semibold text-white">
+                {initials}
+              </span>
+            )}
           </div>
         </div>
       </div>

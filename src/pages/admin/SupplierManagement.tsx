@@ -16,7 +16,7 @@ import { SupplierDialog } from "@/components/admin/dialogs/suppliers/SupplierDia
 import { DeleteSupplierDialog } from "@/components/admin/dialogs/suppliers/DeleteSupplierDialog";
 import { useDeleteSupplier, useSuppliers } from "@/hooks/useSuppliers";
 import type { Supplier } from "@/lib/api/suppliers";
-import { formatPhoneForDisplay } from "@/lib/phone";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
 
 export default function SupplierManagement() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);

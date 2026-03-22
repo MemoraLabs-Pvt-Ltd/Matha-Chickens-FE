@@ -7,7 +7,17 @@ import {
   TableBody,
   TableRow,
   TableHead,
+  TableCell,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { AdminLayout } from "./AdminLayout";
 import {
   StatCard,
@@ -16,10 +26,10 @@ import {
   AlertRow,
   StoreStatRow,
 } from "@/components/common/dashboard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 interface DashboardLayoutProps {
-  userName: string;
-  userEmail: string;
   stats: {
     title: string;
     value: string | number;
@@ -30,7 +40,7 @@ interface DashboardLayoutProps {
     iconColor: string;
   }[];
   executiveSummary: {
-    totalBilled: string;
+    stockValue: string;
     pending: string;
     delivered: string;
     activeCustomers: string;
@@ -61,20 +71,26 @@ interface DashboardLayoutProps {
     value: string | number;
     valueColor?: string;
   }[];
+  isLoading?: boolean;
+  ordersCurrentPage?: number;
+  ordersTotalPages?: number;
+  onOrdersPageChange?: (page: number) => void;
 }
 
 export function DashboardLayout({
-  userName,
-  userEmail,
   stats,
   executiveSummary,
   orders,
   orderStatuses,
   inventoryAlerts,
   storeStats,
+  isLoading,
+  ordersCurrentPage = 1,
+  ordersTotalPages = 1,
+  onOrdersPageChange,
 }: DashboardLayoutProps) {
   return (
-    <AdminLayout title="Dashboard" userName={userName} userEmail={userEmail}>
+    <AdminLayout title="Dashboard">
       <div className="flex-1 p-6 overflow-auto z-10">
         <div className="grid grid-cols-4 gap-6 mb-6">
           {stats.map((stat) => (
@@ -91,8 +107,8 @@ export function DashboardLayout({
           </div>
           <div className="flex gap-8">
             <p className="text-sm text-white opacity-90">
-              Total Billed:{" "}
-              <span className="font-bold">₹{executiveSummary.totalBilled}</span>
+              Stock value:{" "}
+              <span className="font-bold">{executiveSummary.stockValue}</span>
             </p>
             <p className="text-sm text-white opacity-90">
               Pending:{" "}
@@ -142,11 +158,97 @@ export function DashboardLayout({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <OrderRow key={order.id} {...order} />
-                ))}
+                {isLoading &&
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={`skel-${i}`}>
+                      <TableCell className="py-4 pl-6">
+                        <Skeleton className="h-4 w-16 rounded" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-4 w-28 rounded" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-4 w-36 rounded" />
+                      </TableCell>
+                      <TableCell className="py-4 pr-6 text-right">
+                        <Skeleton className="h-4 w-20 rounded ml-auto" />
+                      </TableCell>
+                      <TableCell className="py-4 text-center">
+                        <Skeleton className="h-6 w-24 rounded-full mx-auto" />
+                      </TableCell>
+                      <TableCell className="py-4 pr-6 text-right">
+                        <Skeleton className="h-4 w-20 rounded ml-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {!isLoading &&
+                  orders.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                {!isLoading &&
+                  orders.map((order) => (
+                    <OrderRow key={order.id} {...order} />
+                  ))}
               </TableBody>
             </Table>
+            {ordersTotalPages > 1 && (
+              <div className="py-4 px-6 border-t border-[#e5e5e5]">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          onOrdersPageChange?.(
+                            Math.max(1, ordersCurrentPage - 1),
+                          )
+                        }
+                        className={
+                          ordersCurrentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                    {getPaginationPageNumbers(ordersCurrentPage, ordersTotalPages).map(
+                      (page, index) =>
+                        page === "ellipsis" ? (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              isActive={ordersCurrentPage === page}
+                              onClick={() => onOrdersPageChange?.(page)}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          onOrdersPageChange?.(
+                            Math.min(ordersTotalPages, ordersCurrentPage + 1),
+                          )
+                        }
+                        className={
+                          ordersCurrentPage === ordersTotalPages
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
 

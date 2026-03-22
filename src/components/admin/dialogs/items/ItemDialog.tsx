@@ -163,7 +163,6 @@ function ItemDialogBody({
     (sum, t) => sum + (Number(t.percentage) || 0),
     0,
   );
-  const taxAmount = basePrice * (totalTaxPercentage / 100);
   const parsedDiscountValue = Number(discountValue) || 0;
   const discountAmount =
     discountType === "percentage"
@@ -172,7 +171,14 @@ function ItemDialogBody({
         ? parsedDiscountValue
         : 0;
   const afterDiscount = Math.max(0, basePrice - discountAmount);
-  const finalPrice = afterDiscount + taxAmount;
+  // List/selling price is GST-inclusive (same as offline_bills). Item discount applies to that
+  // inclusive amount; GST is not stacked on top of the pre-discount list price.
+  const finalPriceInclusive = afterDiscount;
+  const exGstInFinal =
+    totalTaxPercentage > 0
+      ? (afterDiscount * 100) / (100 + totalTaxPercentage)
+      : afterDiscount;
+  const gstIncludedInFinal = afterDiscount - exGstInFinal;
   const savings = discountAmount;
 
   const canSubmit =
@@ -485,39 +491,56 @@ function ItemDialogBody({
           {mode === "edit" && (
             <div className="bg-[#FAF5FF] rounded-lg p-4 space-y-3">
               <h4 className="text-sm font-medium text-[#59168B]">
-                Price Preview (per {unit || "kg"})
+                Price Preview (per {unit || "kg"}, incl. GST)
               </h4>
-              <div className="flex items-center gap-6">
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    Original Price
-                  </p>
-                  <p className="text-base font-semibold text-muted-foreground line-through">
-                    ₹{basePrice.toFixed(2)}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">
-                    After Discount
-                  </p>
-                  <p className="text-base font-semibold text-[#00A63E]">
-                    ₹{afterDiscount.toFixed(2)}
-                  </p>
-                </div>
-                {savings > 0 && (
-                  <div className="px-2.5 py-1 bg-[#DCFCE7] rounded-full">
-                    <p className="text-xs font-medium text-[#00A63E]">
-                      Save ₹{savings.toFixed(2)}
+              <div className="flex flex-wrap items-start gap-6">
+                {savings > 0 ? (
+                  <>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        List price (incl. GST)
+                      </p>
+                      <p className="text-base font-semibold text-muted-foreground line-through">
+                        ₹{basePrice.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        After item discount
+                      </p>
+                      <p className="text-base font-semibold text-[#00A63E]">
+                        ₹{afterDiscount.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="px-2.5 py-1 bg-[#DCFCE7] rounded-full self-center">
+                      <p className="text-xs font-medium text-[#00A63E]">
+                        Save ₹{savings.toFixed(2)}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-muted-foreground">
+                      Selling price (incl. GST)
+                    </p>
+                    <p className="text-base font-semibold text-foreground">
+                      ₹{finalPriceInclusive.toFixed(2)}
                     </p>
                   </div>
                 )}
-                <div className="space-y-0.5">
-                  <p className="text-xs text-foreground">Final Price</p>
+                <div className="space-y-0.5 min-w-[120px]">
+                  <p className="text-xs text-foreground">You pay (incl. GST)</p>
                   <p className="text-lg font-semibold text-[#9810FA]">
-                    ₹{finalPrice.toFixed(2)}
+                    ₹{finalPriceInclusive.toFixed(2)}
                   </p>
                 </div>
               </div>
+              {totalTaxPercentage > 0 && (
+                <p className="text-xs text-muted-foreground border-t border-[#E9D5FF] pt-3">
+                  GST split of amount above: ex-GST ₹{exGstInFinal.toFixed(2)} · GST (
+                  {totalTaxPercentage}%) ₹{gstIncludedInFinal.toFixed(2)}
+                </p>
+              )}
             </div>
           )}
         </div>

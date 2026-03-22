@@ -4,8 +4,20 @@ export function sanitizePhoneForDisplayInput(value: string): string {
   const digits = value.replace(/\D/g, "");
 
   // Fixed live mask for Indian numbers: +91 XX XXXX XXXX
-  if ((hasLeadingPlus && digits.startsWith("91")) || digits.startsWith("91")) {
-    const local = digits.slice(2, 12);
+  // Supports:
+  // - explicit +91...
+  // - pasted 91...
+  // - plain local number (auto-assume +91)
+  if (
+    (hasLeadingPlus && digits.startsWith("91")) ||
+    (!hasLeadingPlus && digits.startsWith("91")) ||
+    (!hasLeadingPlus && digits.length > 0)
+  ) {
+    const normalized = !hasLeadingPlus && !digits.startsWith("91")
+      ? `91${digits}`
+      : digits;
+
+    const local = normalized.slice(2, 12);
     const part1 = local.slice(0, 2);
     const part2 = local.slice(2, 6);
     const part3 = local.slice(6, 10);
@@ -29,7 +41,54 @@ export function normalizePhoneForPayload(value: string): string {
   const hasLeadingPlus = trimmed.startsWith("+");
   const digits = trimmed.replace(/\D/g, "");
 
-  return hasLeadingPlus ? `+${digits}` : digits;
+  if (hasLeadingPlus) return `+${digits}`;
+
+  // Default to +91 for local input.
+  if (digits.startsWith("91")) {
+    return `+${digits.slice(0, 12)}`;
+  }
+
+  return `+91${digits.slice(0, 10)}`;
+}
+
+function formatIndianLocalDigits(localDigits: string): string {
+  const local = localDigits.slice(0, 10);
+  const part1 = local.slice(0, 2);
+  const part2 = local.slice(2, 6);
+  const part3 = local.slice(6, 10);
+  return [part1, part2, part3].filter(Boolean).join(" ");
+}
+
+export function sanitizeIndianPhoneLocalInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  const local =
+    digits.length > 10 && digits.startsWith("91")
+      ? digits.slice(2, 12)
+      : digits.slice(0, 10);
+  return formatIndianLocalDigits(local);
+}
+
+export function formatIndianPhoneLocalDisplay(value: string): string {
+  const normalized = normalizePhoneForPayload(value);
+  if (!normalized) return "";
+
+  const digits = normalized.replace(/\D/g, "");
+  const local =
+    digits.length > 10 && digits.startsWith("91")
+      ? digits.slice(2, 12)
+      : digits.slice(0, 10);
+  return formatIndianLocalDigits(local);
+}
+
+export function normalizeIndianPhonePayloadFromLocal(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  const local =
+    digits.length > 10 && digits.startsWith("91")
+      ? digits.slice(2, 12)
+      : digits.slice(0, 10);
+
+  if (!local) return "";
+  return `+91${local}`;
 }
 
 export function formatPhoneForDisplay(value: string): string {

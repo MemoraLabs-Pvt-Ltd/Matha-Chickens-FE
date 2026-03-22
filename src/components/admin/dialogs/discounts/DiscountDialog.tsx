@@ -33,6 +33,7 @@ import type {
   DiscountStatus,
   DiscountType,
 } from "@/lib/api/discounts";
+import { parseApiDate } from "@/lib/display/formatting";
 
 interface DiscountDialogProps {
   open: boolean;
@@ -45,21 +46,6 @@ interface DiscountDialogBodyProps {
   mode: "add" | "edit";
   discount?: Discount | null;
   onOpenChange: (open: boolean) => void;
-}
-
-function parseApiDate(value: string | Date | null | undefined): Date | undefined {
-  if (!value) return undefined;
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? undefined : value;
-  }
-
-  const raw = value.trim();
-  if (!raw) return undefined;
-
-  const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date;
 }
 
 function toDateTimeLocal(value: string | Date): string {

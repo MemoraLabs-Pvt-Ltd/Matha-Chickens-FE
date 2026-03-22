@@ -1,7 +1,7 @@
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export type PaymentMode = "cash" | "card" | "upi" | "cheque" | "other";
+export type PaymentMode = "cash" | "card" | "upi" | "other";
 export type DiscountType = "none" | "percentage" | "fixed";
 
 export interface OfflineBill {

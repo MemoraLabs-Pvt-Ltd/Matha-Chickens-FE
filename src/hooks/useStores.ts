@@ -5,6 +5,7 @@ import {
   deleteStore,
   getStore,
   getStores,
+  getMyStore,
   updateStore,
   type CreateStoreInput,
   type StoresQueryParams,
@@ -22,6 +23,7 @@ export const storeKeys = {
     params?.search ?? "",
   ] as const,
   detail: (id: number) => ["stores", "detail", id] as const,
+  me: () => ["stores", "me"] as const,
 };
 
 export function useStores(params?: StoresQueryParams) {
@@ -39,6 +41,14 @@ export function useStore(id: number) {
   });
 }
 
+export function useMyStore(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: storeKeys.me(),
+    queryFn: () => getMyStore(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useCreateStore() {
   const queryClient = useQueryClient();
 
@@ -46,6 +56,7 @@ export function useCreateStore() {
     mutationFn: (data: CreateStoreInput) => createStore(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: storeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: storeKeys.me() });
       toast.success("Store created successfully");
     },
     onError: (error) => {
@@ -63,6 +74,7 @@ export function useUpdateStore() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: storeKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: storeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: storeKeys.me() });
       toast.success("Store updated successfully");
     },
     onError: (error) => {
@@ -79,6 +91,7 @@ export function useDeleteStore() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: storeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: storeKeys.me() });
       toast.success("Store deleted successfully");
     },
     onError: (error) => {

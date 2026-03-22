@@ -17,7 +17,7 @@ import { StoreDialog } from "@/components/admin/dialogs/stores/StoreDialog";
 import { DeleteStoreDialog } from "@/components/admin/dialogs/stores/DeleteStoreDialog";
 import { useDeleteStore, useStores } from "@/hooks/useStores";
 import type { Store } from "@/lib/api/stores";
-import { formatPhoneForDisplay } from "@/lib/phone";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
 
 export default function StoreManagement() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);

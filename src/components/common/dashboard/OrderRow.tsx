@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
 
 interface OrderRowProps {
   id: string;
@@ -32,7 +33,7 @@ export function OrderRow({ id, customer, phone, store, amount, status, date }: O
       </TableCell>
       <TableCell className="py-4">
         <p className="text-base text-[#171717]">{customer}</p>
-        <p className="text-sm text-[#737373]">{phone}</p>
+        <p className="text-sm text-[#737373]">{formatPhoneForDisplay(phone)}</p>
       </TableCell>
       <TableCell className="py-4">
         <p className="text-base text-[#404040]">{store}</p>

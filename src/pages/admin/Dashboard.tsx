@@ -1,130 +1,168 @@
+import { useMemo } from "react";
 import {
   FaRegMoneyBillAlt,
   FaRegClock,
   FaRegCheckCircle,
-  FaRegUser,
   FaExclamationTriangle,
   FaArchive,
+  FaBoxOpen,
 } from "react-icons/fa";
 import { DashboardLayout } from "@/components/common/layout";
 import { ShoppingCart } from "lucide-react";
+import { useAdminDashboard } from "@/hooks/useDashboard";
+import {
+  formatInr,
+  formatIsoDateEnGbNumeric,
+  formatTrendVsYesterday,
+} from "@/lib/display/formatting";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
 
-const stats = [
-  {
-    title: "Today's Collection",
-    value: "₹0",
-    trend: "+8.2%",
-    iconBg: "bg-[#e0f2fe] border border-[#bedbff]",
-    icon: FaRegMoneyBillAlt,
-    iconColor: "bg-[#2b7fff]",
-  },
-  {
-    title: "Pending Revenue",
-    value: "₹0",
-    subtitle: "2 orders",
-    iconBg: "bg-[#fef3c7] border border-[#fee685]",
-    icon: FaRegClock,
-    iconColor: "bg-[#fe9a00]",
-  },
-  {
-    title: "Delivered Revenue",
-    value: "₹0",
-    subtitle: "1 orders",
-    iconBg: "bg-[#d1fae5] border border-[#b9f8cf]",
-    icon: FaRegCheckCircle,
-    iconColor: "bg-[#00c950]",
-  },
-  {
-    title: "Total Orders",
-    value: "3",
-    trend: "+12.5%",
-    iconBg: "bg-[#f3e8ff] border border-[#e9d4ff]",
-    icon: ShoppingCart,
-    iconColor: "bg-[#ad46ff]",
-  },
-];
-
-const executiveSummary = {
-  totalBilled: "4190",
-  pending: "2 orders",
-  delivered: "1 orders",
-  activeCustomers: "2",
-};
-
-const orders = [
-  {
-    id: "ORD001",
-    customer: "Priya Sharma",
-    phone: "+91 98765 00001",
-    store: "Matha Chickens - MG Road",
-    amount: "₹642.39",
-    status: "received" as const,
-    date: "24/02/2026",
-  },
-  {
-    id: "ORD002",
-    customer: "Rajesh Kumar",
-    phone: "+91 98765 00002",
-    store: "Matha Chickens - MG Road",
-    amount: "₹448.88",
-    status: "dispatched" as const,
-    date: "23/02/2026",
-  },
-  {
-    id: "ORD003",
-    customer: "Rajesh Kumar",
-    phone: "+91 98765 00002",
-    store: "Matha Chickens - Koramangala",
-    amount: "₹1130.00",
-    status: "delivered" as const,
-    date: "20/02/2026",
-  },
-];
-
-const orderStatuses = [
-  { label: "Pending", value: 1, icon: FaRegClock, bgColor: "bg-[#dbeafe]" },
-  {
-    label: "Dispatched",
-    value: 1,
-    icon: FaExclamationTriangle,
-    bgColor: "bg-[#fef3c6]",
-  },
-  {
-    label: "Delivered",
-    value: 1,
-    icon: FaRegCheckCircle,
-    bgColor: "bg-[#dcfce7]",
-  },
-];
-
-const inventoryAlerts = [
-  {
-    label: "Low Stock",
-    value: 0,
-    icon: FaExclamationTriangle,
-    bgColor: "bg-[#ffe2e2]",
-  },
-  { label: "In Stock", value: 8, icon: FaArchive, bgColor: "bg-[#dcfce7]" },
-  { label: "Categories", value: 4, icon: FaRegUser, bgColor: "bg-[#f3e8ff]" },
-];
-
-const storeStats = [
-  { label: "Active Stores", value: "3", valueColor: "text-admin" },
-  { label: "Total Stores", value: "3" },
-  { label: "Avg Orders/Store", value: "1.0", valueColor: "#155dfc" },
-];
+const statusMap = {
+  order_received: "received",
+  dispatched: "dispatched",
+  delivered: "delivered",
+} as const;
 
 export default function Dashboard() {
+  const { data, isLoading } = useAdminDashboard();
+  const dashboard = data?.data;
+
+  const stats = useMemo(() => {
+    const k = dashboard?.kpis;
+    return [
+      {
+        title: "Today's Collection",
+        value: k ? formatInr(k.today_collection.amount) : "—",
+        trend: k ? formatTrendVsYesterday(k.today_collection.change_percent) : undefined,
+        iconBg: "bg-[#e0f2fe] border border-[#bedbff]",
+        icon: FaRegMoneyBillAlt,
+        iconColor: "bg-[#2b7fff]",
+      },
+      {
+        title: "Pending Revenue",
+        value: k ? formatInr(k.pending_revenue.amount) : "—",
+        subtitle: k ? `${k.pending_revenue.orders_count} orders` : undefined,
+        iconBg: "bg-[#fef3c7] border border-[#fee685]",
+        icon: FaRegClock,
+        iconColor: "bg-[#fe9a00]",
+      },
+      {
+        title: "Delivered Revenue",
+        value: k ? formatInr(k.delivered_revenue.amount) : "—",
+        subtitle: k ? `${k.delivered_revenue.orders_count} orders` : undefined,
+        iconBg: "bg-[#d1fae5] border border-[#b9f8cf]",
+        icon: FaRegCheckCircle,
+        iconColor: "bg-[#00c950]",
+      },
+      {
+        title: "Total Orders (today)",
+        value: k ? String(k.total_orders.count) : "—",
+        trend: k ? formatTrendVsYesterday(k.total_orders.change_percent) : undefined,
+        iconBg: "bg-[#f3e8ff] border border-[#e9d4ff]",
+        icon: ShoppingCart,
+        iconColor: "bg-[#ad46ff]",
+      },
+    ];
+  }, [dashboard]);
+
+  const executiveSummary = useMemo(() => {
+    const e = dashboard?.executive_summary;
+    return {
+      stockValue: e ? formatInr(e.total_stock_value) : "—",
+      pending: e ? `${e.pending_orders_count} orders` : "—",
+      delivered: e ? `${e.delivered_orders_count} orders` : "—",
+      activeCustomers: e ? String(e.active_customers_count) : "—",
+    };
+  }, [dashboard]);
+
+  const orders = useMemo(() => {
+    return (dashboard?.recent_orders ?? []).map((order) => ({
+      id: order.order_code,
+      customer: order.customer_name ?? "—",
+      phone: order.customer_phone
+        ? formatPhoneForDisplay(order.customer_phone)
+        : "—",
+      store: order.store_name,
+      amount: formatInr(order.total_amount),
+      status: statusMap[order.status as keyof typeof statusMap] ?? "received",
+      date: formatIsoDateEnGbNumeric(order.created_at),
+    }));
+  }, [dashboard]);
+
+  const orderStatuses = useMemo(() => {
+    const b = dashboard?.order_status_breakdown;
+    return [
+      {
+        label: "Pending",
+        value: b?.order_received ?? 0,
+        icon: FaRegClock,
+        bgColor: "bg-[#dbeafe]",
+      },
+      {
+        label: "Dispatched",
+        value: b?.dispatched ?? 0,
+        icon: FaExclamationTriangle,
+        bgColor: "bg-[#fef3c6]",
+      },
+      {
+        label: "Delivered",
+        value: b?.delivered ?? 0,
+        icon: FaRegCheckCircle,
+        bgColor: "bg-[#dcfce7]",
+      },
+    ];
+  }, [dashboard]);
+
+  const inventoryAlerts = useMemo(() => {
+    const inv = dashboard?.inventory_alerts;
+    return [
+      {
+        label: "Available",
+        value: inv?.available ?? 0,
+        icon: FaArchive,
+        bgColor: "bg-[#dcfce7]",
+      },
+      {
+        label: "Low stock",
+        value: inv?.low_stock ?? 0,
+        icon: FaExclamationTriangle,
+        bgColor: "bg-[#ffe2e2]",
+      },
+      {
+        label: "Out of stock",
+        value: inv?.out_of_stock ?? 0,
+        icon: FaBoxOpen,
+        bgColor: "bg-[#fee2e2]",
+      },
+    ];
+  }, [dashboard]);
+
+  const storeStats = useMemo(() => {
+    const sp = dashboard?.store_performance;
+    const k = dashboard?.kpis;
+    const avg =
+      sp && sp.total_stores > 0 && k
+        ? (k.total_orders.count / sp.total_stores).toFixed(1)
+        : "0.0";
+    return [
+      { label: "Active Stores", value: sp?.active_stores ?? "—", valueColor: "text-admin" },
+      { label: "Total Stores", value: sp?.total_stores ?? "—" },
+      { label: "Avg orders / store (today)", value: avg, valueColor: "#155dfc" },
+    ];
+  }, [dashboard]);
+
   return (
     <DashboardLayout
-      userName="Admin User"
-      userEmail="admin@mathachickens.com"
       stats={stats}
       executiveSummary={executiveSummary}
       orders={orders}
       orderStatuses={orderStatuses}
       inventoryAlerts={inventoryAlerts}
       storeStats={storeStats}
+      isLoading={isLoading}
+      ordersCurrentPage={1}
+      ordersTotalPages={1}
+      onOrdersPageChange={undefined}
     />
   );
 }

@@ -22,10 +22,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useCreateVendor, useUpdateVendor } from "@/hooks/useVendors";
 import {
-  formatPhoneForDisplay,
-  normalizePhoneForPayload,
-  sanitizePhoneForDisplayInput,
-} from "@/lib/phone";
+  formatIndianPhoneLocalDisplay,
+  normalizeIndianPhonePayloadFromLocal,
+  sanitizeIndianPhoneLocalInput,
+} from "@/lib/display/phone";
 import type {
   CreateVendorInput,
   UpdateVendorInput,
@@ -77,7 +77,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
     mode === "edit" && vendor ? vendor.contact_person : "",
   );
   const [phone, setPhone] = useState(
-    mode === "edit" && vendor ? formatPhoneForDisplay(vendor.phone) : "",
+    mode === "edit" && vendor ? formatIndianPhoneLocalDisplay(vendor.phone) : "",
   );
   const [email, setEmail] = useState(
     mode === "edit" && vendor ? (vendor.email ?? "") : "",
@@ -103,7 +103,8 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
   );
   const [showPassword, setShowPassword] = useState(false);
 
-  const normalizedPhone = normalizePhoneForPayload(phone);
+  const normalizedPhone = normalizeIndianPhonePayloadFromLocal(phone);
+  const phoneDigitsCount = phone.replace(/\D/g, "").length;
   const parsedDiscountValue = Number(discountValue);
 
   const isPending = mode === "add" ? createVendor.isPending : updateVendor.isPending;
@@ -122,7 +123,7 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
   const canSubmit =
     businessName.trim().length > 0 &&
     contactPerson.trim().length > 0 &&
-    normalizedPhone.length > 0 &&
+    phoneDigitsCount === 10 &&
     loginId.trim().length > 0 &&
     isDiscountValid &&
     (!isPasswordRequired || password.trim().length >= 6);
@@ -130,13 +131,8 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
   const handleSubmit = () => {
     if (!canSubmit) return;
 
-    if (!normalizedPhone.startsWith("+")) {
-      toast.error("Phone must include country code, e.g. +91 98765 43210");
-      return;
-    }
-
-    if (normalizedPhone.length < 8 || normalizedPhone.length > 16) {
-      toast.error("Enter a valid phone number");
+    if (phoneDigitsCount !== 10) {
+      toast.error("Enter a valid 10-digit phone number");
       return;
     }
 
@@ -228,12 +224,17 @@ function VendorDialogBody({ mode, vendor, onOpenChange }: VendorDialogBodyProps)
             <Label className="text-sm font-medium text-foreground">
               Phone *
             </Label>
-            <Input
-              value={phone}
-              onChange={(e) => setPhone(sanitizePhoneForDisplayInput(e.target.value))}
-              placeholder="+91 98765 43210"
-              className="bg-muted border-0 h-9"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground">
+                +91
+              </span>
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(sanitizeIndianPhoneLocalInput(e.target.value))}
+                placeholder="98765 43210"
+                className="bg-muted border-0 h-9 pl-12"
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-medium text-foreground">Email</Label>

@@ -5,6 +5,7 @@ import {
   deleteDiscount,
   getDiscount,
   getDiscounts,
+  getActiveCampaignDiscount,
   updateDiscount,
   type CreateDiscountInput,
   type DiscountsQueryParams,
@@ -19,8 +20,11 @@ export const discountKeys = {
     params?.page ?? null,
     params?.limit ?? null,
     params?.search ?? "",
+    params?.isDiscountActive ?? null,
   ] as const,
   detail: (id: number) => ["discounts", "detail", id] as const,
+  /** Alias for list query used by manual billing (active campaign). */
+  active: () => discountKeys.list({ page: 1, limit: 1, isDiscountActive: true }),
 };
 
 export function useDiscounts(params?: DiscountsQueryParams) {
@@ -38,6 +42,14 @@ export function useDiscount(id: number) {
   });
 }
 
+export function useActiveCampaignDiscount(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: discountKeys.active(),
+    queryFn: () => getActiveCampaignDiscount(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useCreateDiscount() {
   const queryClient = useQueryClient();
 
@@ -45,6 +57,7 @@ export function useCreateDiscount() {
     mutationFn: (data: CreateDiscountInput) => createDiscount(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: discountKeys.active() });
       toast.success("Discount created successfully");
     },
     onError: (error) => {
@@ -62,6 +75,7 @@ export function useUpdateDiscount() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: discountKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: discountKeys.active() });
       toast.success("Discount updated successfully");
     },
     onError: (error) => {
@@ -78,6 +92,7 @@ export function useDeleteDiscount() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: discountKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: discountKeys.active() });
       toast.success("Discount deleted successfully");
     },
     onError: (error) => {

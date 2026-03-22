@@ -1,5 +1,7 @@
-import { apiGet, apiPut } from "@/lib/api";
+import { apiGet, apiPut } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
+
+export type ItemAvailability = "available" | "low_stock" | "out_of_stock";
 
 export interface UnavailableStockItem {
   id: number;
@@ -22,6 +24,8 @@ export interface UnavailableStockStore {
 export interface UnavailableStockEntry {
   item: UnavailableStockItem;
   store: UnavailableStockStore;
+  /** Present when the API returns per-row availability (low_stock / out_of_stock). */
+  availability: ItemAvailability;
 }
 
 export interface UnavailableStockListResponse
@@ -43,7 +47,7 @@ export interface StoreItemAvailability {
   unit: string;
   status: string | null;
   category_id?: number;
-  available: boolean;
+  availability: ItemAvailability;
 }
 
 export interface StoreItemAvailabilityQueryParams {
@@ -54,8 +58,7 @@ export interface StoreItemAvailabilityQueryParams {
 }
 
 export interface StoreItemAvailabilityUpdateInput {
-  available: number[];
-  unavailable: number[];
+  items: Array<{ item_id: number; availability: ItemAvailability }>;
 }
 
 export interface StoreItemAvailabilityListResponse

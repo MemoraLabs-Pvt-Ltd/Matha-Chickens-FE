@@ -3,12 +3,16 @@ import type { IconType } from "react-icons";
 import { LayoutDashboard, Receipt, Package, ShoppingBag, FileText } from "lucide-react";
 import { StoreSidebar } from "@/components/common/layout/StoreSidebar";
 import { Watermark } from "@/components/ui/watermark";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
 
 interface StoreLayoutProps {
   title: string;
+  /** Overrides auth-derived display name in the header. */
   storeName?: string;
-  storeStatus?: "Active" | "Inactive";
+  /** Overrides auth-derived subtitle (default: role label, e.g. Store owner). */
+  headerSubtitle?: string;
   avatarInitial?: string;
   disableScroll?: boolean;
   children: React.ReactNode;
@@ -24,14 +28,23 @@ const storeNavItems: { icon: IconType; label: string; href: string }[] = [
 
 export function StoreLayout({
   title,
-  storeName = "Matha Chickens - MG Road",
-  storeStatus = "Active",
-  avatarInitial = "S",
+  storeName: storeNameOverride,
+  headerSubtitle: headerSubtitleOverride,
+  avatarInitial: avatarInitialOverride,
   disableScroll = false,
   children,
 }: StoreLayoutProps) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
+
+  const fromAuth = getDisplayForLoggedInUser(user);
+  const headerLoading = authLoading && !storeNameOverride;
+
+  const storeName = storeNameOverride ?? fromAuth?.displayName ?? "Store";
+  const headerSubtitle =
+    headerSubtitleOverride ?? fromAuth?.roleLabel ?? "—";
+  const avatarInitial =
+    avatarInitialOverride ?? fromAuth?.avatarInitial ?? "?";
 
   const handleLogout = async () => {
     await logout();
@@ -54,15 +67,24 @@ export function StoreLayout({
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-foreground">
-                  {storeName}
-                </p>
-                <p className="text-xs text-[#00a63e]">
-                  ● {storeStatus}
-                </p>
+              <div className="text-right min-w-[120px]">
+                {headerLoading ? (
+                  <>
+                    <Skeleton className="h-4 w-40 ml-auto mb-2 rounded-md" />
+                    <Skeleton className="h-3 w-16 ml-auto rounded-md" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-foreground">
+                      {storeName}
+                    </p>
+                    <p className="text-xs text-[#00a63e]">
+                      ● {headerSubtitle}
+                    </p>
+                  </>
+                )}
               </div>
-              <div className="bg-store rounded-full size-10 flex items-center justify-center">
+              <div className="bg-store rounded-full size-10 flex items-center justify-center shrink-0">
                 <span className="text-base font-semibold text-white">
                   {avatarInitial}
                 </span>

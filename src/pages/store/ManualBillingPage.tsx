@@ -1,12 +1,6 @@
 import { useMemo, useState } from "react";
-import {
-  Plus,
-  Search,
-  ChevronDown,
-  FileText,
-  Receipt,
-  Eye,
-} from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Minus, Search, FileText, Receipt, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,85 +34,67 @@ import { StoreLayout } from "@/components/common/layout";
 import { BillDetailsSheet } from "./BillDetailsSheet";
 import { useItems } from "@/hooks/useItems";
 import { useOfflineBills, useCreateOfflineBill } from "@/hooks/useOfflineBills";
-import type { PaymentMode } from "@/lib/api/offlineBills";
+import { useMyStore } from "@/hooks/useStores";
+import { useActiveCampaignDiscount } from "@/hooks/useDiscounts";
+import { useAuth } from "@/hooks/useAuth";
+import type { OfflineBillDetail, PaymentMode } from "@/lib/api/offlineBills";
+import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
+import {
+  computeCartLineDetails,
+  computeAdditionalDiscount,
+  computeCampaignDiscountFromApi,
+  computeOfflineBillTotalAmount,
+  computeStoreDiscount,
+  computeSubtotalAndTaxFromGrossLines,
+  computeVendorDiscount,
+  isStoreTaxApplicable,
+} from "@/lib/billing/offlineBillMath";
+import {
+  computeItemDiscount,
+  describeItemDiscountLabel,
+} from "@/lib/billing/itemDiscount";
+import {
+  normalizeIndianPhonePayloadFromLocal,
+  sanitizeIndianPhoneLocalInput,
+} from "@/lib/display/phone";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 interface CartItem {
   id: number;
   name: string;
   price: number;
   unit: string;
+  gstPercent: number;
+  discountType: string;
+  discountValue: number;
   quantity: number;
 }
 
 const COMPLETED_BILLS_LIMIT = 12;
 const ITEMS_PAGE_LIMIT = 10;
-const EXTRA_DISCOUNT_PERCENT = 0;
-const EXTRA_TAX_PERCENT = 0;
 
-function getPageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 5) {
-    for (let page = 1; page <= totalPages; page += 1) pages.push(page);
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let page = start; page <= end; page += 1) pages.push(page);
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-  return pages;
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
+/** Same defaults as `POST /offline-bills` body (`offlineBillCreateSchema`). */
+const CREATE_BILL_BODY = {
+  discount_type: "none" as const,
+  discount_value: 0,
+};
 
 const paymentModeLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
   card: "Card",
-  cheque: "Cheque",
   other: "Other",
 };
 
 export default function ManualBillingPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"completed" | "create">("create");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentMode, setPaymentMode] = useState<PaymentMode | "">("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,14 +121,28 @@ export default function ManualBillingPage() {
     limit: COMPLETED_BILLS_LIMIT,
   });
 
+  const { data: myStoreResponse } = useMyStore({
+    enabled: user?.role === "store_owner",
+  });
+
+  const { data: activeCampaignResponse } = useActiveCampaignDiscount({
+    enabled: user?.role === "store_owner",
+  });
+
   const createOfflineBillMutation = useCreateOfflineBill();
+
+  const currentStore = myStoreResponse?.data ?? null;
 
   const menuItems = itemsData?.data ?? [];
   const completedBills = completedBillsData?.data ?? [];
   const totalCompletedBills =
     completedBillsData?.pagination?.totalData ?? completedBills.length;
-  const billsTotalPages = Math.max(completedBillsData?.pagination?.totalPages ?? 1, 1);
-  const safeBillsCurrentPage = completedBillsData?.pagination?.page ?? currentPage;
+  const billsTotalPages = Math.max(
+    completedBillsData?.pagination?.totalPages ?? 1,
+    1,
+  );
+  const safeBillsCurrentPage =
+    completedBillsData?.pagination?.page ?? currentPage;
   const itemsTotalPages = Math.max(itemsData?.pagination?.totalPages ?? 1, 1);
   const safeItemsPage = itemsData?.pagination?.page ?? itemsPage;
 
@@ -161,6 +151,9 @@ export default function ManualBillingPage() {
     name: string;
     price: number;
     unit: string;
+    gstPercent: number;
+    discountType: string;
+    discountValue: number;
   }) => {
     setCart((previous) => {
       const existing = previous.find((cartItem) => cartItem.id === item.id);
@@ -175,19 +168,95 @@ export default function ManualBillingPage() {
     });
   };
 
-  const subtotal = useMemo(
+  const removeOneFromCart = (itemId: number) => {
+    setCart((previous) =>
+      previous
+        .map((cartItem) =>
+          cartItem.id === itemId
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem,
+        )
+        .filter((cartItem) => cartItem.quantity > 0),
+    );
+  };
+
+  const cartQuantityByItemId = useMemo(
     () =>
-      cart.reduce(
-        (sum, cartItem) => sum + Number(cartItem.price) * cartItem.quantity,
-        0,
+      new Map(
+        cart.map((cartItem) => [cartItem.id, cartItem.quantity] as const),
       ),
     [cart],
   );
 
-  const discountAmount = (subtotal * EXTRA_DISCOUNT_PERCENT) / 100;
-  const taxableAmount = subtotal - discountAmount;
-  const taxAmount = (taxableAmount * EXTRA_TAX_PERCENT) / 100;
-  const estimatedTotal = taxableAmount + taxAmount;
+  const lineItems = useMemo(
+    () =>
+      cart.map((cartItem) => {
+        const { discountPerUnit, grossTotal, baseTotal, gstTotal } =
+          computeCartLineDetails(
+            cartItem.price,
+            cartItem.gstPercent,
+            cartItem.discountType,
+            cartItem.discountValue,
+            cartItem.quantity,
+          );
+
+        return {
+          ...cartItem,
+          discountPerUnit,
+          grossTotal,
+          baseTotal,
+          gstTotal,
+        };
+      }),
+    [cart],
+  );
+
+  const taxApplicable = isStoreTaxApplicable(currentStore);
+
+  const { subtotal, tax: taxAmount } = useMemo(
+    () =>
+      computeSubtotalAndTaxFromGrossLines(
+        lineItems.map((item) => ({
+          grossTotal: item.grossTotal,
+          gstPercent: item.gstPercent,
+        })),
+        taxApplicable,
+      ),
+    [lineItems, taxApplicable],
+  );
+
+  const storeDiscountAmount = computeStoreDiscount(subtotal, currentStore);
+
+  const campaignDiscountAmount = useMemo(
+    () =>
+      computeCampaignDiscountFromApi(
+        subtotal,
+        activeCampaignResponse?.data ?? null,
+      ),
+    [subtotal, activeCampaignResponse?.data],
+  );
+
+  const additionalDiscountAmount = useMemo(
+    () =>
+      computeAdditionalDiscount(
+        subtotal,
+        CREATE_BILL_BODY.discount_type,
+        CREATE_BILL_BODY.discount_value,
+      ),
+    [subtotal],
+  );
+
+  /** Store-owner manual billing: no vendor context (see BE `vendor` on context). */
+  const vendorDiscountAmount = computeVendorDiscount(subtotal, null);
+
+  const estimatedTotal = computeOfflineBillTotalAmount(
+    subtotal,
+    taxAmount,
+    storeDiscountAmount,
+    campaignDiscountAmount,
+    additionalDiscountAmount,
+    vendorDiscountAmount,
+  );
 
   const handleViewBill = (billId: number) => {
     setSelectedBillId(billId);
@@ -197,18 +266,39 @@ export default function ManualBillingPage() {
   const handleCreateBill = async () => {
     if (cart.length === 0 || !paymentMode) return;
 
-    await createOfflineBillMutation.mutateAsync({
+    const nameTrim = customerName.trim();
+    const phoneDigits = customerPhone.replace(/\D/g, "").length;
+    const phonePayload = normalizeIndianPhonePayloadFromLocal(customerPhone);
+
+    const response = await createOfflineBillMutation.mutateAsync({
       payment_mode: paymentMode,
       items: cart.map((item) => ({
         item_id: item.id,
         quantity: item.quantity,
       })),
-      discount_type: "none",
-      discount_value: 0,
+      discount_type: CREATE_BILL_BODY.discount_type,
+      discount_value: CREATE_BILL_BODY.discount_value,
+      ...(nameTrim.length > 0 ? { customer_name: nameTrim } : {}),
+      ...(phoneDigits >= 10 && phonePayload
+        ? { customer_phone: phonePayload }
+        : {}),
     });
+
+    const payload = response.data;
+    if (payload?.bill && Array.isArray(payload.bill_items)) {
+      const detail: OfflineBillDetail = {
+        ...payload.bill,
+        bill_items: payload.bill_items,
+      };
+      if (!printOfflineBillReceipt(detail, { storeName: currentStore?.name })) {
+        toast.error("Could not open print. Check browser settings.");
+      }
+    }
 
     setCart([]);
     setPaymentMode("");
+    setCustomerName("");
+    setCustomerPhone("");
     setActiveTab("completed");
     setCurrentPage(1);
   };
@@ -272,7 +362,10 @@ export default function ManualBillingPage() {
                   <TableBody>
                     {billsLoading &&
                       Array.from({ length: 6 }).map((_, index) => (
-                        <TableRow key={index} className="border-b border-border">
+                        <TableRow
+                          key={index}
+                          className="border-b border-border"
+                        >
                           <TableCell className="py-4 pl-4">
                             <Skeleton className="h-4 w-20 rounded-lg" />
                           </TableCell>
@@ -296,7 +389,10 @@ export default function ManualBillingPage() {
 
                     {billsError && (
                       <TableRow>
-                        <TableCell colSpan={6} className="py-12 text-center text-sm text-destructive">
+                        <TableCell
+                          colSpan={6}
+                          className="py-12 text-center text-sm text-destructive"
+                        >
                           {billsErrorMessage instanceof Error
                             ? billsErrorMessage.message
                             : "Failed to load completed bills"}
@@ -304,18 +400,23 @@ export default function ManualBillingPage() {
                       </TableRow>
                     )}
 
-                    {!billsLoading && !billsError && completedBills.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
-                          No completed bills found
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {!billsLoading &&
+                      !billsError &&
+                      completedBills.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="py-12 text-center text-sm text-muted-foreground"
+                          >
+                            No completed bills found
+                          </TableCell>
+                        </TableRow>
+                      )}
 
                     {!billsLoading &&
                       !billsError &&
                       completedBills.map((bill) => {
-                        const createdAt = formatDateTime(bill.created_at);
+                        const createdAt = splitIsoDateTime(bill.created_at);
                         return (
                           <TableRow
                             key={bill.id}
@@ -327,8 +428,12 @@ export default function ManualBillingPage() {
                               </span>
                             </TableCell>
                             <TableCell className="py-4 pl-4">
-                              <div className="text-sm text-foreground">{createdAt.date}</div>
-                              <div className="text-xs text-muted-foreground">{createdAt.time}</div>
+                              <div className="text-sm text-foreground">
+                                {createdAt.date}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {createdAt.time}
+                              </div>
                             </TableCell>
                             <TableCell className="py-4 pl-4">
                               <span className="text-sm text-muted-foreground">
@@ -337,7 +442,7 @@ export default function ManualBillingPage() {
                             </TableCell>
                             <TableCell className="py-4 pl-4">
                               <span className="text-sm font-semibold text-foreground">
-                                {formatCurrency(bill.total_amount)}
+                                {formatInr(bill.total_amount)}
                               </span>
                             </TableCell>
                             <TableCell className="py-4 pl-4">
@@ -377,23 +482,25 @@ export default function ManualBillingPage() {
                             }
                           />
                         </PaginationItem>
-                        {getPageNumbers(safeBillsCurrentPage, billsTotalPages).map(
-                          (page, index) =>
-                            page === "ellipsis" ? (
-                              <PaginationItem key={`ellipsis-${index}`}>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            ) : (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  isActive={safeBillsCurrentPage === page}
-                                  onClick={() => setCurrentPage(page)}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ),
+                        {getPaginationPageNumbers(
+                          safeBillsCurrentPage,
+                          billsTotalPages,
+                        ).map((page, index) =>
+                          page === "ellipsis" ? (
+                            <PaginationItem key={`ellipsis-${index}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={safeBillsCurrentPage === page}
+                                onClick={() => setCurrentPage(page)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ),
                         )}
                         <PaginationItem>
                           <PaginationNext
@@ -430,18 +537,10 @@ export default function ManualBillingPage() {
 
               <div className="px-6 pb-4 flex-1 min-h-0 flex flex-col">
                 <div className="flex gap-3 mb-3 shrink-0">
-                  <Button
-                    variant="secondary"
-                    className="h-9 px-3 rounded-lg gap-2"
-                    disabled
-                  >
-                    All Categories
-                    <ChevronDown className="size-4" />
-                  </Button>
-                  <div className="flex-1 bg-muted rounded-lg px-3 flex items-center h-9">
+                  <div className="flex-1 min-w-0 bg-muted rounded-lg px-3 flex items-center h-9">
                     <Search className="size-4 text-muted-foreground mr-2" />
                     <Input
-                      className="border-0 bg-transparent p-0 h-auto shadow-none focus-visible:ring-0 text-sm"
+                      className="border-0 bg-transparent p-0 h-auto min-h-9 shadow-none focus-visible:ring-0 text-base"
                       placeholder="Search items..."
                       value={searchQuery}
                       onChange={(event) => {
@@ -485,35 +584,91 @@ export default function ManualBillingPage() {
 
                   {!itemsLoading &&
                     !itemsError &&
-                    menuItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-muted rounded-xl px-3 py-3 flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="text-base font-medium text-foreground">
-                            {item.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatCurrency(item.price)}/{item.unit}
-                          </p>
-                        </div>
-                        <Button
-                          size="icon"
-                          className="size-8 bg-store hover:bg-store/90 rounded-lg"
-                          onClick={() =>
-                            addToCart({
-                              id: item.id,
-                              name: item.name,
-                              price: Number(item.price),
-                              unit: item.unit,
-                            })
-                          }
+                    menuItems.map((item) => {
+                      const quantityInCart =
+                        cartQuantityByItemId.get(item.id) ?? 0;
+                      const listPrice = Number(item.price);
+                      const discPerUnit = computeItemDiscount(
+                        listPrice,
+                        item.discount_type ?? "none",
+                        Number(item.discount_value ?? 0),
+                      );
+                      const netPerUnit = listPrice - discPerUnit;
+                      const itemDiscLabel = describeItemDiscountLabel(
+                        item.discount_type ?? "none",
+                        Number(item.discount_value ?? 0),
+                        formatInr,
+                      );
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-muted rounded-xl px-3 py-3 flex items-center justify-between"
                         >
-                          <Plus className="size-4 text-white" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div>
+                            <p className="text-base font-medium text-foreground">
+                              {item.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {discPerUnit > 0 ? (
+                                <>
+                                  <span className="line-through opacity-80">
+                                    {formatInr(listPrice)}
+                                  </span>{" "}
+                                  <span className="text-foreground font-medium">
+                                    {formatInr(netPerUnit)}
+                                  </span>
+                                  /{item.unit}
+                                  {itemDiscLabel ? (
+                                    <span className="text-[#00a63e] ml-1">
+                                      ({itemDiscLabel})
+                                    </span>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <>
+                                  {formatInr(listPrice)}/{item.unit}
+                                </>
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="size-8 rounded-lg border-border bg-background hover:bg-muted"
+                              onClick={() => removeOneFromCart(item.id)}
+                              disabled={quantityInCart === 0}
+                            >
+                              <Minus className="size-4" />
+                            </Button>
+                            <span className="min-w-5 text-center text-sm font-medium text-foreground">
+                              {quantityInCart}
+                            </span>
+                            <Button
+                              size="icon"
+                              className="size-8 bg-store hover:bg-store/90 rounded-lg"
+                              onClick={() =>
+                                addToCart({
+                                  id: item.id,
+                                  name: item.name,
+                                  price: Number(item.price),
+                                  unit: item.unit,
+                                  gstPercent: Number(item.gst_percent),
+                                  discountType: item.discount_type ?? "none",
+                                  discountValue: Number(
+                                    item.discount_value ?? 0,
+                                  ),
+                                })
+                              }
+                            >
+                              <Plus className="size-4 text-white" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
 
                 {itemsTotalPages >= 1 && (
@@ -532,23 +687,25 @@ export default function ManualBillingPage() {
                             }
                           />
                         </PaginationItem>
-                        {getPageNumbers(safeItemsPage, itemsTotalPages).map(
-                          (page, index) =>
-                            page === "ellipsis" ? (
-                              <PaginationItem key={`items-ellipsis-${index}`}>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            ) : (
-                              <PaginationItem key={`items-${page}`}>
-                                <PaginationLink
-                                  isActive={safeItemsPage === page}
-                                  onClick={() => setItemsPage(page)}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ),
+                        {getPaginationPageNumbers(
+                          safeItemsPage,
+                          itemsTotalPages,
+                        ).map((page, index) =>
+                          page === "ellipsis" ? (
+                            <PaginationItem key={`items-ellipsis-${index}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={`items-${page}`}>
+                              <PaginationLink
+                                isActive={safeItemsPage === page}
+                                onClick={() => setItemsPage(page)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ),
                         )}
                         <PaginationItem>
                           <PaginationNext
@@ -587,7 +744,7 @@ export default function ManualBillingPage() {
                   </div>
                 ) : (
                   <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-1">
-                    {cart.map((item) => (
+                    {lineItems.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between"
@@ -597,11 +754,12 @@ export default function ManualBillingPage() {
                             {item.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatCurrency(item.price)} x {item.quantity}
+                            {formatInr(item.price - item.discountPerUnit)} x{" "}
+                            {item.quantity}
                           </p>
                         </div>
                         <p className="text-sm font-medium text-foreground">
-                          {formatCurrency(item.price * item.quantity)}
+                          {formatInr(item.grossTotal)}
                         </p>
                       </div>
                     ))}
@@ -610,33 +768,72 @@ export default function ManualBillingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl px-6 py-5 overflow-hidden flex flex-col">
-                <h2 className="text-base font-medium text-foreground mb-4 shrink-0">
+                <h2 className="text-base font-medium text-foreground shrink-0">
                   Bill Summary
                 </h2>
+                <p className="text-xs text-muted-foreground mt-1 mb-4 shrink-0">
+                  Tax inclusive — item list prices include GST
+                  {taxApplicable
+                    ? "; subtotal is ex-GST and the tax line is the GST portion."
+                    : "; no separate GST charge for this store."}
+                </p>
 
                 <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-1">
                   <div className="flex justify-between">
-                    <span className="text-sm text-foreground">Subtotal:</span>
                     <span className="text-sm text-foreground">
-                      {formatCurrency(subtotal)}
+                      Subtotal (ex-GST):
+                    </span>
+                    <span className="text-sm text-foreground">
+                      {formatInr(subtotal)}
                     </span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">
-                      Extra Discount ({EXTRA_DISCOUNT_PERCENT}%):
+                      Store Discount (
+                      {currentStore?.enable_discount
+                        ? `${Number(currentStore.discount_percent)}%`
+                        : "0%"}
+                      ):
+                    </span>
+                    <span className="text-sm text-blue-500">
+                      -{formatInr(storeDiscountAmount)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between gap-3 items-start">
+                    <span
+                      className="text-sm text-foreground min-w-0"
+                      title="App-wide discount from admin. If several are active for the same period, the one with the latest start date is used (not per-store)."
+                    >
+                      Active global discount{" "}
+                      {activeCampaignResponse?.data?.discount_value}(
+                      {activeCampaignResponse?.data?.discount_type ===
+                      "percentage"
+                        ? "%"
+                        : "₹"}
+                      ) :
+                    </span>
+                    <span className="text-sm text-yellow-500 shrink-0 tabular-nums">
+                      -{formatInr(campaignDiscountAmount)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-sm text-foreground">
+                      Additional Discount:
                     </span>
                     <span className="text-sm text-[#00a63e]">
-                      -{formatCurrency(discountAmount)}
+                      -{formatInr(additionalDiscountAmount)}
                     </span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">
-                      Extra Tax ({EXTRA_TAX_PERCENT}%):
+                      Tax {taxApplicable ? "" : "(Not Applicable)"}:
                     </span>
                     <span className="text-sm text-foreground">
-                      {formatCurrency(taxAmount)}
+                      {formatInr(taxAmount)}
                     </span>
                   </div>
 
@@ -645,8 +842,46 @@ export default function ManualBillingPage() {
                       Estimated Total:
                     </span>
                     <span className="text-base font-bold text-foreground">
-                      {formatCurrency(estimatedTotal)}
+                      {formatInr(estimatedTotal)}
                     </span>
+                  </div>
+
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        Customer{" "}
+                        <span className="text-muted-foreground font-normal">
+                          (optional)
+                        </span>
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          className="h-auto min-h-10 border border-border bg-muted px-3 py-2.5 text-base leading-normal shadow-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                          placeholder="Name"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          maxLength={255}
+                          autoComplete="name"
+                        />
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">
+                            +91
+                          </span>
+                          <Input
+                            type="tel"
+                            autoComplete="tel"
+                            placeholder="98765 43210"
+                            value={customerPhone}
+                            onChange={(e) =>
+                              setCustomerPhone(
+                                sanitizeIndianPhoneLocalInput(e.target.value),
+                              )
+                            }
+                            className="h-auto min-h-10 border border-border bg-muted py-2.5 pl-12 pr-3 text-base leading-normal shadow-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="border-t border-border pt-4">
@@ -655,7 +890,9 @@ export default function ManualBillingPage() {
                     </p>
                     <Select
                       value={paymentMode}
-                      onValueChange={(value) => setPaymentMode(value as PaymentMode)}
+                      onValueChange={(value) =>
+                        setPaymentMode(value as PaymentMode)
+                      }
                     >
                       <SelectTrigger className="w-full bg-muted border-transparent rounded-lg h-9 text-sm">
                         <SelectValue placeholder="Select Payment Method" />
@@ -664,7 +901,6 @@ export default function ManualBillingPage() {
                         <SelectItem value="upi">UPI</SelectItem>
                         <SelectItem value="card">Card</SelectItem>
                         <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="cheque">Cheque</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
@@ -693,6 +929,7 @@ export default function ManualBillingPage() {
           billId={selectedBillId}
           isOpen={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
+          storeName={currentStore?.name}
         />
       </div>
     </StoreLayout>

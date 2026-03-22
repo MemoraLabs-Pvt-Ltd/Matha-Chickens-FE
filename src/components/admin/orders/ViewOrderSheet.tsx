@@ -2,6 +2,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrder } from "@/hooks/useOrders";
 import type { OrderStatus } from "@/lib/api/orders";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 
 interface ViewOrderSheetProps {
   orderId: number | null;
@@ -21,34 +22,6 @@ const statusLabels: Record<OrderStatus, string> = {
   delivered: "Delivered",
 };
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
 export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) {
   const {
     data: orderData,
@@ -58,7 +31,7 @@ export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) 
   } = useOrder(orderId ?? 0);
 
   const order = orderData?.data;
-  const createdAt = order ? formatDateTime(order.created_at) : null;
+  const createdAt = order ? splitIsoDateTime(order.created_at) : null;
 
   if (!orderId) return null;
 
@@ -150,18 +123,18 @@ export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) 
                           {item.item_name}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {item.quantity} {item.unit} x {formatCurrency(item.price)}
+                          {item.quantity} {item.unit} x {formatInr(item.price)}
                         </span>
                       </div>
                       <span className="text-sm font-medium text-foreground text-right">
-                        {formatCurrency(item.total)}
+                        {formatInr(item.total)}
                       </span>
                     </div>
                   ))}
                   <div className="flex justify-between pt-2 border-t border-border">
                     <span className="text-sm text-muted-foreground">Subtotal</span>
                     <span className="text-sm font-medium text-foreground">
-                      {formatCurrency(order.subtotal)}
+                      {formatInr(order.subtotal)}
                     </span>
                   </div>
                 </div>
@@ -173,19 +146,19 @@ export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) 
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Subtotal</span>
                     <span className="text-sm font-medium text-foreground">
-                      {formatCurrency(order.subtotal)}
+                      {formatInr(order.subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Discount</span>
                     <span className="text-sm font-medium text-emerald-600">
-                      -{formatCurrency(order.discount)}
+                      -{formatInr(order.discount)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Tax</span>
                     <span className="text-sm font-medium text-foreground">
-                      {formatCurrency(order.tax)}
+                      {formatInr(order.tax)}
                     </span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-border">
@@ -193,7 +166,7 @@ export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) 
                       Total
                     </span>
                     <span className="text-base font-semibold text-foreground">
-                      {formatCurrency(order.total_amount)}
+                      {formatInr(order.total_amount)}
                     </span>
                   </div>
                 </div>

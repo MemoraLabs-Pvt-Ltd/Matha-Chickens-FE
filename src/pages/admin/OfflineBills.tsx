@@ -25,6 +25,9 @@ import {
 import { useStores } from "@/hooks/useStores";
 import { useOfflineBills } from "@/hooks/useOfflineBills";
 import type { PaymentMode } from "@/lib/api/offlineBills";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const OFFLINE_BILLS_PAGE_LIMIT = 20;
 
@@ -32,7 +35,6 @@ const paymentStyles: Record<PaymentMode, string> = {
   cash: "bg-muted text-foreground",
   upi: "bg-muted text-foreground",
   card: "bg-muted text-foreground",
-  cheque: "bg-muted text-foreground",
   other: "bg-muted text-foreground",
 };
 
@@ -40,56 +42,8 @@ const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
   card: "Card",
-  cheque: "Cheque",
   other: "Other",
 };
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
-function getPageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-  if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i += 1) pages.push(i);
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let i = start; i <= end; i += 1) pages.push(i);
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-  return pages;
-}
 
 export default function OfflineBills() {
   const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
@@ -242,7 +196,7 @@ export default function OfflineBills() {
                 {!isLoading &&
                   !isError &&
                   bills.map((bill) => {
-                    const createdAt = formatDateTime(bill.created_at);
+                    const createdAt = splitIsoDateTime(bill.created_at);
                     const storeName =
                       storeNameById.get(bill.store_id) ?? `Store #${bill.store_id}`;
 
@@ -260,7 +214,7 @@ export default function OfflineBills() {
                         <TableCell className="py-3 pl-2 text-sm text-foreground">
                           <div>{bill.customer_name || "-"}</div>
                           <div className="text-xs text-muted-foreground">
-                            {bill.customer_phone || "-"}
+                            {bill.customer_phone ? formatPhoneForDisplay(bill.customer_phone) : "-"}
                           </div>
                         </TableCell>
                         <TableCell className="py-3 pl-2">
@@ -270,16 +224,16 @@ export default function OfflineBills() {
                           </div>
                         </TableCell>
                         <TableCell className="py-3 pl-2 text-sm text-foreground">
-                          {formatCurrency(bill.subtotal)}
+                          {formatInr(bill.subtotal)}
                         </TableCell>
                         <TableCell className="py-3 pl-2 text-sm text-emerald-600">
-                          -{formatCurrency(bill.discount)}
+                          -{formatInr(bill.discount)}
                         </TableCell>
                         <TableCell className="py-3 pl-2 text-sm text-foreground">
-                          {formatCurrency(bill.tax)}
+                          {formatInr(bill.tax)}
                         </TableCell>
                         <TableCell className="py-3 pl-2 text-sm font-semibold text-foreground">
-                          {formatCurrency(bill.total_amount)}
+                          {formatInr(bill.total_amount)}
                         </TableCell>
                         <TableCell className="py-3 pl-2">
                           <span
@@ -320,7 +274,7 @@ export default function OfflineBills() {
                         }
                       />
                     </PaginationItem>
-                    {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+                    {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                       page === "ellipsis" ? (
                         <PaginationItem key={`ellipsis-${index}`}>
                           <PaginationEllipsis />

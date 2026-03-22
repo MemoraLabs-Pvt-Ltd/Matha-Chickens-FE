@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -16,7 +16,7 @@ import SupplierManagement from './pages/admin/SupplierManagement';
 import StoreManagement from './pages/admin/StoreManagement';
 import TaxManagement from './pages/admin/TaxManagement';
 import DiscountManagement from './pages/admin/DiscountManagement';
-import OutOfStockAlerts from './pages/admin/OutOfStockAlerts';
+import StockAlerts from './pages/admin/StockAlerts';
 import OnlineOrders from './pages/admin/OnlineOrders';
 import OfflineBills from './pages/admin/OfflineBills';
 import Vendors from './pages/admin/Vendors';
@@ -139,12 +139,16 @@ function App() {
             }
           />
           <Route
-            path="/admin/out-of-stock"
+            path="/admin/stock-alerts"
             element={
               <AdminRoute>
-                <OutOfStockAlerts />
+                <StockAlerts />
               </AdminRoute>
             }
+          />
+          <Route
+            path="/admin/out-of-stock"
+            element={<Navigate to="/admin/stock-alerts" replace />}
           />
           <Route
             path="/admin/orders"

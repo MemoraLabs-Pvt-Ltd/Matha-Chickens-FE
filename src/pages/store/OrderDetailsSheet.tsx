@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrder, useUpdateOrderStatus } from "@/hooks/useOrders";
 import type { OrderStatus } from "@/lib/api/orders";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import {
   Select,
   SelectContent,
@@ -30,34 +32,6 @@ const statusLabels: Record<OrderStatus, string> = {
   delivered: "Delivered",
 };
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
 export function OrderDetailsSheet({
   orderId,
   isOpen,
@@ -73,7 +47,7 @@ export function OrderDetailsSheet({
   } = useOrder(orderId ?? 0);
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const order = orderData?.data;
-  const createdAt = order ? formatDateTime(order.created_at) : null;
+  const createdAt = order ? splitIsoDateTime(order.created_at) : null;
 
   useEffect(() => {
     if (order?.status) {
@@ -150,7 +124,7 @@ export function OrderDetailsSheet({
                     <span className="font-bold">Name:</span> {order.customer_name}
                   </p>
                   <p className="text-sm text-foreground">
-                    <span className="font-bold">Phone:</span> {order.customer_phone}
+                    <span className="font-bold">Phone:</span> {formatPhoneForDisplay(order.customer_phone)}
                   </p>
                   <p className="text-sm text-foreground">
                     <span className="font-bold">Address:</span> {order.delivery_address}
@@ -176,11 +150,11 @@ export function OrderDetailsSheet({
                           {item.item_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity} {item.unit} x {formatCurrency(item.price)}
+                          Qty: {item.quantity} {item.unit} x {formatInr(item.price)}
                         </p>
                       </div>
                       <p className="text-sm font-semibold text-foreground">
-                        {formatCurrency(item.total)}
+                        {formatInr(item.total)}
                       </p>
                     </div>
                   ))}
@@ -194,20 +168,20 @@ export function OrderDetailsSheet({
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Subtotal:</span>
-                    <span className="text-sm text-foreground">{formatCurrency(order.subtotal)}</span>
+                    <span className="text-sm text-foreground">{formatInr(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-[#00a63e]">Discount:</span>
-                    <span className="text-sm text-[#00a63e]">-{formatCurrency(order.discount)}</span>
+                    <span className="text-sm text-[#00a63e]">-{formatInr(order.discount)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">Tax:</span>
-                    <span className="text-sm text-foreground">{formatCurrency(order.tax)}</span>
+                    <span className="text-sm text-foreground">{formatInr(order.tax)}</span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between">
                     <span className="text-base font-bold text-foreground">Total:</span>
                     <span className="text-lg font-bold text-foreground">
-                      {formatCurrency(order.total_amount)}
+                      {formatInr(order.total_amount)}
                     </span>
                   </div>
                 </div>

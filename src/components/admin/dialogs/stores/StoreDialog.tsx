@@ -13,10 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useCreateStore, useUpdateStore } from "@/hooks/useStores";
 import {
-  formatPhoneForDisplay,
-  normalizePhoneForPayload,
-  sanitizePhoneForDisplayInput,
-} from "@/lib/phone";
+  formatIndianPhoneLocalDisplay,
+  normalizeIndianPhonePayloadFromLocal,
+  sanitizeIndianPhoneLocalInput,
+} from "@/lib/display/phone";
 import type { CreateStoreInput, Store, UpdateStoreInput } from "@/lib/api/stores";
 
 interface StoreDialogProps {
@@ -65,7 +65,7 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
     mode === "edit" && store ? store.name : "",
   );
   const [phone, setPhone] = useState(
-    mode === "edit" && store ? formatPhoneForDisplay(store.phone) : "",
+    mode === "edit" && store ? formatIndianPhoneLocalDisplay(store.phone) : "",
   );
   const [address, setAddress] = useState(
     mode === "edit" && store ? store.address : "",
@@ -94,11 +94,12 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
     mode === "edit" && store ? loginId.trim() !== store.login_id : false;
 
   const requiresPassword = mode === "add" || emailChanged;
-  const normalizedPhone = normalizePhoneForPayload(phone);
+  const normalizedPhone = normalizeIndianPhonePayloadFromLocal(phone);
+  const phoneDigitsCount = phone.replace(/\D/g, "").length;
 
   const canSubmit =
     storeName.trim().length > 0 &&
-    normalizedPhone.length > 0 &&
+    phoneDigitsCount === 10 &&
     address.trim().length > 0 &&
     loginId.trim().length > 0 &&
     (!requiresPassword || password.trim().length > 0);
@@ -106,13 +107,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   const handleSubmit = () => {
     if (!canSubmit) return;
 
-    if (!normalizedPhone.startsWith("+")) {
-      toast.error("Phone must include country code, e.g. +91 98765 43210");
-      return;
-    }
-
-    if (normalizedPhone.length < 8 || normalizedPhone.length > 16) {
-      toast.error("Enter a valid phone number");
+    if (phoneDigitsCount !== 10) {
+      toast.error("Enter a valid 10-digit phone number");
       return;
     }
 
@@ -199,14 +195,19 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             >
               Phone *
             </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+91 98765 43210"
-              value={phone}
-              onChange={(e) => setPhone(sanitizePhoneForDisplayInput(e.target.value))}
-              className="bg-input border-transparent rounded-lg h-9 text-sm"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground">
+                +91
+              </span>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(sanitizeIndianPhoneLocalInput(e.target.value))}
+                className="bg-input border-transparent rounded-lg h-9 text-sm pl-12"
+              />
+            </div>
           </div>
         </div>
 

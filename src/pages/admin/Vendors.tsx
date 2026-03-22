@@ -37,30 +37,10 @@ import { VendorDialog } from "@/components/admin/dialogs/vendors/VendorDialog";
 import { VendorLoginQRDialog } from "@/components/admin/dialogs/vendors/VendorLoginQRDialog";
 import { useDeleteVendor, useVendors } from "@/hooks/useVendors";
 import type { Vendor } from "@/lib/api/vendors";
-import { formatPhoneForDisplay } from "@/lib/phone";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const VENDORS_PAGE_LIMIT = 20;
-
-function getPageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i += 1) pages.push(i);
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-
-  for (let i = start; i <= end; i += 1) pages.push(i);
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-
-  return pages;
-}
 
 export default function Vendors() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -425,7 +405,7 @@ export default function Vendors() {
                         }
                       />
                     </PaginationItem>
-                    {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+                    {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                       page === "ellipsis" ? (
                         <PaginationItem key={`ellipsis-${index}`}>
                           <PaginationEllipsis />

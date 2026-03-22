@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateSupplier, useUpdateSupplier } from "@/hooks/useSuppliers";
 import {
-  formatPhoneForDisplay,
-  normalizePhoneForPayload,
-  sanitizePhoneForDisplayInput,
-} from "@/lib/phone";
+  formatIndianPhoneLocalDisplay,
+  normalizeIndianPhonePayloadFromLocal,
+  sanitizeIndianPhoneLocalInput,
+} from "@/lib/display/phone";
 import type { CreateSupplierInput, Supplier } from "@/lib/api/suppliers";
 
 interface SupplierDialogProps {
@@ -61,32 +61,30 @@ function SupplierDialogBody({
     mode === "edit" && supplier ? supplier.name : "",
   );
   const [phoneNumber, setPhoneNumber] = useState(
-    mode === "edit" && supplier ? formatPhoneForDisplay(supplier.phone_number) : "",
+    mode === "edit" && supplier
+      ? formatIndianPhoneLocalDisplay(supplier.phone_number)
+      : "",
   );
   const [address, setAddress] = useState(
     mode === "edit" && supplier ? supplier.address : "",
   );
 
-  const normalizedPhone = normalizePhoneForPayload(phoneNumber);
+  const normalizedPhone = normalizeIndianPhonePayloadFromLocal(phoneNumber);
+  const phoneDigitsCount = phoneNumber.replace(/\D/g, "").length;
 
   const isPending =
     mode === "add" ? createSupplier.isPending : updateSupplier.isPending;
 
   const canSubmit =
     supplierName.trim().length > 0 &&
-    normalizedPhone.length > 0 &&
+    phoneDigitsCount === 10 &&
     address.trim().length > 0;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
 
-    if (!normalizedPhone.startsWith("+")) {
-      toast.error("Phone must include country code, e.g. +91 98765 43210");
-      return;
-    }
-
-    if (normalizedPhone.length < 8 || normalizedPhone.length > 16) {
-      toast.error("Enter a valid phone number");
+    if (phoneDigitsCount !== 10) {
+      toast.error("Enter a valid 10-digit phone number");
       return;
     }
 
@@ -146,14 +144,19 @@ function SupplierDialogBody({
           >
             Phone Number *
           </Label>
-          <Input
-            id="phoneNumber"
-            type="tel"
-            placeholder="+91 98765 43210"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(sanitizePhoneForDisplayInput(e.target.value))}
-            className="bg-input border-transparent rounded-lg h-9 text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground">
+              +91
+            </span>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              placeholder="98765 43210"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(sanitizeIndianPhoneLocalInput(e.target.value))}
+              className="bg-input border-transparent rounded-lg h-9 text-sm pl-12"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">

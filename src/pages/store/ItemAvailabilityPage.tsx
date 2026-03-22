@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { StoreLayout } from "@/components/common/layout";
-import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBodySkeleton } from "@/components/common/TableBodySkeleton";
@@ -26,35 +32,30 @@ import {
   useStoreItemAvailability,
   useUpdateStoreItemAvailability,
 } from "@/hooks/useStoreItemUnavailability";
+import type { ItemAvailability } from "@/lib/api/storeItemUnavailability";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const AVAILABILITY_PAGE_LIMIT = 20;
 
-function getPageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
+const AVAILABILITY_OPTIONS: { value: ItemAvailability; label: string }[] = [
+  { value: "available", label: "In stock" },
+  { value: "low_stock", label: "Low stock" },
+  { value: "out_of_stock", label: "Out of stock" },
+];
 
-  if (totalPages <= 5) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pages.push(page);
+function availabilityBadgeClass(availability: ItemAvailability): string {
+  switch (availability) {
+    case "available":
+      return "bg-[#dcfce7] text-[#016630]";
+    case "low_stock":
+      return "bg-[#ffedd5] text-[#9a3412]";
+    case "out_of_stock":
+      return "bg-[#ffe2e2] text-[#9f0712]";
+    default: {
+      const _exhaustive: never = availability;
+      return _exhaustive;
     }
-    return pages;
   }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let page = start; page <= end; page += 1) {
-    pages.push(page);
-  }
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-
-  return pages;
 }
 
 export default function ItemAvailabilityPage() {
@@ -79,12 +80,11 @@ export default function ItemAvailabilityPage() {
   const totalPages = Math.max(availabilityData?.pagination?.totalPages ?? 1, 1);
   const safeCurrentPage = availabilityData?.pagination?.page ?? currentPage;
 
-  const toggleAvailability = async (itemId: number, nextAvailable: boolean) => {
+  const setItemAvailability = async (itemId: number, availability: ItemAvailability) => {
     setPendingItemId(itemId);
     try {
       await updateAvailabilityMutation.mutateAsync({
-        available: nextAvailable ? [itemId] : [],
-        unavailable: nextAvailable ? [] : [itemId],
+        items: [{ item_id: itemId, availability }],
       });
     } finally {
       setPendingItemId(null);
@@ -99,8 +99,8 @@ export default function ItemAvailabilityPage() {
             Manage item availability for your store
           </h2>
           <p className="text-sm text-muted-foreground italic">
-            Items marked as "Out of Stock" will be hidden from customers in the
-            mobile app
+            In stock and low stock items appear in the app; out of stock items are hidden from
+            customers for your store.
           </p>
         </div>
 
@@ -133,10 +133,10 @@ export default function ItemAvailabilityPage() {
                   Price
                 </TableHead>
                 <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                  Availability Status
+                  Status
                 </TableHead>
                 <TableHead className="text-right py-3 pr-4 text-sm font-medium text-foreground">
-                  Toggle
+                  Availability
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -151,7 +151,7 @@ export default function ItemAvailabilityPage() {
                     if (columnIndex === 4) {
                       return (
                         <div className="flex justify-end">
-                          <Skeleton className="h-6 w-12 rounded-full" />
+                          <Skeleton className="h-8 w-[140px] rounded-lg" />
                         </div>
                       );
                     }
@@ -187,15 +187,15 @@ export default function ItemAvailabilityPage() {
                 !isError &&
                 items.map((item) => {
                   const isToggling =
-                    updateAvailabilityMutation.isPending &&
-                    pendingItemId === item.id;
+                    updateAvailabilityMutation.isPending && pendingItemId === item.id;
+                  const label =
+                    AVAILABILITY_OPTIONS.find((o) => o.value === item.availability)?.label ??
+                    item.availability;
 
                   return (
                     <TableRow key={item.id} className="border-b border-border">
                       <TableCell className="py-3 pl-4">
-                        <span className="text-sm font-medium text-foreground">
-                          {item.name}
-                        </span>
+                        <span className="text-sm font-medium text-foreground">{item.name}</span>
                       </TableCell>
                       <TableCell className="py-3 pl-4">
                         <span className="text-sm text-foreground">
@@ -208,32 +208,35 @@ export default function ItemAvailabilityPage() {
                         </span>
                       </TableCell>
                       <TableCell className="py-3 pl-4">
-                        {item.available ? (
-                          <span className="inline-flex items-center px-2 py-1 bg-[#dcfce7] rounded text-xs font-medium text-[#016630]">
-                            Available
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 bg-[#ffe2e2] rounded text-xs font-medium text-[#9f0712]">
-                            Out of Stock
-                          </span>
-                        )}
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${availabilityBadgeClass(item.availability)}`}
+                        >
+                          {label}
+                        </span>
                       </TableCell>
                       <TableCell className="py-3 pr-4">
-                        <div className="flex items-center justify-end gap-3">
-                          <span className="text-sm text-muted-foreground">
-                            {isToggling
-                              ? "Updating..."
-                              : item.available
-                                ? "Available"
-                                : "Out of Stock"}
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-xs text-muted-foreground">
+                            {isToggling ? "Updating..." : "Change"}
                           </span>
-                          <Switch
-                            checked={item.available}
+                          <Select
+                            value={item.availability}
                             disabled={isToggling}
-                            onCheckedChange={(checked) =>
-                              toggleAvailability(item.id, checked)
+                            onValueChange={(value) =>
+                              setItemAvailability(item.id, value as ItemAvailability)
                             }
-                          />
+                          >
+                            <SelectTrigger className="w-[min(100%,10rem)] h-9 ml-auto">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AVAILABILITY_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -247,10 +250,8 @@ export default function ItemAvailabilityPage() {
           <p className="text-sm text-[#1c398e]">
             <span className="font-semibold">Note:</span>{" "}
             <span className="font-normal">
-              When you mark an item as "Out of Stock", it will immediately
-              disappear from the customer app for your store. The item will
-              still be visible to Admin and can be made available again by
-              toggling the switch.
+              Out of stock hides the item from the customer app for your store. Low stock still
+              lists the item but signals limited quantity. In stock means fully available.
             </span>
           </p>
         </div>
@@ -268,7 +269,7 @@ export default function ItemAvailabilityPage() {
                   }
                 />
               </PaginationItem>
-              {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+              {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
                     <PaginationEllipsis />

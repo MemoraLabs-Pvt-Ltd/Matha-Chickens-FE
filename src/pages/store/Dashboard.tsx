@@ -1,5 +1,15 @@
-import { useState } from "react";
-import { DollarSign, ShoppingCart, Calculator, Package, TrendingUp, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { useMemo } from "react";
+import {
+  DollarSign,
+  ShoppingCart,
+  Calculator,
+  Package,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Layers,
+} from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,65 +20,15 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { StoreLayout } from "@/components/common/layout";
-import { useOrders } from "@/hooks/useOrders";
+import { useStoreDashboard } from "@/hooks/useDashboard";
 import type { OrderStatus } from "@/lib/api/orders";
-
-const stats = [
-  {
-    title: "Today's Collection",
-    value: "₹0",
-    trend: "+5.4%",
-    iconBg: "bg-[#e0f2fe] border border-[#bedbff]",
-    icon: DollarSign,
-    iconColor: "bg-[#2b7fff]",
-    valueColor: "text-[#1c398e]",
-    labelColor: "text-[#1447e6]",
-    trendColor: "text-[#00a63e]",
-  },
-  {
-    title: "Online Orders",
-    value: "0",
-    subtitle: "₹0",
-    iconBg: "bg-[#fef3c7] border border-[#fee685]",
-    icon: ShoppingCart,
-    iconColor: "bg-[#fe9a00]",
-    valueColor: "text-[#7b3306]",
-    labelColor: "text-[#bb4d00]",
-  },
-  {
-    title: "Offline Bills",
-    value: "0",
-    subtitle: "₹0",
-    iconBg: "bg-[#f6fffb] border border-[#f3fcf6]",
-    icon: Calculator,
-    iconColor: "bg-[#00c950]",
-    valueColor: "text-[#0d542b]",
-    labelColor: "text-[#008236]",
-  },
-  {
-    title: "Available Items",
-    value: "7",
-    subtitle: "1 out of stock",
-    iconBg: "bg-[#f3e8ff] border border-[#e9d4ff]",
-    icon: Package,
-    iconColor: "bg-[#ad46ff]",
-    valueColor: "text-[#59168b]",
-    labelColor: "text-[#8200db]",
-    subtitleColor: "text-[#e7000b]",
-  },
-];
-
-const DASHBOARD_ORDERS_LIMIT = 5;
+import {
+  formatInr,
+  formatIsoDateEnGbNumeric,
+  formatTrendVsYesterday,
+} from "@/lib/display/formatting";
+import { formatPhoneForDisplay } from "@/lib/display/phone";
 
 const orderStatusStyles: Record<OrderStatus, string> = {
   order_received: "bg-[#dbeafe] text-[#1447e6]",
@@ -82,81 +42,143 @@ const orderStatusLabels: Record<OrderStatus, string> = {
   delivered: "Delivered",
 };
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
-function getPageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 5) {
-    for (let page = 1; page <= totalPages; page += 1) pages.push(page);
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let page = start; page <= end; page += 1) pages.push(page);
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-  return pages;
-}
-
-const orderStatuses = [
-  { label: "Pending", value: 1, icon: Clock, bgColor: "bg-[#dbeafe]", iconColor: "text-[#1447e6]" },
-  { label: "Dispatched", value: 1, icon: TrendingUp, bgColor: "bg-[#febebe]", iconColor: "text-[#bb4d00]" },
-  { label: "Delivered", value: 0, icon: CheckCircle, bgColor: "bg-[#dcfce7]", iconColor: "text-[#00a63e]" },
-];
-
-const inventoryItems = [
-  { label: "Available", value: 7, icon: CheckCircle, bgColor: "bg-[#dcfce7]", iconColor: "text-[#00a63e]" },
-  { label: "Out of Stock", value: 1, icon: AlertTriangle, bgColor: "bg-[#ffe2e2]", iconColor: "text-[#bb4d00]" },
-  { label: "Total Items", value: 8, icon: Package, bgColor: "bg-[#dbeafe]", iconColor: "text-[#1447e6]" },
-];
-
-const performanceItems = [
-  { label: "Orders Received", value: "0", valueColor: "text-[#155dfc]" },
-  { label: "Bills Generated", value: "0", valueColor: "text-store" },
-  { label: "Revenue", value: "₹0", valueColor: "text-[#00a63e]" },
-];
-
 export default function StoreDashboard() {
-  const [ordersPage, setOrdersPage] = useState(1);
-  const {
-    data: ordersData,
-    isLoading: ordersLoading,
-    isError: ordersError,
-    error: ordersErrorMessage,
-  } = useOrders({
-    page: ordersPage,
-    limit: DASHBOARD_ORDERS_LIMIT,
-  });
+  const { data, isLoading } = useStoreDashboard();
+  const dashboard = data?.data;
 
-  const recentOrders = ordersData?.data ?? [];
-  const totalOrderPages = Math.max(ordersData?.pagination?.totalPages ?? 1, 1);
-  const safeOrdersPage = ordersData?.pagination?.page ?? ordersPage;
+  const stats = useMemo(() => {
+    const k = dashboard?.kpis;
+    return [
+      {
+        title: "Today's Collection",
+        value: k ? formatInr(k.today_collection.amount) : "—",
+        trend: k ? formatTrendVsYesterday(k.today_collection.change_percent) : undefined,
+        iconBg: "bg-[#e0f2fe] border border-[#bedbff]",
+        icon: DollarSign,
+        iconColor: "bg-[#2b7fff]",
+        valueColor: "text-[#1c398e]",
+        labelColor: "text-[#1447e6]",
+        trendColor: "text-[#00a63e]",
+      },
+      {
+        title: "Online Orders",
+        value: k ? String(k.online_orders.count) : "—",
+        subtitle: k ? formatInr(k.online_orders.amount) : undefined,
+        iconBg: "bg-[#fef3c7] border border-[#fee685]",
+        icon: ShoppingCart,
+        iconColor: "bg-[#fe9a00]",
+        valueColor: "text-[#7b3306]",
+        labelColor: "text-[#bb4d00]",
+      },
+      {
+        title: "Offline Bills",
+        value: k ? String(k.offline_bills.count) : "—",
+        subtitle: k ? formatInr(k.offline_bills.amount) : undefined,
+        iconBg: "bg-[#f6fffb] border border-[#f3fcf6]",
+        icon: Calculator,
+        iconColor: "bg-[#00c950]",
+        valueColor: "text-[#0d542b]",
+        labelColor: "text-[#008236]",
+      },
+      {
+        title: "Available Items",
+        value: k ? String(k.available_items.available) : "—",
+        subtitle: k
+          ? `${k.available_items.out_of_stock} out of stock`
+          : undefined,
+        iconBg: "bg-[#f3e8ff] border border-[#e9d4ff]",
+        icon: Package,
+        iconColor: "bg-[#ad46ff]",
+        valueColor: "text-[#59168b]",
+        labelColor: "text-[#8200db]",
+        subtitleColor: "text-[#e7000b]",
+      },
+    ];
+  }, [dashboard]);
+
+  const recentOrders = dashboard?.recent_orders ?? [];
+
+  const orderStatuses = useMemo(() => {
+    const b = dashboard?.order_status_breakdown;
+    return [
+      {
+        label: "Pending",
+        value: b?.order_received ?? 0,
+        icon: Clock,
+        bgColor: "bg-[#dbeafe]",
+        iconColor: "text-[#1447e6]",
+      },
+      {
+        label: "Dispatched",
+        value: b?.dispatched ?? 0,
+        icon: TrendingUp,
+        bgColor: "bg-[#febebe]",
+        iconColor: "text-[#bb4d00]",
+      },
+      {
+        label: "Delivered",
+        value: b?.delivered ?? 0,
+        icon: CheckCircle,
+        bgColor: "bg-[#dcfce7]",
+        iconColor: "text-[#00a63e]",
+      },
+    ];
+  }, [dashboard]);
+
+  const inventoryItems = useMemo(() => {
+    const inv = dashboard?.inventory_status;
+    return [
+      {
+        label: "Available",
+        value: inv?.available ?? 0,
+        icon: CheckCircle,
+        bgColor: "bg-[#dcfce7]",
+        iconColor: "text-[#00a63e]",
+      },
+      {
+        label: "Low stock",
+        value: inv?.low_stock ?? 0,
+        icon: AlertTriangle,
+        bgColor: "bg-[#ffedd5]",
+        iconColor: "text-[#c2410c]",
+      },
+      {
+        label: "Out of Stock",
+        value: inv?.out_of_stock ?? 0,
+        icon: AlertTriangle,
+        bgColor: "bg-[#ffe2e2]",
+        iconColor: "text-[#bb4d00]",
+      },
+      {
+        label: "Total Items",
+        value: inv?.total_items ?? 0,
+        icon: Layers,
+        bgColor: "bg-[#dbeafe]",
+        iconColor: "text-[#1447e6]",
+      },
+    ];
+  }, [dashboard]);
+
+  const performanceItems = useMemo(() => {
+    const t = dashboard?.today_performance;
+    return [
+      {
+        label: "Orders Received",
+        value: t ? String(t.orders_received) : "—",
+        valueColor: "text-[#155dfc]",
+      },
+      {
+        label: "Bills Generated",
+        value: t ? String(t.bills_generated) : "—",
+        valueColor: "text-store",
+      },
+      {
+        label: "Revenue",
+        value: t ? formatInr(t.revenue) : "—",
+        valueColor: "text-[#00a63e]",
+      },
+    ];
+  }, [dashboard]);
 
   return (
     <StoreLayout title="Dashboard">
@@ -168,9 +190,15 @@ export default function StoreDashboard() {
           >
             <div className="flex flex-col gap-1">
               <p className={`text-sm font-medium leading-5 ${stat.labelColor}`}>{stat.title}</p>
-              <p className={`text-[30px] font-bold leading-9 tracking-wide ${stat.valueColor}`}>{stat.value}</p>
-              {(stat.trend || stat.subtitle) && (
-                <div className="flex items-center gap-1">
+              {isLoading ? (
+                <Skeleton className="h-9 w-24 mt-1 rounded-lg" />
+              ) : (
+                <p className={`text-[30px] font-bold leading-9 tracking-wide ${stat.valueColor}`}>
+                  {stat.value}
+                </p>
+              )}
+              {(stat.trend || stat.subtitle) && !isLoading && (
+                <div className="flex items-center gap-1 flex-wrap">
                   {stat.trend && (
                     <>
                       <TrendingUp className="size-4 text-[#00a63e]" />
@@ -178,7 +206,9 @@ export default function StoreDashboard() {
                     </>
                   )}
                   {stat.subtitle && (
-                    <p className={`text-sm font-normal leading-5 ${stat.subtitleColor || stat.labelColor}`}>
+                    <p
+                      className={`text-sm font-normal leading-5 ${stat.subtitleColor || stat.labelColor}`}
+                    >
                       {stat.subtitle}
                     </p>
                   )}
@@ -222,7 +252,7 @@ export default function StoreDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ordersLoading &&
+              {isLoading &&
                 Array.from({ length: 4 }).map((_, index) => (
                   <TableRow key={index} className="h-[76.5px]">
                     <TableCell className="pl-6 py-4">
@@ -244,17 +274,7 @@ export default function StoreDashboard() {
                   </TableRow>
                 ))}
 
-              {ordersError && (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-sm text-destructive">
-                    {ordersErrorMessage instanceof Error
-                      ? ordersErrorMessage.message
-                      : "Failed to load recent orders"}
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!ordersLoading && !ordersError && recentOrders.length === 0 && (
+              {!isLoading && recentOrders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
                     No recent online orders
@@ -262,95 +282,45 @@ export default function StoreDashboard() {
                 </TableRow>
               )}
 
-              {!ordersLoading &&
-                !ordersError &&
+              {!isLoading &&
                 recentOrders.map((order) => (
                   <TableRow key={order.id} className="h-[76.5px]">
                     <TableCell className="pl-6 py-4">
                       <p className="text-base font-semibold text-foreground tracking-wide">
-                        #{order.id}
+                        {order.order_code}
                       </p>
                     </TableCell>
                     <TableCell className="py-4">
                       <p className="text-base font-normal text-foreground tracking-wide">
-                        {order.customer_name}
+                        {order.customer_name ?? "—"}
                       </p>
                       <p className="text-sm font-normal text-muted-foreground">
-                        {order.customer_phone}
+                        {order.customer_phone
+                          ? formatPhoneForDisplay(order.customer_phone)
+                          : "—"}
                       </p>
                     </TableCell>
                     <TableCell className="text-right py-4 pr-6">
                       <p className="text-base font-bold text-foreground tracking-wide">
-                        {formatCurrency(order.total_amount)}
+                        {formatInr(order.total_amount)}
                       </p>
                     </TableCell>
                     <TableCell className="text-center py-4">
                       <span
-                        className={`inline-flex items-center justify-center h-7 rounded-full px-4 text-sm font-medium ${orderStatusStyles[order.status]}`}
+                        className={`inline-flex items-center justify-center h-7 rounded-full px-4 text-sm font-medium ${orderStatusStyles[order.status as OrderStatus]}`}
                       >
-                        {orderStatusLabels[order.status]}
+                        {orderStatusLabels[order.status as OrderStatus] ?? order.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right py-4 pr-6">
                       <p className="text-sm font-normal text-muted-foreground">
-                        {formatDate(order.created_at)}
+                        {formatIsoDateEnGbNumeric(order.created_at)}
                       </p>
                     </TableCell>
                   </TableRow>
                 ))}
             </TableBody>
           </Table>
-          {totalOrderPages >= 1 && (
-            <div className="py-4 px-6 border-t border-border">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        setOrdersPage((page) => Math.max(1, page - 1))
-                      }
-                      className={
-                        safeOrdersPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  {getPageNumbers(safeOrdersPage, totalOrderPages).map((page, index) =>
-                    page === "ellipsis" ? (
-                      <PaginationItem key={`dashboard-ellipsis-${index}`}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    ) : (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          isActive={safeOrdersPage === page}
-                          onClick={() => setOrdersPage(page)}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ),
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        setOrdersPage((page) =>
-                          Math.min(totalOrderPages, page + 1),
-                        )
-                      }
-                      className={
-                        safeOrdersPage === totalOrderPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -373,9 +343,9 @@ export default function StoreDashboard() {
                       {item.label}
                     </p>
                   </div>
-                  <p className="text-xl font-bold text-foreground">
-                    {item.value}
-                  </p>
+                  <div className="text-xl font-bold text-foreground">
+                    {isLoading ? <Skeleton className="h-7 w-8 inline-block" /> : item.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -400,9 +370,9 @@ export default function StoreDashboard() {
                       {item.label}
                     </p>
                   </div>
-                  <p className="text-xl font-bold text-foreground">
-                    {item.value}
-                  </p>
+                  <div className="text-xl font-bold text-foreground">
+                    {isLoading ? <Skeleton className="h-7 w-8 inline-block" /> : item.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -412,7 +382,7 @@ export default function StoreDashboard() {
         <Card className="rounded-xl border border-border shadow-sm">
           <CardHeader className="px-6 pt-6 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">
-              Today's Performance
+              Today&apos;s Performance
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6">
@@ -422,9 +392,9 @@ export default function StoreDashboard() {
                   <p className="text-base font-normal text-muted-foreground">
                     {item.label}
                   </p>
-                  <p className={`text-xl font-bold ${item.valueColor}`}>
-                    {item.value}
-                  </p>
+                  <div className={`text-xl font-bold ${item.valueColor}`}>
+                    {isLoading ? <Skeleton className="h-7 w-20 inline-block" /> : item.value}
+                  </div>
                 </div>
               ))}
             </div>

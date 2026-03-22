@@ -25,6 +25,8 @@ import {
 import { useOfflineBills } from "@/hooks/useOfflineBills";
 import { BillDetailsSheet } from "./BillDetailsSheet";
 import type { PaymentMode } from "@/lib/api/offlineBills";
+import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
+import { getPaginationPageNumbers } from "@/lib/display/pagination";
 
 const OFFLINE_BILLS_PAGE_LIMIT = 20;
 
@@ -32,65 +34,8 @@ const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
   card: "Card",
-  cheque: "Cheque",
   other: "Other",
 };
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatDateTime(value: string): { date: string; time: string } {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { date: "-", time: "-" };
-  }
-
-  return {
-    date: date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
-function getPageNumbers(
-  currentPage: number,
-  totalPages: number,
-): (number | "ellipsis")[] {
-  const pages: (number | "ellipsis")[] = [];
-
-  if (totalPages <= 5) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pages.push(page);
-    }
-    return pages;
-  }
-
-  pages.push(1);
-  if (currentPage > 3) pages.push("ellipsis");
-
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let page = start; page <= end; page += 1) {
-    pages.push(page);
-  }
-
-  if (currentPage < totalPages - 2) pages.push("ellipsis");
-  pages.push(totalPages);
-
-  return pages;
-}
 
 export default function OfflineBillsPage() {
   const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
@@ -217,7 +162,7 @@ export default function OfflineBillsPage() {
               {!isLoading &&
                 !isError &&
                 bills.map((bill) => {
-                  const createdAt = formatDateTime(bill.created_at);
+                  const createdAt = splitIsoDateTime(bill.created_at);
                   return (
                     <TableRow key={bill.id} className="border-b border-border">
                       <TableCell className="py-4 pl-4">
@@ -230,16 +175,16 @@ export default function OfflineBillsPage() {
                         <div className="text-xs text-muted-foreground">{createdAt.time}</div>
                       </TableCell>
                       <TableCell className="py-4 pl-4 text-sm text-foreground">
-                        {formatCurrency(bill.subtotal)}
+                        {formatInr(bill.subtotal)}
                       </TableCell>
                       <TableCell className="py-4 pl-4 text-sm text-[#00a63e]">
-                        -{formatCurrency(bill.discount)}
+                        -{formatInr(bill.discount)}
                       </TableCell>
                       <TableCell className="py-4 pl-4 text-sm text-foreground">
-                        {formatCurrency(bill.tax)}
+                        {formatInr(bill.tax)}
                       </TableCell>
                       <TableCell className="py-4 pl-4 text-sm font-semibold text-foreground">
-                        {formatCurrency(bill.total_amount)}
+                        {formatInr(bill.total_amount)}
                       </TableCell>
                       <TableCell className="py-4 pl-4">
                         <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-foreground">
@@ -276,7 +221,7 @@ export default function OfflineBillsPage() {
                   }
                 />
               </PaginationItem>
-              {getPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
+              {getPaginationPageNumbers(safeCurrentPage, totalPages).map((page, index) =>
                 page === "ellipsis" ? (
                   <PaginationItem key={`ellipsis-${index}`}>
                     <PaginationEllipsis />

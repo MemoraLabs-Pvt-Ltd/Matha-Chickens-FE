@@ -1,4 +1,4 @@
-import { apiGet, apiPut } from "@/lib/api";
+import { apiGet, apiPut } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
 export type OrderStatus = "order_received" | "dispatched" | "delivered";

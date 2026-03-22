@@ -14,10 +14,13 @@ import { Sidebar } from "@/components/common/layout/Sidebar";
 import { Header } from "@/components/common/layout/Header";
 import { Watermark } from "@/components/ui/watermark";
 import { useAuth } from "@/hooks/useAuth";
+import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
 
 interface AdminLayoutProps {
   title: string;
+  /** Override auth-derived display name in the header. */
   userName?: string;
+  /** Override auth email line in the header. */
   userEmail?: string;
   children: React.ReactNode;
   bgColor?: string;
@@ -29,7 +32,7 @@ const adminNavItems = [
   { icon: LuBox, label: "Items", href: "/admin/items" },
   { icon: LuTruck, label: "Suppliers", href: "/admin/suppliers" },
   { icon: Box, label: "Stock Management", href: "/admin/stocks" },
-  { icon: AlertTriangle, label: "Out of Stock Alerts", href: "/admin/out-of-stock" },
+  { icon: AlertTriangle, label: "Stock alerts", href: "/admin/stock-alerts" },
   { icon: Users, label: "Vendors", href: "/admin/vendors" },
   { icon: Store, label: "Stores", href: "/admin/stores" },
   { icon: Receipt, label: "Taxes", href: "/admin/taxes" },
@@ -40,13 +43,18 @@ const adminNavItems = [
 
 export function AdminLayout({
   title,
-  userName = "Admin User",
-  userEmail = "admin@mathachickens.com",
+  userName: userNameOverride,
+  userEmail: userEmailOverride,
   children,
   bgColor = "bg-white",
 }: AdminLayoutProps) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
+  const fromAuth = getDisplayForLoggedInUser(user);
+
+  const userName =
+    userNameOverride ?? fromAuth?.displayName ?? "User";
+  const userEmail = userEmailOverride ?? user?.email ?? "";
 
   const handleLogout = async () => {
     await logout();
@@ -57,7 +65,12 @@ export function AdminLayout({
     <div className="flex min-h-screen bg-background">
       <Sidebar navItems={adminNavItems} onLogout={handleLogout} bgColor={bgColor} />
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-        <Header title={title} userName={userName} userEmail={userEmail} />
+        <Header
+          title={title}
+          userName={userName}
+          userEmail={userEmail}
+          isLoading={authLoading && !userNameOverride}
+        />
         <div className="flex-1 p-8 overflow-auto z-10">{children}</div>
         <Watermark />
       </div>

@@ -79,7 +79,7 @@ export function StoreLayout({
 
   const handleLogout = async () => {
     await logout();
-    navigate("/", { replace: true });
+    navigate("/portal", { replace: true });
   };
 
   return (

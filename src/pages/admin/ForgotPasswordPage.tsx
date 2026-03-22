@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get("from");
+  const from = fromParam === "store" ? "store" : "admin";
+  const loginPath = from === "store" ? "/store/login" : "/admin/login";
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -20,7 +24,7 @@ export default function ForgotPasswordPage() {
     setError("");
     setIsLoading(true);
 
-    const result = await resetPassword(email);
+    const result = await resetPassword(email, { from });
 
     if (result.error) {
       setError(result.error);
@@ -32,80 +36,69 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center w-full">
-      <div className="h-[500px] relative shrink-0 w-[448px]">
-        <form onSubmit={handleReset}>
-          <div>
-            <Button
-              className="absolute left-0 top-0 px-6 py-4"
-              onClick={() => navigate("/admin/login")}
-              variant="ghost"
-              type="button"
-            >
-              <FaArrowLeft className="size-4 text-muted-foreground" />
-              <span className="font-normal leading-5 ml-2 text-sm text-muted-foreground">
-                Back to Login
-              </span>
-            </Button>
+    <div className="flex min-h-screen w-full items-center justify-center px-4 py-10 sm:py-12">
+      <div className="w-full min-w-0 max-w-md">
+        <Button
+          className="mb-4 h-auto gap-2 px-2 py-2 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(loginPath)}
+          variant="ghost"
+          type="button"
+        >
+          <FaArrowLeft className="size-4 shrink-0" />
+          <span className="text-sm font-normal">Back to Login</span>
+        </Button>
 
-            <div className="absolute bg-card border border-border flex flex-col gap-16 h-[460px] items-start left-0 p-px rounded-2xl top-[52px] w-[448px]">
-              <div className="h-[120px] relative shrink-0 w-[446px]">
-                <div className="flex flex-col items-center pt-6 px-6 size-full">
-                  <div className="h-16 relative rounded-lg shrink-0 w-[70px]">
-                    <Logo className="absolute bg-clip-padding border-0 border-transparent border-solid inset-0 max-w-none object-cover pointer-events-none rounded-lg size-full" />
-                  </div>
-
-                  <p className="font-medium leading-4 mt-4 text-base text-foreground text-center">
-                    Reset Password
-                  </p>
-
-                  <p className="font-normal leading-6 mt-1 text-base text-muted-foreground text-center px-4">
-                    Enter your email to receive a password reset link
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-px min-w-px relative w-[446px]">
-                <div className="flex flex-col items-start px-6 size-full">
-                  <div className="flex flex-col gap-4 items-start relative shrink-0 w-full">
-                    {error && (
-                      <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg w-full">
-                        {error}
-                      </div>
-                    )}
-
-                    {isSuccess ? (
-                      <div className="bg-green-100 text-green-700 text-sm p-3 rounded-lg w-full">
-                        Password reset email sent! Check your inbox.
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex flex-col gap-2 h-[58px] items-start relative shrink-0 w-full">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            className="bg-input border-transparent h-9 rounded-lg"
-                            id="email"
-                            placeholder="admin@mathachickens.com"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-
-                        <Button
-                          className="bg-admin h-9 hover:bg-admin/90 rounded-lg text-white w-full"
-                          type="submit"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? "Sending..." : "Send Reset Link"}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+        <form
+          onSubmit={handleReset}
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8"
+        >
+          <div className="flex flex-col items-center">
+            <div className="relative h-16 w-[70px] shrink-0 rounded-lg">
+              <Logo className="pointer-events-none absolute inset-0 size-full max-w-none rounded-lg border-0 object-cover" />
             </div>
+            <p className="mt-4 text-center text-base font-medium text-foreground">
+              Reset Password
+            </p>
+            <p className="mt-1 max-w-sm px-2 text-center text-base text-muted-foreground">
+              Enter your email to receive a password reset link
+            </p>
+          </div>
+
+          <div className="mt-8 flex w-full flex-col gap-4">
+            {error && (
+              <div className="w-full rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {isSuccess ? (
+              <div className="w-full rounded-lg bg-green-100 p-3 text-sm text-green-700">
+                Password reset email sent! Check your inbox.
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    className="h-9 rounded-lg border-transparent bg-input"
+                    id="email"
+                    placeholder="admin@mathachickens.com"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <Button
+                  className="h-9 w-full rounded-lg bg-primary text-white hover:bg-primary/90"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Reset Link"}
+                </Button>
+              </>
+            )}
           </div>
         </form>
       </div>

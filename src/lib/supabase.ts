@@ -7,7 +7,11 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Missing Supabase environment variables");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    detectSessionInUrl: true,
+  },
+});
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 export const ITEM_IMAGES_BUCKET =

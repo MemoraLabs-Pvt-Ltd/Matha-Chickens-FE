@@ -1,35 +1,129 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Logo } from '@/components/ui/logo';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/ui/logo";
+import { supabase } from "@/lib/supabase";
+
+function AuthCardShell({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center px-4 py-10 sm:py-12">
+      <div className="w-full min-w-0 max-w-md">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col items-center">
+            <div className="relative h-16 w-[70px] shrink-0 rounded-lg">
+              <Logo className="pointer-events-none absolute inset-0 size-full max-w-none rounded-lg border-0 object-cover" />
+            </div>
+            <p className="mt-4 text-center text-base font-medium text-foreground">
+              {title}
+            </p>
+            {subtitle ? (
+              <p className="mt-1 text-center text-base text-muted-foreground">
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
+          <div className="mt-8 flex w-full flex-col gap-4">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function loginPathFromParam(from: string | null): string {
+  return from === "store" ? "/store/login" : "/admin/login";
+}
+
+function parseHashRecovery(): boolean {
+  const hash = window.location.hash.replace(/^#/, "");
+  if (!hash) return false;
+  const params = new URLSearchParams(hash);
+  return (
+    params.get("type") === "recovery" && Boolean(params.get("access_token"))
+  );
+}
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isLoading } = useAuth();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const from = searchParams.get("from");
+  const loginPath = loginPathFromParam(from);
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const [recoveryReady, setRecoveryReady] = useState(false);
+  const [recoveryChecked, setRecoveryChecked] = useState(false);
+
   useEffect(() => {
-    // If user is already logged in, redirect to admin dashboard
-    if (!isLoading && user) {
-      navigate('/admin/dashboard');
-    }
-  }, [user, isLoading, navigate]);
+    let cancelled = false;
 
-  // Verify the token from URL params
-  const accessToken = searchParams.get('access_token');
-  const type = searchParams.get('type');
-  const isValidToken = accessToken && type === 'recovery';
+    const finish = () => {
+      if (!cancelled) setRecoveryChecked(true);
+    };
 
-  if (isLoading) {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryReady(true);
+        finish();
+      }
+    });
+
+    const run = async () => {
+      if (parseHashRecovery()) {
+        setRecoveryReady(true);
+        finish();
+        return;
+      }
+
+      const qs = new URLSearchParams(window.location.search);
+      const pkceCode = qs.get("code");
+      if (pkceCode) {
+        for (let i = 0; i < 50; i++) {
+          if (cancelled) return;
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session) {
+            setRecoveryReady(true);
+            finish();
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        finish();
+        return;
+      }
+
+      await new Promise((r) => setTimeout(r, 1600));
+      finish();
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const showInvalid = recoveryChecked && !recoveryReady && !isSuccess;
+
+  if (!recoveryChecked) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -37,185 +131,164 @@ export default function ResetPasswordPage() {
     );
   }
 
-  if (!isValidToken) {
+  if (showInvalid) {
     return (
-      <div className="flex min-h-screen items-center justify-center w-full">
-        <div className="h-[400px] relative shrink-0 w-[448px]">
-          <div className="absolute bg-card border border-border flex flex-col gap-16 h-[348px] items-start left-0 p-px rounded-2xl top-[52px] w-[448px]">
-            <div className="h-[120px] relative shrink-0 w-[446px]">
-              <div className="flex flex-col items-center pt-6 px-6 size-full">
-                <div className="h-16 relative rounded-lg shrink-0 w-[70px]">
-                  <Logo className="absolute bg-clip-padding border-0 border-transparent border-solid inset-0 max-w-none object-cover pointer-events-none rounded-lg size-full" />
-                </div>
-                <p className="font-medium leading-4 mt-4 text-base text-foreground text-center">
-                  Password Reset
-                </p>
-              </div>
-            </div>
-            <div className="flex-1 min-h-px min-w-px relative w-[446px]">
-              <div className="flex flex-col items-start px-6 size-full">
-                <div className="flex flex-col gap-4 items-start relative shrink-0 w-full">
-                  <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
-                    Invalid or expired password reset link. Please request a new one.
-                  </div>
-                  <Button
-                    className="bg-admin h-9 hover:bg-admin/90 rounded-lg text-white w-full"
-                    onClick={() => navigate('/forgot-password')}
-                  >
-                    Request New Link
-                  </Button>
-                  <p
-                    className="font-normal h-5 leading-5 text-sm text-muted-foreground text-center w-full cursor-pointer hover:underline"
-                    onClick={() => navigate('/admin/login')}
-                  >
-                    Back to Login
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <AuthCardShell title="Password Reset">
+        <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          Invalid or expired password reset link. Please request a new one.
         </div>
-      </div>
+        <Button
+          className="h-9 w-full rounded-lg bg-admin text-white hover:bg-admin/90"
+          onClick={() =>
+            navigate(
+              from === "store"
+                ? "/forgot-password?from=store"
+                : "/forgot-password",
+            )
+          }
+        >
+          Request New Link
+        </Button>
+        <p
+          className="cursor-pointer text-center text-sm text-muted-foreground hover:underline"
+          onClick={() => navigate(loginPath)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate(loginPath);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+        >
+          Back to Login
+        </p>
+      </AuthCardShell>
     );
   }
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center w-full">
-        <div className="h-[400px] relative shrink-0 w-[448px]">
-          <div className="absolute bg-card border border-border flex flex-col gap-16 h-[348px] items-start left-0 p-px rounded-2xl top-[52px] w-[448px]">
-            <div className="h-[120px] relative shrink-0 w-[446px]">
-              <div className="flex flex-col items-center pt-6 px-6 size-full">
-                <div className="h-16 relative rounded-lg shrink-0 w-[70px]">
-                  <Logo className="absolute bg-clip-padding border-0 border-transparent border-solid inset-0 max-w-none object-cover pointer-events-none rounded-lg size-full" />
-                </div>
-                <p className="font-medium leading-4 mt-4 text-base text-foreground text-center">
-                  Password Reset Complete
-                </p>
-              </div>
-            </div>
-            <div className="flex-1 min-h-px min-w-px relative w-[446px]">
-              <div className="flex flex-col items-start px-6 size-full">
-                <div className="flex flex-col gap-4 items-start relative shrink-0 w-full">
-                  <p className="text-sm text-muted-foreground text-center w-full">
-                    Your password has been successfully reset. You can now login with your new password.
-                  </p>
-                  <Button
-                    className="bg-admin h-9 hover:bg-admin/90 rounded-lg text-white w-full"
-                    onClick={() => navigate('/admin/login')}
-                  >
-                    Go to Login
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AuthCardShell title="Password Reset Complete">
+        <p className="text-center text-sm text-muted-foreground">
+          Your password has been successfully reset. You can now login with your
+          new password.
+        </p>
+        <Button
+          className="h-9 w-full rounded-lg bg-admin text-white hover:bg-admin/90"
+          onClick={() => navigate(loginPath)}
+        >
+          Go to Login
+        </Button>
+      </AuthCardShell>
     );
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     setIsSubmitting(true);
 
-    const { error } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabase.auth.updateUser({
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (updateError) {
+      setError(updateError.message);
       setIsSubmitting(false);
-    } else {
-      setIsSuccess(true);
+      return;
     }
+
+    await supabase.auth.signOut();
+    setIsSuccess(true);
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center w-full">
-      <div className="h-[500px] relative shrink-0 w-[448px]">
-        <form onSubmit={handleResetPassword}>
-          <div className="absolute bg-card border border-border flex flex-col gap-16 h-[448px] items-start left-0 p-px rounded-2xl top-[52px] w-[448px]">
-            <div className="h-[120px] relative shrink-0 w-[446px]">
-              <div className="flex flex-col items-center pt-6 px-6 size-full">
-                <div className="h-16 relative rounded-lg shrink-0 w-[70px]">
-                  <Logo className="absolute bg-clip-padding border-0 border-transparent border-solid inset-0 max-w-none object-cover pointer-events-none rounded-lg size-full" />
-                </div>
+    <div className="flex min-h-screen w-full items-center justify-center px-4 py-10 sm:py-12">
+      <div className="w-full min-w-0 max-w-md">
+        <form
+          onSubmit={handleResetPassword}
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8"
+        >
+          <div className="flex flex-col items-center">
+            <div className="relative h-16 w-[70px] shrink-0 rounded-lg">
+              <Logo className="pointer-events-none absolute inset-0 size-full max-w-none rounded-lg border-0 object-cover" />
+            </div>
+            <p className="mt-4 text-center text-base font-medium text-foreground">
+              Set New Password
+            </p>
+            <p className="mt-1 text-center text-base text-muted-foreground">
+              Enter your new password below
+            </p>
+          </div>
 
-                <p className="font-medium leading-4 mt-4 text-base text-foreground text-center">
-                  Set New Password
-                </p>
-
-                <p className="font-normal leading-6 mt-1 text-base text-muted-foreground text-center">
-                  Enter your new password below
-                </p>
+          <div className="mt-8 flex w-full flex-col gap-4">
+            {error && (
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
               </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">New Password</Label>
+              <Input
+                className="h-9 rounded-lg border-transparent bg-input"
+                id="password"
+                placeholder="Enter new password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
 
-            <div className="flex-1 min-h-px min-w-px relative w-[446px]">
-              <div className="flex flex-col items-start px-6 size-full">
-                <div className="flex flex-col gap-4 items-start relative shrink-0 w-full">
-                  {error && (
-                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 h-[58px] items-start relative shrink-0 w-full">
-                    <Label htmlFor="password">New Password</Label>
-                    <Input
-                      className="bg-input border-transparent h-9 rounded-lg"
-                      id="password"
-                      placeholder="Enter new password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2 h-[58px] items-start relative shrink-0 w-full">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      className="bg-input border-transparent h-9 rounded-lg"
-                      id="confirmPassword"
-                      placeholder="Confirm new password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    className="bg-admin h-9 hover:bg-admin/90 rounded-lg text-white w-full"
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Resetting...' : 'Reset Password'}
-                  </Button>
-
-                  <p
-                    className="font-normal h-5 leading-5 text-sm text-muted-foreground text-center w-full cursor-pointer hover:underline"
-                    onClick={() => navigate('/admin/login')}
-                  >
-                    Back to Login
-                  </p>
-                </div>
-              </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                className="h-9 rounded-lg border-transparent bg-input"
+                id="confirmPassword"
+                placeholder="Confirm new password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
             </div>
+
+            <Button
+              className="h-9 w-full rounded-lg bg-admin text-white hover:bg-admin/90"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Resetting..." : "Reset Password"}
+            </Button>
+
+            <p
+              className="cursor-pointer text-center text-sm text-muted-foreground hover:underline"
+              onClick={() => navigate(loginPath)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(loginPath);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              Back to Login
+            </p>
           </div>
         </form>
       </div>

@@ -7,23 +7,25 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-8">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10 sm:gap-8 sm:p-8">
       <img
         src={NotFoundSvg}
         alt="Page not found"
-        className="w-full max-w-[600px] h-auto"
+        className="h-auto w-full max-w-[min(600px,calc(100vw-2rem))]"
       />
-      <div className="flex flex-col items-center gap-2 text-center">
-        <p className="text-xl font-semibold text-[#0a0a0a]">Page not found</p>
-        <p className="text-sm text-muted-foreground max-w-md">
+      <div className="flex max-w-md flex-col items-center gap-2 text-center">
+        <p className="text-lg font-semibold text-[#0a0a0a] sm:text-xl">
+          Page not found
+        </p>
+        <p className="text-sm text-muted-foreground sm:text-base">
           The page you're looking for doesn't exist or has been moved.
         </p>
       </div>
       <Button
         onClick={() => navigate("/")}
-        className="bg-admin h-9 px-6 hover:bg-admin/90 rounded-lg text-white"
+        className="h-9 rounded-lg bg-admin px-6 text-white hover:bg-admin/90"
       >
-        <Home className="size-4 mr-2" />
+        <Home className="mr-2 size-4" />
         Back to Home
       </Button>
     </div>

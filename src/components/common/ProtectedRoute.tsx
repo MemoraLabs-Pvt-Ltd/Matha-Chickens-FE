@@ -19,7 +19,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/portal" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {

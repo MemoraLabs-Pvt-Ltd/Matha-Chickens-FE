@@ -25,6 +25,13 @@ interface AuthContextType {
     email: string,
     options?: { from?: "admin" | "store" },
   ) => Promise<{ error: string | null }>;
+  sendResetCode: (
+    email: string,
+  ) => Promise<{ error: string | null }>;
+  verifyResetCode: (
+    email: string,
+    code: string,
+  ) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
 }
 
@@ -110,6 +117,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const sendResetCode = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const verifyResetCode = async (email: string, code: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "recovery",
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -124,6 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         resetPassword,
+        sendResetCode,
+        verifyResetCode,
         logout,
       }}
     >

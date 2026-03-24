@@ -2,11 +2,13 @@ import { cn } from "@/lib/utils";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ImagePreviewButton } from "@/components/common/ImagePreviewButton";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface CategoryRowProps {
   id: number;
   name: string;
+  imgUrl?: string | null;
   status: "active" | "inactive";
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
@@ -20,6 +22,7 @@ const statusBadgeStyles = {
 export function CategoryRow({
   id,
   name,
+  imgUrl,
   status,
   onEdit,
   onDelete,
@@ -41,6 +44,11 @@ export function CategoryRow({
       </TableCell>
       <TableCell className="py-3 pr-6">
         <div className="flex items-center justify-end gap-2">
+          <ImagePreviewButton
+            src={imgUrl}
+            variant="icon"
+            dialogTitle={`${name} — category image`}
+          />
           <Button
             variant="ghost"
             size="icon"

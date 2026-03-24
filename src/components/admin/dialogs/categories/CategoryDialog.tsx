@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ImagePreviewButton } from '@/components/common/ImagePreviewButton';
 import {
   Dialog,
   DialogContent,
@@ -13,10 +14,13 @@ import {
   adminDialogFooterClass,
   adminDialogHeaderClass,
 } from '@/lib/adminDialogContent';
+import { ITEM_IMAGES_BUCKET, supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
+import { toast } from 'sonner';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategories';
 import type { Category } from '@/lib/api/categories';
 
@@ -65,14 +69,61 @@ function CategoryDialogBody({
   const [isActive, setIsActive] = useState(
     mode === 'edit' && category ? category.status === 'active' : true,
   );
+  const [imgUrl, setImgUrl] = useState(
+    mode === 'edit' && category ? (category.imgUrl ?? '') : '',
+  );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const isPending =
     mode === 'add' ? createCategory.isPending : updateCategory.isPending;
+
+  const handleUploadClick = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `categories/${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(ITEM_IMAGES_BUCKET)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from(ITEM_IMAGES_BUCKET)
+        .getPublicUrl(filePath);
+
+      setImgUrl(data.publicUrl);
+      toast.success('Category image uploaded successfully');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to upload image';
+      toast.error(message);
+    } finally {
+      setIsUploadingImage(false);
+      event.target.value = '';
+    }
+  };
 
   const handleSubmit = () => {
     if (!categoryName.trim()) return;
     const data = {
       name: categoryName.trim(),
+      imgUrl: imgUrl.trim() || (mode === 'edit' ? null : undefined),
       status: isActive ? ('active' as const) : ('inactive' as const),
     };
     if (mode === 'add') {
@@ -139,6 +190,50 @@ function CategoryDialogBody({
             className="data-checked:bg-toggle-on [&_[data-slot=switch-thumb]]:bg-white"
           />
         </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-[#0a0a0a]">
+            Category Image (optional)
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleUploadClick}
+              disabled={isUploadingImage}
+              className="h-8 px-3 border border-[rgba(0,0,0,0.1)] text-[#0a0a0a]"
+            >
+              <Upload className="mr-2 size-4" />
+              {isUploadingImage
+                ? 'Uploading...'
+                : imgUrl
+                  ? 'Replace Image'
+                  : 'Upload'}
+            </Button>
+            <ImagePreviewButton
+              src={imgUrl}
+              dialogTitle="Category image preview"
+            />
+            {imgUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setImgUrl('')}
+                className="h-8 px-2 text-xs text-[#525252]"
+              >
+                Remove
+              </Button>
+            )}
+          </div>
+          {imgUrl && <p className="text-xs text-[#717182] break-all">{imgUrl}</p>}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+        </div>
       </div>
 
       <div className={adminDialogFooterClass}>
@@ -154,7 +249,7 @@ function CategoryDialogBody({
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={isPending || !categoryName.trim()}
+          disabled={isPending || isUploadingImage || !categoryName.trim()}
           className={cn(
             adminDialogFooterButtonClass,
             'bg-admin px-4 text-white hover:bg-admin/90',

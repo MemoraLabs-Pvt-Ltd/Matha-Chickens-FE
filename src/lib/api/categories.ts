@@ -4,6 +4,7 @@ import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 export interface Category {
   id: number;
   name: string;
+  imgUrl: string | null;
   status: "active" | "inactive";
   created_at: string;
   updated_at: string;
@@ -17,6 +18,7 @@ export type CategoryResponse = ApiResponse<Category>;
 
 export interface CreateCategoryInput {
   name: string;
+  imgUrl?: string | null;
   status?: "active" | "inactive";
 }
 

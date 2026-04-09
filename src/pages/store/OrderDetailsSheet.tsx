@@ -12,7 +12,7 @@ import type { OrderStatus } from "@/lib/api/orders";
 import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import { formatPhoneForDisplay } from "@/lib/display/phone";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface OrderDetailsSheetProps {
   orderId: number | null;
@@ -37,18 +37,19 @@ export function OrderDetailsSheet({
   isOpen,
   onClose,
 }: OrderDetailsSheetProps) {
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
+  const [statusOverride, setStatusOverride] = useState<{
+    orderId: number;
+    value: OrderStatus;
+  } | null>(null);
 
   const { data: orderData, isLoading, isError, error } = useOrder(orderId ?? 0);
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const order = orderData?.data;
   const createdAt = order ? splitIsoDateTime(order.created_at) : null;
-
-  useEffect(() => {
-    if (order?.status) {
-      setSelectedStatus(order.status);
-    }
-  }, [order?.status]);
+  const selectedStatus =
+    statusOverride && statusOverride.orderId === order?.id
+      ? statusOverride.value
+      : (order?.status ?? "");
 
   if (!isOpen || !orderId) return null;
 
@@ -211,7 +212,10 @@ export function OrderDetailsSheet({
                   <Select
                     value={selectedStatus}
                     onValueChange={(value) =>
-                      setSelectedStatus(value as OrderStatus)
+                      setStatusOverride({
+                        orderId: order.id,
+                        value: value as OrderStatus,
+                      })
                     }
                   >
                     <SelectTrigger className="bg-muted border-transparent rounded-lg h-9">

@@ -7,6 +7,7 @@ import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { getDisplayForLoggedInUser } from "@/lib/display/authDisplay";
 import {
   AlertTriangle,
+  BarChart3,
   Box,
   FileText,
   Percent,
@@ -38,6 +39,7 @@ const adminNavItems = [
   { icon: AlertTriangle, label: "Stock alerts", href: "/admin/stock-alerts" },
   { icon: Users, label: "Vendors", href: "/admin/vendors" },
   { icon: Store, label: "Stores", href: "/admin/stores" },
+  { icon: BarChart3, label: "Billing insights", href: "/admin/billing-insights" },
   { icon: Receipt, label: "Taxes", href: "/admin/taxes" },
   { icon: Percent, label: "Discounts", href: "/admin/discounts" },
   { icon: ShoppingCart, label: "Online Orders", href: "/admin/orders" },

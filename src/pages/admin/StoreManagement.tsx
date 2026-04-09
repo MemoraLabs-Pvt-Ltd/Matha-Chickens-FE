@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminLayout } from "@/components/common/layout";
 import {
@@ -65,13 +66,22 @@ export default function StoreManagement() {
           <p className="text-base text-muted-foreground">
             Manage store locations and configuration
           </p>
-          <Button
-            onClick={() => setAddDialogOpen(true)}
-            className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-admin/90 sm:w-auto"
-          >
-            <Plus className="size-4" />
-            <span>Create Store</span>
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              variant="outline"
+              asChild
+              className="h-9 w-full shrink-0 justify-center rounded-lg border-border sm:w-auto"
+            >
+              <Link to="/admin/billing-insights">Billing insights</Link>
+            </Button>
+            <Button
+              onClick={() => setAddDialogOpen(true)}
+              className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-admin px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-admin/90 sm:w-auto"
+            >
+              <Plus className="size-4" />
+              <span>Create Store</span>
+            </Button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -94,7 +104,7 @@ export default function StoreManagement() {
                 Status
               </TableHead>
               <TableHead className="text-right py-3 pr-6 text-sm font-medium text-foreground">
-                Actions
+                Billing & actions
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -200,7 +210,19 @@ export default function StoreManagement() {
                   </TableCell>
 
                   <TableCell className="py-3 pr-6">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="h-8 rounded-lg px-2.5 text-xs font-medium"
+                      >
+                        <Link
+                          to={`/admin/billing-insights?storeId=${store.id}&store=${encodeURIComponent(store.name)}`}
+                        >
+                          Insights
+                        </Link>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

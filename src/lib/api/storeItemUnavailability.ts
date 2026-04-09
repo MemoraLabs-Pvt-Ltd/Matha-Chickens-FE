@@ -11,6 +11,7 @@ export interface UnavailableStockItem {
   unit: string;
   status: string;
   category_id: number;
+  category_name?: string | null;
 }
 
 export interface UnavailableStockStore {
@@ -47,6 +48,7 @@ export interface StoreItemAvailability {
   unit: string;
   status: string | null;
   category_id?: number;
+  category_name?: string | null;
   availability: ItemAvailability;
 }
 

@@ -219,9 +219,10 @@ export default function ItemAvailabilityPage() {
                       </TableCell>
                       <TableCell className="py-3 pl-4">
                         <span className="text-sm text-foreground">
-                          {item.category_id
-                            ? `Category #${item.category_id}`
-                            : "-"}
+                          {item.category_name?.trim() ||
+                            (item.category_id
+                              ? `Category #${item.category_id}`
+                              : "-")}
                         </span>
                       </TableCell>
                       <TableCell className="py-3 pl-4">

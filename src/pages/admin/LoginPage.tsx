@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/useAuth";
 
+const LOWERCASE_EMAIL_PATTERN = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, user, isLoading } = useAuth();
@@ -36,7 +38,14 @@ export default function LoginPage() {
     setError("");
     setIsSubmitting(true);
 
-    const result = await login(email, password);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!LOWERCASE_EMAIL_PATTERN.test(normalizedEmail)) {
+      setError("Email must be a valid lowercase email address");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const result = await login(normalizedEmail, password);
 
     if (result.error) {
       setError(result.error);
@@ -90,7 +99,9 @@ export default function LoginPage() {
                 placeholder="admin@mathachickens.com"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                autoCapitalize="none"
+                autoCorrect="off"
                 required
               />
             </div>

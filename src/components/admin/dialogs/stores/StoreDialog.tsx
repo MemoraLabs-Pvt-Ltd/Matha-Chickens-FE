@@ -40,6 +40,8 @@ interface StoreDialogBodyProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const LOWERCASE_EMAIL_PATTERN = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+
 function sanitizeNonNegativeNumberInput(value: string): string {
   if (!value.trim()) return "";
   const parsed = Number(value);
@@ -98,18 +100,22 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   const isPending =
     mode === "add" ? createStore.isPending : updateStore.isPending;
 
+  const normalizedLoginId = loginId.trim().toLowerCase();
   const emailChanged =
-    mode === "edit" && store ? loginId.trim() !== store.login_id : false;
+    mode === "edit" && store
+      ? normalizedLoginId !== store.login_id.trim().toLowerCase()
+      : false;
 
   const requiresPassword = mode === "add" || emailChanged;
   const normalizedPhone = normalizeIndianPhonePayloadFromLocal(phone);
   const phoneDigitsCount = phone.replace(/\D/g, "").length;
+  const isLowercaseEmailValid = LOWERCASE_EMAIL_PATTERN.test(normalizedLoginId);
 
   const canSubmit =
     storeName.trim().length > 0 &&
     phoneDigitsCount === 10 &&
     address.trim().length > 0 &&
-    loginId.trim().length > 0 &&
+    isLowercaseEmailValid &&
     (!requiresPassword || password.trim().length > 0);
 
   const handleSubmit = () => {
@@ -117,6 +123,11 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
 
     if (phoneDigitsCount !== 10) {
       toast.error("Enter a valid 10-digit phone number");
+      return;
+    }
+
+    if (!isLowercaseEmailValid) {
+      toast.error("Login email must be a valid lowercase email address");
       return;
     }
 
@@ -135,7 +146,7 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
       name: storeName.trim(),
       phone: normalizedPhone,
       address: address.trim(),
-      login_id: loginId.trim(),
+      login_id: normalizedLoginId,
       enable_discount: enableDiscount,
       discount_percent: enableDiscount ? parsedDiscountPercent : 0,
       is_tax_applicable: isTaxApplicable,
@@ -248,7 +259,9 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               type="email"
               placeholder="store@example.com"
               value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
+              onChange={(e) => setLoginId(e.target.value.toLowerCase())}
+              autoCapitalize="none"
+              autoCorrect="off"
               className="bg-input border-transparent rounded-lg h-9 text-sm"
             />
           </div>

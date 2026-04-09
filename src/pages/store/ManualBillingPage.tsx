@@ -55,7 +55,7 @@ import {
   normalizeIndianPhonePayloadFromLocal,
   sanitizeIndianPhoneLocalInput,
 } from "@/lib/display/phone";
-import { Eye, FileText, Minus, Plus, Receipt, Search } from "lucide-react";
+import { Eye, FileText, Receipt, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BillDetailsSheet } from "./BillDetailsSheet";
@@ -146,38 +146,31 @@ export default function ManualBillingPage() {
   const itemsTotalPages = Math.max(itemsData?.pagination?.totalPages ?? 1, 1);
   const safeItemsPage = itemsData?.pagination?.page ?? itemsPage;
 
-  const addToCart = (item: {
-    id: number;
-    name: string;
-    price: number;
-    unit: string;
-    gstPercent: number;
-    discountType: string;
-    discountValue: number;
-  }) => {
+  const setCartQuantity = (
+    item: {
+      id: number;
+      name: string;
+      price: number;
+      unit: string;
+      gstPercent: number;
+      discountType: string;
+      discountValue: number;
+    },
+    nextQuantity: number,
+  ) => {
+    const safeQuantity = Math.max(0, Math.floor(nextQuantity));
     setCart((previous) => {
       const existing = previous.find((cartItem) => cartItem.id === item.id);
-      if (existing) {
-        return previous.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem,
-        );
+      if (safeQuantity === 0) {
+        return previous.filter((cartItem) => cartItem.id !== item.id);
       }
-      return [...previous, { ...item, quantity: 1 }];
+      if (!existing) {
+        return [...previous, { ...item, quantity: safeQuantity }];
+      }
+      return previous.map((cartItem) =>
+        cartItem.id === item.id ? { ...cartItem, quantity: safeQuantity } : cartItem,
+      );
     });
-  };
-
-  const removeOneFromCart = (itemId: number) => {
-    setCart((previous) =>
-      previous
-        .map((cartItem) =>
-          cartItem.id === itemId
-            ? { ...cartItem, quantity: cartItem.quantity - 1 }
-            : cartItem,
-        )
-        .filter((cartItem) => cartItem.quantity > 0),
-    );
   };
 
   const cartQuantityByItemId = useMemo(
@@ -636,37 +629,47 @@ export default function ManualBillingPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              className="size-8 rounded-lg border-border bg-background hover:bg-muted"
-                              onClick={() => removeOneFromCart(item.id)}
-                              disabled={quantityInCart === 0}
-                            >
-                              <Minus className="size-4" />
-                            </Button>
-                            <span className="min-w-5 text-center text-sm font-medium text-foreground">
-                              {quantityInCart}
-                            </span>
-                            <Button
-                              size="icon"
-                              className="size-8 bg-store hover:bg-store/90 rounded-lg"
-                              onClick={() =>
-                                addToCart({
-                                  id: item.id,
-                                  name: item.name,
-                                  price: Number(item.price),
-                                  unit: item.unit,
-                                  gstPercent: Number(item.gst_percent),
-                                  discountType: item.discount_type ?? "none",
-                                  discountValue: Number(
-                                    item.discount_value ?? 0,
-                                  ),
-                                })
-                              }
-                            >
-                              <Plus className="size-4 text-white" />
-                            </Button>
+                            <Input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              step={1}
+                              value={quantityInCart === 0 ? "" : quantityInCart}
+                              onChange={(event) => {
+                                const raw = event.target.value;
+                                if (raw === "") {
+                                  setCartQuantity(
+                                    {
+                                      id: item.id,
+                                      name: item.name,
+                                      price: Number(item.price),
+                                      unit: item.unit,
+                                      gstPercent: Number(item.gst_percent),
+                                      discountType: item.discount_type ?? "none",
+                                      discountValue: Number(item.discount_value ?? 0),
+                                    },
+                                    0,
+                                  );
+                                  return;
+                                }
+
+                                const parsed = Number(raw);
+                                setCartQuantity(
+                                  {
+                                    id: item.id,
+                                    name: item.name,
+                                    price: Number(item.price),
+                                    unit: item.unit,
+                                    gstPercent: Number(item.gst_percent),
+                                    discountType: item.discount_type ?? "none",
+                                    discountValue: Number(item.discount_value ?? 0),
+                                  },
+                                  Number.isFinite(parsed) ? parsed : 0,
+                                );
+                              }}
+                              placeholder="0"
+                              className="h-8 w-16 rounded-lg border-border bg-background px-2 py-1 text-center text-sm font-medium tabular-nums shadow-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                            />
                           </div>
                         </div>
                       );

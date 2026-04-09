@@ -1,7 +1,7 @@
-import { StoreLayout } from "@/components/common/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { StoreLayout } from '@/components/common/layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Pagination,
   PaginationContent,
@@ -10,15 +10,15 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -26,18 +26,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/useAuth";
-import { useActiveCampaignDiscount } from "@/hooks/useDiscounts";
-import { useItems } from "@/hooks/useItems";
-import { useCreateOfflineBill, useOfflineBills } from "@/hooks/useOfflineBills";
-import { useMyStore } from "@/hooks/useStores";
-import type { OfflineBillDetail, PaymentMode } from "@/lib/api/offlineBills";
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/useAuth';
+import { useActiveCampaignDiscount } from '@/hooks/useDiscounts';
+import { useItems } from '@/hooks/useItems';
+import { useCreateOfflineBill, useOfflineBills } from '@/hooks/useOfflineBills';
+import { useMyStore } from '@/hooks/useStores';
+import type { OfflineBillDetail, PaymentMode } from '@/lib/api/offlineBills';
 import {
   computeItemDiscount,
   describeItemDiscountLabel,
-} from "@/lib/billing/itemDiscount";
+} from '@/lib/billing/itemDiscount';
 import {
   computeAdditionalDiscount,
   computeCampaignDiscountFromApi,
@@ -47,18 +47,18 @@ import {
   computeSubtotalAndTaxFromGrossLines,
   computeVendorDiscount,
   isStoreTaxApplicable,
-} from "@/lib/billing/offlineBillMath";
-import { printOfflineBillReceipt } from "@/lib/billing/printOfflineBill";
-import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
-import { getPaginationPageNumbers } from "@/lib/display/pagination";
+} from '@/lib/billing/offlineBillMath';
+import { printOfflineBillReceipt } from '@/lib/billing/printOfflineBill';
+import { formatInr, splitIsoDateTime } from '@/lib/display/formatting';
+import { getPaginationPageNumbers } from '@/lib/display/pagination';
 import {
   normalizeIndianPhonePayloadFromLocal,
   sanitizeIndianPhoneLocalInput,
-} from "@/lib/display/phone";
-import { Eye, FileText, Receipt, Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { BillDetailsSheet } from "./BillDetailsSheet";
+} from '@/lib/display/phone';
+import { Eye, FileText, Minus, Plus, Receipt, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { BillDetailsSheet } from './BillDetailsSheet';
 
 interface CartItem {
   id: number;
@@ -76,25 +76,25 @@ const ITEMS_PAGE_LIMIT = 10;
 
 /** Same defaults as `POST /offline-bills` body (`offlineBillCreateSchema`). */
 const CREATE_BILL_BODY = {
-  discount_type: "none" as const,
+  discount_type: 'none' as const,
   discount_value: 0,
 };
 
 const paymentModeLabels: Record<PaymentMode, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  card: "Card",
-  other: "Other",
+  cash: 'Cash',
+  upi: 'UPI',
+  card: 'Card',
+  other: 'Other',
 };
 
 export default function ManualBillingPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"completed" | "create">("create");
+  const [activeTab, setActiveTab] = useState<'completed' | 'create'>('create');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [paymentMode, setPaymentMode] = useState<PaymentMode | "">("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode | ''>('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,11 +122,11 @@ export default function ManualBillingPage() {
   });
 
   const { data: myStoreResponse } = useMyStore({
-    enabled: user?.role === "store_owner",
+    enabled: user?.role === 'store_owner',
   });
 
   const { data: activeCampaignResponse } = useActiveCampaignDiscount({
-    enabled: user?.role === "store_owner",
+    enabled: user?.role === 'store_owner',
   });
 
   const createOfflineBillMutation = useCreateOfflineBill();
@@ -146,30 +146,69 @@ export default function ManualBillingPage() {
   const itemsTotalPages = Math.max(itemsData?.pagination?.totalPages ?? 1, 1);
   const safeItemsPage = itemsData?.pagination?.page ?? itemsPage;
 
-  const setCartQuantity = (
-    item: {
-      id: number;
-      name: string;
-      price: number;
-      unit: string;
-      gstPercent: number;
-      discountType: string;
-      discountValue: number;
-    },
-    nextQuantity: number,
-  ) => {
-    const safeQuantity = Math.max(0, Math.floor(nextQuantity));
+  const addToCart = (item: {
+    id: number;
+    name: string;
+    price: number;
+    unit: string;
+    gstPercent: number;
+    discountType: string;
+    discountValue: number;
+  }) => {
     setCart((previous) => {
       const existing = previous.find((cartItem) => cartItem.id === item.id);
-      if (safeQuantity === 0) {
-        return previous.filter((cartItem) => cartItem.id !== item.id);
+      if (existing) {
+        return previous.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem,
+        );
       }
-      if (!existing) {
-        return [...previous, { ...item, quantity: safeQuantity }];
+      return [...previous, { ...item, quantity: 1 }];
+    });
+  };
+
+  const removeOneFromCart = (itemId: number) => {
+    setCart((previous) =>
+      previous
+        .map((cartItem) =>
+          cartItem.id === itemId
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem,
+        )
+        .filter((cartItem) => cartItem.quantity > 0),
+    );
+  };
+
+  const setCartQuantity = (itemId: number, quantity: number) => {
+    setCart((previous) => {
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        return previous.filter((cartItem) => cartItem.id !== itemId);
       }
-      return previous.map((cartItem) =>
-        cartItem.id === item.id ? { ...cartItem, quantity: safeQuantity } : cartItem,
-      );
+
+      const existing = previous.find((cartItem) => cartItem.id === itemId);
+      if (existing) {
+        return previous.map((cartItem) =>
+          cartItem.id === itemId ? { ...cartItem, quantity } : cartItem,
+        );
+      }
+
+      const source = menuItems.find((item) => item.id === itemId);
+      if (!source) return previous;
+
+      return [
+        ...previous,
+        {
+          id: source.id,
+          name: source.name,
+          price: Number(source.price),
+          unit: source.unit,
+          gstPercent: Number(source.gst_percent),
+          discountType: source.discount_type ?? "none",
+          discountValue: Number(source.discount_value ?? 0),
+          quantity,
+        },
+      ];
     });
   };
 
@@ -260,7 +299,7 @@ export default function ManualBillingPage() {
     if (cart.length === 0 || !paymentMode) return;
 
     const nameTrim = customerName.trim();
-    const phoneDigits = customerPhone.replace(/\D/g, "").length;
+    const phoneDigits = customerPhone.replace(/\D/g, '').length;
     const phonePayload = normalizeIndianPhonePayloadFromLocal(customerPhone);
 
     const response = await createOfflineBillMutation.mutateAsync({
@@ -284,15 +323,15 @@ export default function ManualBillingPage() {
         bill_items: payload.bill_items,
       };
       if (!printOfflineBillReceipt(detail, { storeName: currentStore?.name })) {
-        toast.error("Could not open print. Check browser settings.");
+        toast.error('Could not open print. Check browser settings.');
       }
     }
 
     setCart([]);
-    setPaymentMode("");
-    setCustomerName("");
-    setCustomerPhone("");
-    setActiveTab("completed");
+    setPaymentMode('');
+    setCustomerName('');
+    setCustomerPhone('');
+    setActiveTab('completed');
     setCurrentPage(1);
   };
 
@@ -330,135 +369,135 @@ export default function ManualBillingPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b border-border">
-                      <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                        Bill Number
-                      </TableHead>
-                      <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                        Date & Time
-                      </TableHead>
-                      <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                        Items
-                      </TableHead>
-                      <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                        Total
-                      </TableHead>
-                      <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
-                        Payment
-                      </TableHead>
-                      <TableHead className="text-right py-3 pr-4 text-sm font-medium text-foreground">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {billsLoading &&
-                      Array.from({ length: 6 }).map((_, index) => (
-                        <TableRow
-                          key={index}
-                          className="border-b border-border"
-                        >
-                          <TableCell className="py-4 pl-4">
-                            <Skeleton className="h-4 w-20 rounded-lg" />
-                          </TableCell>
-                          <TableCell className="py-4 pl-4">
-                            <Skeleton className="h-4 w-28 rounded-lg" />
-                          </TableCell>
-                          <TableCell className="py-4 pl-4">
-                            <Skeleton className="h-4 w-16 rounded-lg" />
-                          </TableCell>
-                          <TableCell className="py-4 pl-4">
-                            <Skeleton className="h-4 w-20 rounded-lg" />
-                          </TableCell>
-                          <TableCell className="py-4 pl-4">
-                            <Skeleton className="h-6 w-16 rounded-lg" />
-                          </TableCell>
-                          <TableCell className="py-4 pr-4 text-right">
-                            <Skeleton className="h-8 w-8 rounded-lg ml-auto" />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-
-                    {billsError && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="py-12 text-center text-sm text-destructive"
-                        >
-                          {billsErrorMessage instanceof Error
-                            ? billsErrorMessage.message
-                            : "Failed to load completed bills"}
-                        </TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-border">
+                        <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
+                          Bill Number
+                        </TableHead>
+                        <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
+                          Date & Time
+                        </TableHead>
+                        <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
+                          Items
+                        </TableHead>
+                        <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
+                          Total
+                        </TableHead>
+                        <TableHead className="text-left py-3 pl-4 text-sm font-medium text-foreground">
+                          Payment
+                        </TableHead>
+                        <TableHead className="text-right py-3 pr-4 text-sm font-medium text-foreground">
+                          Actions
+                        </TableHead>
                       </TableRow>
-                    )}
+                    </TableHeader>
+                    <TableBody>
+                      {billsLoading &&
+                        Array.from({ length: 6 }).map((_, index) => (
+                          <TableRow
+                            key={index}
+                            className="border-b border-border"
+                          >
+                            <TableCell className="py-4 pl-4">
+                              <Skeleton className="h-4 w-20 rounded-lg" />
+                            </TableCell>
+                            <TableCell className="py-4 pl-4">
+                              <Skeleton className="h-4 w-28 rounded-lg" />
+                            </TableCell>
+                            <TableCell className="py-4 pl-4">
+                              <Skeleton className="h-4 w-16 rounded-lg" />
+                            </TableCell>
+                            <TableCell className="py-4 pl-4">
+                              <Skeleton className="h-4 w-20 rounded-lg" />
+                            </TableCell>
+                            <TableCell className="py-4 pl-4">
+                              <Skeleton className="h-6 w-16 rounded-lg" />
+                            </TableCell>
+                            <TableCell className="py-4 pr-4 text-right">
+                              <Skeleton className="h-8 w-8 rounded-lg ml-auto" />
+                            </TableCell>
+                          </TableRow>
+                        ))}
 
-                    {!billsLoading &&
-                      !billsError &&
-                      completedBills.length === 0 && (
+                      {billsError && (
                         <TableRow>
                           <TableCell
                             colSpan={6}
-                            className="py-12 text-center text-sm text-muted-foreground"
+                            className="py-12 text-center text-sm text-destructive"
                           >
-                            No completed bills found
+                            {billsErrorMessage instanceof Error
+                              ? billsErrorMessage.message
+                              : 'Failed to load completed bills'}
                           </TableCell>
                         </TableRow>
                       )}
 
-                    {!billsLoading &&
-                      !billsError &&
-                      completedBills.map((bill) => {
-                        const createdAt = splitIsoDateTime(bill.created_at);
-                        return (
-                          <TableRow
-                            key={bill.id}
-                            className="border-b border-border"
-                          >
-                            <TableCell className="py-4 pl-4">
-                              <span className="text-sm font-medium text-foreground">
-                                #{bill.id}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4 pl-4">
-                              <div className="text-sm text-foreground">
-                                {createdAt.date}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {createdAt.time}
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4 pl-4">
-                              <span className="text-sm text-muted-foreground">
-                                View details
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4 pl-4">
-                              <span className="text-sm font-semibold text-foreground">
-                                {formatInr(bill.total_amount)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4 pl-4">
-                              <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-foreground">
-                                {paymentModeLabels[bill.payment_mode]}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4 pr-4 text-right">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="size-8 hover:bg-muted"
-                                onClick={() => handleViewBill(bill.id)}
-                              >
-                                <Eye className="size-4 text-muted-foreground" />
-                              </Button>
+                      {!billsLoading &&
+                        !billsError &&
+                        completedBills.length === 0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="py-12 text-center text-sm text-muted-foreground"
+                            >
+                              No completed bills found
                             </TableCell>
                           </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
+                        )}
+
+                      {!billsLoading &&
+                        !billsError &&
+                        completedBills.map((bill) => {
+                          const createdAt = splitIsoDateTime(bill.created_at);
+                          return (
+                            <TableRow
+                              key={bill.id}
+                              className="border-b border-border"
+                            >
+                              <TableCell className="py-4 pl-4">
+                                <span className="text-sm font-medium text-foreground">
+                                  #{bill.id}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4 pl-4">
+                                <div className="text-sm text-foreground">
+                                  {createdAt.date}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {createdAt.time}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4 pl-4">
+                                <span className="text-sm text-muted-foreground">
+                                  View details
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4 pl-4">
+                                <span className="text-sm font-semibold text-foreground">
+                                  {formatInr(bill.total_amount)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4 pl-4">
+                                <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-foreground">
+                                  {paymentModeLabels[bill.payment_mode]}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4 pr-4 text-right">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8 hover:bg-muted"
+                                  onClick={() => handleViewBill(bill.id)}
+                                >
+                                  <Eye className="size-4 text-muted-foreground" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
                 </div>
 
                 {billsTotalPages >= 1 && (
@@ -472,8 +511,8 @@ export default function ManualBillingPage() {
                             }
                             className={
                               safeBillsCurrentPage === 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
+                                ? 'pointer-events-none opacity-50'
+                                : 'cursor-pointer'
                             }
                           />
                         </PaginationItem>
@@ -481,7 +520,7 @@ export default function ManualBillingPage() {
                           safeBillsCurrentPage,
                           billsTotalPages,
                         ).map((page, index) =>
-                          page === "ellipsis" ? (
+                          page === 'ellipsis' ? (
                             <PaginationItem key={`ellipsis-${index}`}>
                               <PaginationEllipsis />
                             </PaginationItem>
@@ -506,8 +545,8 @@ export default function ManualBillingPage() {
                             }
                             className={
                               safeBillsCurrentPage === billsTotalPages
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
+                                ? 'pointer-events-none opacity-50'
+                                : 'cursor-pointer'
                             }
                           />
                         </PaginationItem>
@@ -566,7 +605,7 @@ export default function ManualBillingPage() {
                       <p className="text-sm text-destructive">
                         {itemsErrorMessage instanceof Error
                           ? itemsErrorMessage.message
-                          : "Failed to load items"}
+                          : 'Failed to load items'}
                       </p>
                     </div>
                   )}
@@ -585,12 +624,12 @@ export default function ManualBillingPage() {
                       const listPrice = Number(item.price);
                       const discPerUnit = computeItemDiscount(
                         listPrice,
-                        item.discount_type ?? "none",
+                        item.discount_type ?? 'none',
                         Number(item.discount_value ?? 0),
                       );
                       const netPerUnit = listPrice - discPerUnit;
                       const itemDiscLabel = describeItemDiscountLabel(
-                        item.discount_type ?? "none",
+                        item.discount_type ?? 'none',
                         Number(item.discount_value ?? 0),
                         formatInr,
                       );
@@ -609,7 +648,7 @@ export default function ManualBillingPage() {
                                 <>
                                   <span className="line-through opacity-80">
                                     {formatInr(listPrice)}
-                                  </span>{" "}
+                                  </span>{' '}
                                   <span className="text-foreground font-medium">
                                     {formatInr(netPerUnit)}
                                   </span>
@@ -629,47 +668,51 @@ export default function ManualBillingPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="size-8 rounded-lg border-border bg-background hover:bg-muted"
+                              onClick={() => removeOneFromCart(item.id)}
+                              disabled={quantityInCart === 0}
+                            >
+                              <Minus className="size-4" />
+                            </Button>
                             <Input
-                              type="number"
                               inputMode="numeric"
-                              min={0}
-                              step={1}
-                              value={quantityInCart === 0 ? "" : quantityInCart}
+                              value={quantityInCart === 0 ? "" : String(quantityInCart)}
                               onChange={(event) => {
                                 const raw = event.target.value;
-                                if (raw === "") {
-                                  setCartQuantity(
-                                    {
-                                      id: item.id,
-                                      name: item.name,
-                                      price: Number(item.price),
-                                      unit: item.unit,
-                                      gstPercent: Number(item.gst_percent),
-                                      discountType: item.discount_type ?? "none",
-                                      discountValue: Number(item.discount_value ?? 0),
-                                    },
-                                    0,
-                                  );
+                                if (raw.trim().length === 0) {
+                                  setCartQuantity(item.id, 0);
                                   return;
                                 }
-
-                                const parsed = Number(raw);
-                                setCartQuantity(
-                                  {
-                                    id: item.id,
-                                    name: item.name,
-                                    price: Number(item.price),
-                                    unit: item.unit,
-                                    gstPercent: Number(item.gst_percent),
-                                    discountType: item.discount_type ?? "none",
-                                    discountValue: Number(item.discount_value ?? 0),
-                                  },
-                                  Number.isFinite(parsed) ? parsed : 0,
-                                );
+                                const parsed = Number.parseInt(raw, 10);
+                                if (!Number.isFinite(parsed)) return;
+                                setCartQuantity(item.id, parsed);
                               }}
-                              placeholder="0"
-                              className="h-8 w-16 rounded-lg border-border bg-background px-2 py-1 text-center text-sm font-medium tabular-nums shadow-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                              className="h-8 w-14 rounded-lg border-border bg-background px-2 text-center text-sm font-medium text-foreground shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder=""
+                              aria-label={`${item.name} quantity`}
                             />
+                            <Button
+                              size="icon"
+                              className="size-8 bg-store hover:bg-store/90 rounded-lg"
+                              onClick={() =>
+                                addToCart({
+                                  id: item.id,
+                                  name: item.name,
+                                  price: Number(item.price),
+                                  unit: item.unit,
+                                  gstPercent: Number(item.gst_percent),
+                                  discountType: item.discount_type ?? "none",
+                                  discountValue: Number(
+                                    item.discount_value ?? 0,
+                                  ),
+                                })
+                              }
+                            >
+                              <Plus className="size-4 text-white" />
+                            </Button>
                           </div>
                         </div>
                       );
@@ -687,8 +730,8 @@ export default function ManualBillingPage() {
                             }
                             className={
                               safeItemsPage === 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
+                                ? 'pointer-events-none opacity-50'
+                                : 'cursor-pointer'
                             }
                           />
                         </PaginationItem>
@@ -696,7 +739,7 @@ export default function ManualBillingPage() {
                           safeItemsPage,
                           itemsTotalPages,
                         ).map((page, index) =>
-                          page === "ellipsis" ? (
+                          page === 'ellipsis' ? (
                             <PaginationItem key={`items-ellipsis-${index}`}>
                               <PaginationEllipsis />
                             </PaginationItem>
@@ -721,8 +764,8 @@ export default function ManualBillingPage() {
                             }
                             className={
                               safeItemsPage === itemsTotalPages
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
+                                ? 'pointer-events-none opacity-50'
+                                : 'cursor-pointer'
                             }
                           />
                         </PaginationItem>
@@ -759,7 +802,7 @@ export default function ManualBillingPage() {
                             {item.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatInr(item.price - item.discountPerUnit)} x{" "}
+                            {formatInr(item.price - item.discountPerUnit)} x{' '}
                             {item.quantity}
                           </p>
                         </div>
@@ -779,8 +822,8 @@ export default function ManualBillingPage() {
                 <p className="text-xs text-muted-foreground mt-1 mb-4 shrink-0">
                   Tax inclusive — item list prices include GST
                   {taxApplicable
-                    ? "; subtotal is ex-GST and the tax line is the GST portion."
-                    : "; no separate GST charge for this store."}
+                    ? '; subtotal is ex-GST and the tax line is the GST portion.'
+                    : '; no separate GST charge for this store.'}
                 </p>
 
                 <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-1">
@@ -798,7 +841,7 @@ export default function ManualBillingPage() {
                       Store Discount (
                       {currentStore?.enable_discount
                         ? `${Number(currentStore.discount_percent)}%`
-                        : "0%"}
+                        : '0%'}
                       ):
                     </span>
                     <span className="text-sm text-blue-500">
@@ -811,12 +854,12 @@ export default function ManualBillingPage() {
                       className="text-sm text-foreground min-w-0"
                       title="App-wide discount from admin. If several are active for the same period, the one with the latest start date is used (not per-store)."
                     >
-                      Active global discount{" "}
+                      Active global discount{' '}
                       {activeCampaignResponse?.data?.discount_value}(
                       {activeCampaignResponse?.data?.discount_type ===
-                      "percentage"
-                        ? "%"
-                        : "₹"}
+                      'percentage'
+                        ? '%'
+                        : '₹'}
                       ) :
                     </span>
                     <span className="text-sm text-yellow-500 shrink-0 tabular-nums">
@@ -835,7 +878,7 @@ export default function ManualBillingPage() {
 
                   <div className="flex justify-between">
                     <span className="text-sm text-foreground">
-                      Tax {taxApplicable ? "" : "(Not Applicable)"}:
+                      Tax {taxApplicable ? '' : '(Not Applicable)'}:
                     </span>
                     <span className="text-sm text-foreground">
                       {formatInr(taxAmount)}
@@ -854,7 +897,7 @@ export default function ManualBillingPage() {
                   <div className="border-t border-border pt-4 space-y-3">
                     <div>
                       <p className="text-sm font-medium text-foreground mb-2">
-                        Customer{" "}
+                        Customer{' '}
                         <span className="text-muted-foreground font-normal">
                           (optional)
                         </span>
@@ -922,8 +965,8 @@ export default function ManualBillingPage() {
                   >
                     <FileText className="size-4 mr-2" />
                     {createOfflineBillMutation.isPending
-                      ? "Saving..."
-                      : "Save & Print Bill"}
+                      ? 'Saving...'
+                      : 'Save & Print Bill'}
                   </Button>
                 </div>
               </div>

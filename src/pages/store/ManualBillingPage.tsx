@@ -679,7 +679,7 @@ export default function ManualBillingPage() {
                             </Button>
                             <Input
                               inputMode="numeric"
-                              value={quantityInCart === 0 ? "" : String(quantityInCart)}
+                              value={String(quantityInCart)}
                               onChange={(event) => {
                                 const raw = event.target.value;
                                 if (raw.trim().length === 0) {

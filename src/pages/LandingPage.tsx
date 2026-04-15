@@ -1,17 +1,37 @@
 /** Staff portal: admin vs store login cards at `/portal`. */
-import { FaUserCog, FaStore } from "react-icons/fa";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useEffect } from 'react';
+import { FaUserCog, FaStore } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Logo } from "@/components/ui/logo";
+} from '@/components/ui/card';
+import { Logo } from '@/components/ui/logo';
+import { useAuth } from '@/hooks/useAuth';
+import { getDashboardPath } from '@/lib/auth';
 
 export default function LoginLanding() {
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate(getDashboardPath(user.role), { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="flex h-20 w-full shrink-0 items-center justify-center border-b border-border bg-background px-4 pt-3 pb-px sm:h-24 sm:pt-4">

@@ -1,4 +1,4 @@
-import type { AuthRole, AuthUser } from "@/hooks/useAuth";
+import type { AuthRole, AuthUser } from "@/types/auth";
 
 const ROLE_LABEL: Record<AuthRole, string> = {
   admin: "Admin",

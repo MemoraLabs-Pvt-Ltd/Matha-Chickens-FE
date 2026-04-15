@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/useAuth";
+import { getDashboardPath } from "@/lib/auth";
 
 const LOWERCASE_EMAIL_PATTERN = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
 
@@ -20,7 +21,7 @@ export default function StoreLoginPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      navigate("/store/dashboard");
+      navigate(getDashboardPath(user.role), { replace: true });
     }
   }, [user, isLoading, navigate]);
 

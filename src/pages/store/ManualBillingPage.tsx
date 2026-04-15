@@ -204,7 +204,7 @@ export default function ManualBillingPage() {
           price: Number(source.price),
           unit: source.unit,
           gstPercent: Number(source.gst_percent),
-          discountType: source.discount_type ?? "none",
+          discountType: source.discount_type ?? 'none',
           discountValue: Number(source.discount_value ?? 0),
           quantity,
         },
@@ -704,7 +704,7 @@ export default function ManualBillingPage() {
                                   price: Number(item.price),
                                   unit: item.unit,
                                   gstPercent: Number(item.gst_percent),
-                                  discountType: item.discount_type ?? "none",
+                                  discountType: item.discount_type ?? 'none',
                                   discountValue: Number(
                                     item.discount_value ?? 0,
                                   ),

@@ -1,41 +1,8 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
+import type { AuthRole, AuthUser } from '@/types/auth';
 import type { Session, User } from '@supabase/supabase-js';
-
-export type AuthRole = 'admin' | 'store_owner' | 'user';
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: AuthRole;
-}
-
-interface AuthContextType {
-  user: AuthUser | null;
-  session: Session | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ error: string | null }>;
-  resetPassword: (
-    email: string,
-    options?: { from?: "admin" | "store" },
-  ) => Promise<{ error: string | null }>;
-  sendResetCode: (
-    email: string,
-  ) => Promise<{ error: string | null }>;
-  verifyResetCode: (
-    email: string,
-    code: string,
-  ) => Promise<{ error: string | null }>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './auth-context';
 
 function readRoleFromMetadata(user: User): AuthRole | null {
   const appRole = user.app_metadata?.role;
@@ -103,11 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (
     email: string,
-    options?: { from?: "admin" | "store" },
+    options?: { from?: 'admin' | 'store' },
   ) => {
     const url = new URL(`${window.location.origin}/reset-password`);
-    if (options?.from === "store") {
-      url.searchParams.set("from", "store");
+    if (options?.from === 'store') {
+      url.searchParams.set('from', 'store');
     }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: url.toString(),
@@ -132,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token: code,
-      type: "recovery",
+      type: 'recovery',
     });
     if (error) return { error: error.message };
     return { error: null };
@@ -160,12 +127,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }

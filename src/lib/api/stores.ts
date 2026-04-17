@@ -6,6 +6,8 @@ export interface Store {
   name: string;
   phone: string;
   address: string;
+  pincode: string;
+  state: string;
   login_id: string;
   enable_discount: boolean;
   discount_percent: number;
@@ -31,6 +33,8 @@ export interface CreateStoreInput {
   name: string;
   phone: string;
   address: string;
+  pincode: string;
+  state: string;
   login_id: string;
   password: string;
   enable_discount?: boolean;
@@ -43,6 +47,8 @@ export interface UpdateStoreInput {
   name: string;
   phone: string;
   address: string;
+  pincode: string;
+  state: string;
   login_id: string;
   password?: string;
   enable_discount?: boolean;

@@ -80,6 +80,12 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   const [address, setAddress] = useState(
     mode === "edit" && store ? store.address : "",
   );
+  const [pincode, setPincode] = useState(
+    mode === "edit" && store ? store.pincode : "",
+  );
+  const [state, setState] = useState(
+    mode === "edit" && store ? store.state : "",
+  );
   const [loginId, setLoginId] = useState(
     mode === "edit" && store ? store.login_id : "",
   );
@@ -115,6 +121,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
     storeName.trim().length > 0 &&
     phoneDigitsCount === 10 &&
     address.trim().length > 0 &&
+    pincode.trim().length > 0 &&
+    state.trim().length > 0 &&
     isLowercaseEmailValid &&
     (!requiresPassword || password.trim().length > 0);
 
@@ -146,6 +154,8 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
       name: storeName.trim(),
       phone: normalizedPhone,
       address: address.trim(),
+      pincode: pincode.trim(),
+      state: state.trim(),
       login_id: normalizedLoginId,
       enable_discount: enableDiscount,
       discount_percent: enableDiscount ? parsedDiscountPercent : 0,
@@ -244,6 +254,40 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
             onChange={(e) => setAddress(e.target.value)}
             className="bg-input border-transparent rounded-lg h-9 text-sm"
           />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 min-w-0 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label
+              htmlFor="pincode"
+              className="text-sm font-medium text-foreground"
+            >
+              Pincode *
+            </Label>
+            <Input
+              id="pincode"
+              placeholder="Enter pincode"
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value)}
+              className="bg-input border-transparent rounded-lg h-9 text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="state"
+              className="text-sm font-medium text-foreground"
+            >
+              State *
+            </Label>
+            <Input
+              id="state"
+              placeholder="Enter state"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              className="bg-input border-transparent rounded-lg h-9 text-sm"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 min-w-0 sm:grid-cols-2">

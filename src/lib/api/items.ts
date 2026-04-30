@@ -1,7 +1,7 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
-import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
+import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api/client';
+import type { ApiResponse, PaginationMeta } from '@/lib/api/types';
 
-export const UNIT_OPTIONS = ["kg", "pack", "pcs", "dozen", "liters"] as const;
+export const UNIT_OPTIONS = ['Kg', 'Nos', 'Tray'] as const;
 
 export interface Item {
   id: number;
@@ -44,14 +44,16 @@ export interface CreateItemInput {
   status?: string;
 }
 
-export async function getItems(params?: ItemsQueryParams): Promise<ItemListResponse> {
+export async function getItems(
+  params?: ItemsQueryParams,
+): Promise<ItemListResponse> {
   const searchParams = new URLSearchParams();
-  if (params?.page) searchParams.set("page", String(params.page));
-  if (params?.limit) searchParams.set("limit", String(params.limit));
-  if (params?.search) searchParams.set("search", params.search);
+  if (params?.page) searchParams.set('page', String(params.page));
+  if (params?.limit) searchParams.set('limit', String(params.limit));
+  if (params?.search) searchParams.set('search', params.search);
 
   const query = searchParams.toString();
-  return apiGet<ItemListResponse>(`/items${query ? `?${query}` : ""}`);
+  return apiGet<ItemListResponse>(`/items${query ? `?${query}` : ''}`);
 }
 
 export async function getItem(id: number): Promise<ItemResponse> {
@@ -59,10 +61,13 @@ export async function getItem(id: number): Promise<ItemResponse> {
 }
 
 export async function createItem(data: CreateItemInput): Promise<ItemResponse> {
-  return apiPost<ItemResponse>("/items", data);
+  return apiPost<ItemResponse>('/items', data);
 }
 
-export async function updateItem(id: number, data: CreateItemInput): Promise<ItemResponse> {
+export async function updateItem(
+  id: number,
+  data: CreateItemInput,
+): Promise<ItemResponse> {
   return apiPut<ItemResponse>(`/items/${id}`, data);
 }
 

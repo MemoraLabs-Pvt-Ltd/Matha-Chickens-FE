@@ -678,15 +678,17 @@ export default function ManualBillingPage() {
                               <Minus className="size-4" />
                             </Button>
                             <Input
-                              inputMode="numeric"
-                              value={String(quantityInCart)}
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              value={quantityInCart}
                               onChange={(event) => {
                                 const raw = event.target.value;
                                 if (raw.trim().length === 0) {
                                   setCartQuantity(item.id, 0);
                                   return;
                                 }
-                                const parsed = Number.parseInt(raw, 10);
+                                const parsed = Number.parseFloat(raw);
                                 if (!Number.isFinite(parsed)) return;
                                 setCartQuantity(item.id, parsed);
                               }}

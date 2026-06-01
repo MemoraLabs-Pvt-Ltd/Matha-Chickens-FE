@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/testimonials-columns-1";
 import { cn } from "@/lib/utils";
 import LogoMetal from "@/assets/LogoMetal.png";
-import appleStoreIcon from "@/assets/apple_store.svg";
 import playStoreIcon from "@/assets/play_store.svg";
 import familyPackImage from "@/assets/family-pack.png";
 import bonelessValueImage from "@/assets/boneless-value.png";
@@ -254,31 +253,6 @@ function StoreDownloadButtons({ fullWidth = false }: { fullWidth?: boolean }) {
         fullWidth ? "w-full flex-col" : "items-center",
       )}
     >
-      <Button variant="outline" size="sm" className={btnClass} asChild>
-        <a
-          href="#"
-          onClick={(e) => e.preventDefault()}
-          aria-label="Download on the App Store — coming soon"
-        >
-          <img
-            src={appleStoreIcon}
-            alt=""
-            className={cn(
-              "shrink-0 object-contain",
-              fullWidth ? "size-8" : "size-7",
-            )}
-            aria-hidden
-          />
-          <span className="min-w-0 text-left leading-tight">
-            <span className="block text-[9px] font-medium text-[#E7000B]/85">
-              Download on the
-            </span>
-            <span className="block text-sm font-semibold tracking-tight">
-              App Store
-            </span>
-          </span>
-        </a>
-      </Button>
       <Button variant="outline" size="sm" className={btnClass} asChild>
         <a
           href="#"
@@ -567,7 +541,7 @@ export default function HomePage() {
                     asChild
                     className="mt-4 h-auto p-0 text-xs font-semibold uppercase tracking-wide text-[#E7000B] opacity-90 hover:opacity-100"
                   >
-                    <a href="#contact">
+                    <a href="#find-us">
                       Check availability
                       <ArrowRight className="ml-1 size-3.5" />
                     </a>
@@ -622,7 +596,7 @@ export default function HomePage() {
                 asChild
                 className="bg-[#E7000B] text-[#FFFFFF] hover:bg-[#E7000B]/90"
               >
-                <a href="#contact">Check today&apos;s rates</a>
+                <a href="mailto:support@mathachickens.com?subject=Chicken%20Rates%20Inquiry">Check today&apos;s rates</a>
               </Button>
             </div>
 
@@ -704,33 +678,6 @@ export default function HomePage() {
                   store.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="min-h-[52px] w-full max-w-full justify-start gap-3 rounded-xl border border-[#FFFFFF]/15 bg-[#FFFFFF] px-4 py-2.5 text-[#E7000B] shadow-lg hover:bg-[#FFFFFF]/95 sm:w-auto"
-                    asChild
-                  >
-                    <a
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
-                      aria-label="Download on the App Store — coming soon"
-                    >
-                      <img
-                        src={appleStoreIcon}
-                        alt=""
-                        className="size-9 shrink-0 object-contain"
-                        aria-hidden
-                      />
-                      <span className="min-w-0 text-left leading-tight">
-                        <span className="block text-[10px] font-medium text-[#E7000B]/85">
-                          Download on the
-                        </span>
-                        <span className="block text-lg font-semibold tracking-tight">
-                          App Store
-                        </span>
-                      </span>
-                    </a>
-                  </Button>
                   <Button
                     variant="secondary"
                     size="lg"
@@ -835,7 +782,11 @@ export default function HomePage() {
                     asChild
                     className="bg-[#FFFFFF] text-[#d10c18] hover:bg-[#fff4ee]"
                   >
-                    <a href="#contact">
+                    <a
+                      href="https://maps.google.com/?q=Matha+Chickens+Barkur+Road+Barkur+Karnataka"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Get directions
                       <ArrowRight className="size-4" />
                     </a>
@@ -869,7 +820,7 @@ export default function HomePage() {
                     asChild
                     className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
                   >
-                    <a href="#contact">Contact us</a>
+                    <a href="mailto:support@mathachickens.com">Contact us</a>
                   </Button>
                 </li>
                 <li>
@@ -887,7 +838,7 @@ export default function HomePage() {
                     asChild
                     className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
                   >
-                    <a href="#">Privacy</a>
+                    <Link to="/privacy-policy">Privacy Policy</Link>
                   </Button>
                 </li>
               </ul>
@@ -949,20 +900,22 @@ export default function HomePage() {
                     <a href="#find-us">Partner stores</a>
                   </Button>
                 </li>
-                <li>
-                  <Button
-                    variant="link"
-                    asChild
-                    className="h-auto p-0 text-sm text-zinc-300 hover:text-[#FFFFFF] hover:no-underline"
-                  >
-                    <a href="#">FAQs</a>
-                  </Button>
-                </li>
               </ul>
             </div>
           </div>
           <div className="mx-auto mt-12 max-w-7xl border-t border-zinc-800 px-4 pt-8 text-center text-xs text-zinc-500 sm:px-6">
-            © {new Date().getFullYear()} Matha Chickens. All rights reserved.
+            <p>© {new Date().getFullYear()} Matha Chickens. All rights reserved.</p>
+            <p className="mt-1 text-[10px] text-zinc-600">
+              Privacy Policy generated using{" "}
+              <a
+                href="https://www.termsfeed.com/privacy-policy-generator/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-500 hover:text-zinc-400 hover:underline"
+              >
+                TermsFeed Privacy Policy Generator
+              </a>.
+            </p>
           </div>
         </footer>
       </main>

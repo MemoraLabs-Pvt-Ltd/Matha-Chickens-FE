@@ -945,18 +945,6 @@ export default function PrivacyPolicy() {
           <p>
             © {new Date().getFullYear()} Matha Chickens. All rights reserved.
           </p>
-          <p className='mt-1 text-[10px] text-muted-foreground/75'>
-            Privacy Policy generated using{' '}
-            <a
-              href='https://www.termsfeed.com/privacy-policy-generator/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='font-medium text-foreground hover:underline'
-            >
-              TermsFeed Privacy Policy Generator
-            </a>
-            .
-          </p>
         </div>
       </footer>
     </div>

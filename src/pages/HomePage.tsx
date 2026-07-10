@@ -255,9 +255,10 @@ function StoreDownloadButtons({ fullWidth = false }: { fullWidth?: boolean }) {
     >
       <Button variant="outline" size="sm" className={btnClass} asChild>
         <a
-          href="#"
-          onClick={(e) => e.preventDefault()}
-          aria-label="Get it on Google Play — coming soon"
+          href="https://play.google.com/store/apps/details?id=com.mathachickens.mathachickens"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Get it on Google Play"
         >
           <img
             src={playStoreIcon}
@@ -685,9 +686,10 @@ export default function HomePage() {
                     asChild
                   >
                     <a
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
-                      aria-label="Get it on Google Play — coming soon"
+                      href="https://play.google.com/store/apps/details?id=com.mathachickens.mathachickens"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Get it on Google Play"
                     >
                       <img
                         src={playStoreIcon}

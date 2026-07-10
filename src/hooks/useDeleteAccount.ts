@@ -11,7 +11,7 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: async ({ email, password }: DeleteAccountInput) => {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/profile/delete-by-credentials`,
+        `${API_BASE_URL}/profile/delete-by-credentials`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

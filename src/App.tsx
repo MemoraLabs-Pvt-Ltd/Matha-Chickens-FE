@@ -35,6 +35,7 @@ import OfflineBillsPage from "./pages/store/OfflineBillsPage";
 import NotFound from "./pages/NotFound";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import DeleteAccountPage from "./pages/DeleteAccountPage";
 import RootLayout from "@/layouts/RootLayout";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
@@ -87,6 +88,7 @@ function App() {
               <Route path="/store/login" element={<StoreLoginPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/delete-account" element={<DeleteAccountPage />} />
             </Route>
 
             <Route

@@ -1,7 +1,13 @@
 import { apiGet, apiPut } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export type OrderStatus = "order_received" | "dispatched" | "delivered";
+export type OrderStatus =
+  | "order_received"
+  | "out_for_delivery"
+  | "dispatched"
+  | "delivered"
+  | "cancelled"
+  | "refunded";
 
 export interface Order {
   id: number;
@@ -15,6 +21,7 @@ export interface Order {
   tax: number;
   total_amount: number;
   status: OrderStatus;
+  cancel_reason?: string;
   created_at: string;
 }
 
@@ -44,6 +51,7 @@ export interface OrdersQueryParams {
 
 export interface UpdateOrderStatusInput {
   status: OrderStatus;
+  cancel_reason?: string;
 }
 
 export interface OrderListResponse extends ApiResponse<Order[]> {

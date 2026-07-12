@@ -40,8 +40,15 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
-      updateOrderStatus(id, { status }),
+    mutationFn: ({
+      id,
+      status,
+      cancel_reason,
+    }: {
+      id: number;
+      status: OrderStatus;
+      cancel_reason?: string;
+    }) => updateOrderStatus(id, { status, cancel_reason }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });

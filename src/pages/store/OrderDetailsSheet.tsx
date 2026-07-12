@@ -22,14 +22,20 @@ interface OrderDetailsSheetProps {
 
 const statusStyles: Record<OrderStatus, { bg: string; text: string }> = {
   order_received: { bg: "bg-[#dbeafe]", text: "text-[#193cb8]" },
+  out_for_delivery: { bg: "bg-[#ffedd5]", text: "text-[#c2410c]" },
   dispatched: { bg: "bg-[#fef3c6]", text: "text-[#973c00]" },
   delivered: { bg: "bg-[#dcfce7]", text: "text-[#016630]" },
+  cancelled: { bg: "bg-[#fee2e2]", text: "text-[#991b1b]" },
+  refunded: { bg: "bg-[#f3e8ff]", text: "text-[#6b21a8]" },
 };
 
 const statusLabels: Record<OrderStatus, string> = {
   order_received: "Order Received",
+  out_for_delivery: "Out for Delivery",
   dispatched: "Dispatched",
   delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export function OrderDetailsSheet({
@@ -41,6 +47,7 @@ export function OrderDetailsSheet({
     orderId: number;
     value: OrderStatus;
   } | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const { data: orderData, isLoading, isError, error } = useOrder(orderId ?? 0);
   const updateOrderStatusMutation = useUpdateOrderStatus();
@@ -57,14 +64,18 @@ export function OrderDetailsSheet({
     Boolean(order) &&
     Boolean(selectedStatus) &&
     selectedStatus !== order?.status &&
-    !updateOrderStatusMutation.isPending;
+    !updateOrderStatusMutation.isPending &&
+    (selectedStatus !== "cancelled" || cancelReason.trim().length > 0);
 
   const handleUpdateStatus = async () => {
     if (!order || !selectedStatus) return;
     await updateOrderStatusMutation.mutateAsync({
       id: order.id,
       status: selectedStatus,
+      cancel_reason: selectedStatus === "cancelled" ? cancelReason.trim() : undefined,
     });
+    setCancelReason("");
+    setStatusOverride(null);
   };
 
   return (
@@ -203,11 +214,18 @@ export function OrderDetailsSheet({
                   Order Status
                 </h3>
                 <div className="space-y-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${statusStyles[order.status].bg} ${statusStyles[order.status].text}`}
-                  >
-                    Current: {statusLabels[order.status]}
-                  </span>
+                  <div className="flex flex-col gap-2">
+                    <span
+                      className={`inline-flex items-center self-start px-2 py-1 rounded text-xs font-medium ${statusStyles[order.status].bg} ${statusStyles[order.status].text}`}
+                    >
+                      Current: {statusLabels[order.status]}
+                    </span>
+                    {order.status === "cancelled" && order.cancel_reason && (
+                      <div className="text-sm text-[#991b1b] bg-[#fee2e2]/30 border border-[#fee2e2] rounded-[10px] p-3">
+                        <span className="font-bold">Cancellation Reason:</span> {order.cancel_reason}
+                      </div>
+                    )}
+                  </div>
 
                   <Select
                     value={selectedStatus}
@@ -225,10 +243,31 @@ export function OrderDetailsSheet({
                       <SelectItem value="order_received">
                         Order Received
                       </SelectItem>
+                      <SelectItem value="out_for_delivery">
+                        Out for Delivery
+                      </SelectItem>
                       <SelectItem value="dispatched">Dispatched</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
+                      {order.status !== "out_for_delivery" && order.status !== "delivered" && (
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      )}
+                      <SelectItem value="refunded">Refunded</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {selectedStatus === "cancelled" && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground">
+                        Cancellation Reason <span className="text-destructive">*</span>
+                      </label>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Enter reason for cancellation..."
+                        className="w-full min-h-[70px] p-2 text-sm bg-muted border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-store"
+                      />
+                    </div>
+                  )}
 
                   <Button
                     onClick={handleUpdateStatus}

@@ -40,14 +40,20 @@ const ORDERS_PAGE_LIMIT = 20;
 
 const statusStyles: Record<OrderStatus, { bg: string; text: string }> = {
   order_received: { bg: "bg-[#dbeafe]", text: "text-[#193cb8]" },
+  out_for_delivery: { bg: "bg-[#ffedd5]", text: "text-[#c2410c]" },
   dispatched: { bg: "bg-[#fef3c6]", text: "text-[#973c00]" },
   delivered: { bg: "bg-[#dcfce7]", text: "text-[#016630]" },
+  cancelled: { bg: "bg-[#fee2e2]", text: "text-[#991b1b]" },
+  refunded: { bg: "bg-[#f3e8ff]", text: "text-[#6b21a8]" },
 };
 
 const statusLabels: Record<OrderStatus, string> = {
   order_received: "Order Received",
+  out_for_delivery: "Out for Delivery",
   dispatched: "Dispatched",
   delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export default function OnlineOrdersPage() {
@@ -113,8 +119,11 @@ export default function OnlineOrdersPage() {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="order_received">Order Received</SelectItem>
+              <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
               <SelectItem value="dispatched">Dispatched</SelectItem>
               <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="refunded">Refunded</SelectItem>
             </SelectContent>
           </Select>
         </div>

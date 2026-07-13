@@ -12,14 +12,20 @@ interface ViewOrderSheetProps {
 
 const statusStyles: Record<OrderStatus, string> = {
   order_received: "bg-[#dbeafe] text-[#193cb8]",
+  out_for_delivery: "bg-[#ffedd5] text-[#c2410c]",
   dispatched: "bg-[#fef3c6] text-[#973c00]",
   delivered: "bg-[#dcfce7] text-[#016630]",
+  cancelled: "bg-[#fee2e2] text-[#991b1b]",
+  refunded: "bg-[#f3e8ff] text-[#6b21a8]",
 };
 
 const statusLabels: Record<OrderStatus, string> = {
   order_received: "Order Received",
+  out_for_delivery: "Out for Delivery",
   dispatched: "Dispatched",
   delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export function ViewOrderSheet({ orderId, open, onClose }: ViewOrderSheetProps) {

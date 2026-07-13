@@ -32,14 +32,20 @@ import { useMemo } from "react";
 
 const orderStatusStyles: Record<OrderStatus, string> = {
   order_received: "bg-[#dbeafe] text-[#1447e6]",
+  out_for_delivery: "bg-[#ffedd5] text-[#c2410c]",
   dispatched: "bg-[#febebe] text-[#bb4d00]",
   delivered: "bg-[#dcfce7] text-[#016630]",
+  cancelled: "bg-[#fee2e2] text-[#991b1b]",
+  refunded: "bg-[#f3e8ff] text-[#6b21a8]",
 };
 
 const orderStatusLabels: Record<OrderStatus, string> = {
   order_received: "Order Received",
+  out_for_delivery: "Out for Delivery",
   dispatched: "Dispatched",
   delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export default function StoreDashboard() {

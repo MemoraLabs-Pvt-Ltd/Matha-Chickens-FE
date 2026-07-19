@@ -89,7 +89,9 @@ export default function ItemManagement() {
         id: item.id,
         name: item.name,
         category: categoryNameById.get(item.category_id) ?? `Category #${item.category_id}`,
-        price: `₹${item.price.toFixed(2)}/${item.unit || "kg"}`,
+        price: `₹${item.price.toFixed(2)}/${
+          (item.unit || "kg").toLowerCase() === "bird" ? "kg" : item.unit || "kg"
+        }`,
         status: item.status === "inactive" ? "inactive" : "active",
         imageUrl: item.image_url,
       })),

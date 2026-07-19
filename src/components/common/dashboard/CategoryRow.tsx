@@ -10,8 +10,24 @@ interface CategoryRowProps {
   name: string;
   imgUrl?: string | null;
   status: "active" | "inactive";
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  avgPrice?: number | null;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+}
+
+function birdPriceLabel(
+  minPrice?: number | null,
+  maxPrice?: number | null,
+  avgPrice?: number | null,
+): string | null {
+  const parts = [
+    minPrice != null ? `Min ₹${minPrice}` : null,
+    maxPrice != null ? `Max ₹${maxPrice}` : null,
+    avgPrice != null ? `Avg ₹${avgPrice}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 const statusBadgeStyles = {
@@ -24,9 +40,14 @@ export function CategoryRow({
   name,
   imgUrl,
   status,
+  minPrice,
+  maxPrice,
+  avgPrice,
   onEdit,
   onDelete,
 }: CategoryRowProps) {
+  const priceLabel = birdPriceLabel(minPrice, maxPrice, avgPrice);
+
   return (
     <TableRow className="border-[rgba(0,0,0,0.1)]">
       <TableCell className="py-3 pl-6">
@@ -41,6 +62,11 @@ export function CategoryRow({
         >
           {status === "active" ? "Active" : "Inactive"}
         </Badge>
+      </TableCell>
+      <TableCell className="py-3">
+        <p className="text-sm text-muted-foreground whitespace-nowrap">
+          {priceLabel ?? "—"}
+        </p>
       </TableCell>
       <TableCell className="py-3 pr-6">
         <div className="flex items-center justify-end gap-2">

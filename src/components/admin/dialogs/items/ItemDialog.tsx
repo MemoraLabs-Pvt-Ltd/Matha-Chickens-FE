@@ -36,12 +36,20 @@ import {
   type Item,
 } from "@/lib/api/items";
 
+interface ItemDialogCategory {
+  id: number;
+  name: string;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  avgPrice?: number | null;
+}
+
 interface ItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "add" | "edit";
   item?: Item | null;
-  categories: { id: number; name: string }[];
+  categories: ItemDialogCategory[];
 }
 
 export function ItemDialog({
@@ -67,8 +75,18 @@ export function ItemDialog({
 interface ItemDialogBodyProps {
   mode: "add" | "edit";
   item?: Item | null;
-  categories: { id: number; name: string }[];
+  categories: ItemDialogCategory[];
   onOpenChange: (open: boolean) => void;
+}
+
+function birdPriceLabel(category?: ItemDialogCategory): string | null {
+  if (!category) return null;
+  const parts = [
+    category.minPrice != null ? `Min ₹${category.minPrice}` : null,
+    category.maxPrice != null ? `Max ₹${category.maxPrice}` : null,
+    category.avgPrice != null ? `Avg ₹${category.avgPrice}` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 type DiscountType = "none" | "percentage" | "flat";
@@ -134,6 +152,11 @@ function ItemDialogBody({
 
   const isPending =
     mode === "add" ? createItem.isPending : updateItem.isPending;
+
+  const selectedCategory = categories.find(
+    (cat) => String(cat.id) === categoryId,
+  );
+  const selectedBirdPriceLabel = birdPriceLabel(selectedCategory);
 
   const addTax = () => {
     setTaxes((prev) => [
@@ -331,6 +354,18 @@ function ItemDialogBody({
             </Select>
           </div>
         </div>
+
+        {selectedBirdPriceLabel && (
+          <div className="bg-[#FFF7ED] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[#9A3412]">
+              Per-bird price range: {selectedBirdPriceLabel}
+            </p>
+            <p className="text-xs text-[#C2410C]">
+              Customers will see this range per bird on items in this
+              category, along with the selling price per {unit || "kg"}.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label

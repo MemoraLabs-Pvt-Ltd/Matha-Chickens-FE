@@ -165,16 +165,20 @@ function ItemDialogBody({
   const [birdMinPrice, setBirdMinPrice] = useState("");
   const [birdMaxPrice, setBirdMaxPrice] = useState("");
   const [birdAvgPrice, setBirdAvgPrice] = useState("");
+  const prefilledCategoryIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!selectedCategory) return;
+    if (prefilledCategoryIdRef.current === selectedCategory.id) return;
+    prefilledCategoryIdRef.current = selectedCategory.id;
     setBirdMinPrice(
-      selectedCategory?.minPrice != null ? String(selectedCategory.minPrice) : "",
+      selectedCategory.minPrice != null ? String(selectedCategory.minPrice) : "",
     );
     setBirdMaxPrice(
-      selectedCategory?.maxPrice != null ? String(selectedCategory.maxPrice) : "",
+      selectedCategory.maxPrice != null ? String(selectedCategory.maxPrice) : "",
     );
     setBirdAvgPrice(
-      selectedCategory?.avgPrice != null ? String(selectedCategory.avgPrice) : "",
+      selectedCategory.avgPrice != null ? String(selectedCategory.avgPrice) : "",
     );
   }, [selectedCategory]);
 

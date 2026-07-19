@@ -40,6 +40,7 @@ import {
 interface ItemDialogCategory {
   id: number;
   name: string;
+  status: "active" | "inactive";
   minPrice?: number | null;
   maxPrice?: number | null;
   avgPrice?: number | null;
@@ -322,6 +323,7 @@ function ItemDialogBody({
           id: selectedCategory.id,
           data: {
             name: selectedCategory.name,
+            status: selectedCategory.status,
             minPrice: min,
             maxPrice: max,
             avgPrice: avg,

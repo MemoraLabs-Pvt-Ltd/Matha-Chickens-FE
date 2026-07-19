@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -29,6 +29,7 @@ import {
 } from "@/lib/adminDialogContent";
 import { cn } from "@/lib/utils";
 import { useCreateItem, useUpdateItem } from "@/hooks/useItems";
+import { useUpdateCategory } from "@/hooks/useCategories";
 import { ITEM_IMAGES_BUCKET, supabase } from "@/lib/supabase";
 import {
   UNIT_OPTIONS,
@@ -113,6 +114,7 @@ function ItemDialogBody({
 }: ItemDialogBodyProps) {
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
+  const updateCategory = useUpdateCategory();
 
   const initialTaxPercentage =
     mode === "edit" && item ? String(item.gst_percent ?? 0) : "5";
@@ -157,6 +159,23 @@ function ItemDialogBody({
     (cat) => String(cat.id) === categoryId,
   );
   const selectedBirdPriceLabel = birdPriceLabel(selectedCategory);
+  const isBirdUnit = unit.trim().toLowerCase() === "bird";
+
+  const [birdMinPrice, setBirdMinPrice] = useState("");
+  const [birdMaxPrice, setBirdMaxPrice] = useState("");
+  const [birdAvgPrice, setBirdAvgPrice] = useState("");
+
+  useEffect(() => {
+    setBirdMinPrice(
+      selectedCategory?.minPrice != null ? String(selectedCategory.minPrice) : "",
+    );
+    setBirdMaxPrice(
+      selectedCategory?.maxPrice != null ? String(selectedCategory.maxPrice) : "",
+    );
+    setBirdAvgPrice(
+      selectedCategory?.avgPrice != null ? String(selectedCategory.avgPrice) : "",
+    );
+  }, [selectedCategory]);
 
   const addTax = () => {
     setTaxes((prev) => [
@@ -275,6 +294,37 @@ function ItemDialogBody({
       return;
     }
 
+    if (isBirdUnit && selectedCategory) {
+      const min = birdMinPrice.trim() ? Number(birdMinPrice) : null;
+      const max = birdMaxPrice.trim() ? Number(birdMaxPrice) : null;
+      const avg = birdAvgPrice.trim() ? Number(birdAvgPrice) : null;
+      for (const value of [min, max, avg]) {
+        if (value !== null && (!Number.isFinite(value) || value < 0)) {
+          toast.error("Bird prices must be valid non-negative numbers");
+          return;
+        }
+      }
+      if (min !== null && max !== null && min > max) {
+        toast.error("Min price per bird cannot be greater than max price");
+        return;
+      }
+      const changed =
+        min !== (selectedCategory.minPrice ?? null) ||
+        max !== (selectedCategory.maxPrice ?? null) ||
+        avg !== (selectedCategory.avgPrice ?? null);
+      if (changed) {
+        updateCategory.mutate({
+          id: selectedCategory.id,
+          data: {
+            name: selectedCategory.name,
+            minPrice: min,
+            maxPrice: max,
+            avgPrice: avg,
+          },
+        });
+      }
+    }
+
     const payload: CreateItemInput = {
       category_id: parsedCategoryId,
       name: itemName.trim(),
@@ -355,7 +405,84 @@ function ItemDialogBody({
           </div>
         </div>
 
-        {selectedBirdPriceLabel && (
+        {isBirdUnit && (
+          <div className="bg-[#FFF7ED] rounded-lg px-3 py-3 space-y-2">
+            <p className="text-xs font-medium text-[#9A3412]">
+              Per-bird price range
+              {selectedCategory ? ` — ${selectedCategory.name}` : ""}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label
+                  htmlFor="birdMinPrice"
+                  className="text-xs text-[#9A3412]"
+                >
+                  Min (₹)
+                </Label>
+                <Input
+                  id="birdMinPrice"
+                  type="number"
+                  min={0}
+                  placeholder="450"
+                  value={birdMinPrice}
+                  onChange={(e) =>
+                    setBirdMinPrice(
+                      sanitizeNonNegativeNumberInput(e.target.value),
+                    )
+                  }
+                  className="bg-white border-transparent rounded-lg h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="birdMaxPrice"
+                  className="text-xs text-[#9A3412]"
+                >
+                  Max (₹)
+                </Label>
+                <Input
+                  id="birdMaxPrice"
+                  type="number"
+                  min={0}
+                  placeholder="700"
+                  value={birdMaxPrice}
+                  onChange={(e) =>
+                    setBirdMaxPrice(
+                      sanitizeNonNegativeNumberInput(e.target.value),
+                    )
+                  }
+                  className="bg-white border-transparent rounded-lg h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="birdAvgPrice"
+                  className="text-xs text-[#9A3412]"
+                >
+                  Avg (₹)
+                </Label>
+                <Input
+                  id="birdAvgPrice"
+                  type="number"
+                  min={0}
+                  placeholder="550"
+                  value={birdAvgPrice}
+                  onChange={(e) =>
+                    setBirdAvgPrice(
+                      sanitizeNonNegativeNumberInput(e.target.value),
+                    )
+                  }
+                  className="bg-white border-transparent rounded-lg h-9 text-sm"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-[#C2410C]">
+              Saved on the {selectedCategory?.name ?? "selected"} category and
+              shown per bird to customers on all its items.
+            </p>
+          </div>
+        )}
+        {!isBirdUnit && selectedBirdPriceLabel && (
           <div className="bg-[#FFF7ED] rounded-lg px-3 py-2">
             <p className="text-xs font-medium text-[#9A3412]">
               Per-bird price range: {selectedBirdPriceLabel}

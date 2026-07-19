@@ -72,15 +72,6 @@ function CategoryDialogBody({
   const [imgUrl, setImgUrl] = useState(
     mode === 'edit' && category ? (category.imgUrl ?? '') : '',
   );
-  const [minPrice, setMinPrice] = useState(
-    mode === 'edit' && category?.minPrice != null ? String(category.minPrice) : '',
-  );
-  const [maxPrice, setMaxPrice] = useState(
-    mode === 'edit' && category?.maxPrice != null ? String(category.maxPrice) : '',
-  );
-  const [avgPrice, setAvgPrice] = useState(
-    mode === 'edit' && category?.avgPrice != null ? String(category.avgPrice) : '',
-  );
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,34 +119,12 @@ function CategoryDialogBody({
     }
   };
 
-  const parsePrice = (value: string): number | null | undefined => {
-    const trimmed = value.trim();
-    if (!trimmed) return mode === 'edit' ? null : undefined;
-    return Number(trimmed);
-  };
-
   const handleSubmit = () => {
     if (!categoryName.trim()) return;
-    const min = parsePrice(minPrice);
-    const max = parsePrice(maxPrice);
-    const avg = parsePrice(avgPrice);
-    for (const price of [min, max, avg]) {
-      if (typeof price === 'number' && (!Number.isFinite(price) || price < 0)) {
-        toast.error('Bird prices must be valid non-negative numbers');
-        return;
-      }
-    }
-    if (typeof min === 'number' && typeof max === 'number' && min > max) {
-      toast.error('Min price per bird cannot be greater than max price');
-      return;
-    }
     const data = {
       name: categoryName.trim(),
       imgUrl: imgUrl.trim() || (mode === 'edit' ? null : undefined),
       status: isActive ? ('active' as const) : ('inactive' as const),
-      minPrice: min,
-      maxPrice: max,
-      avgPrice: avg,
     };
     if (mode === 'add') {
       createCategory.mutate(data, { onSuccess: () => onOpenChange(false) });
@@ -264,70 +233,6 @@ function CategoryDialogBody({
             className="hidden"
             onChange={handleImageUpload}
           />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-[#0a0a0a]">
-            Per-bird pricing (optional)
-          </label>
-          <p className="text-sm text-[#525252]">
-            Only for bird categories like Nati, where a whole bird's price
-            varies with its weight. Shown to customers as
-            "Min · Max · Avg per bird".
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1">
-              <label
-                htmlFor="minPrice"
-                className="text-xs font-medium text-[#525252]"
-              >
-                Min price (₹)
-              </label>
-              <Input
-                id="minPrice"
-                type="number"
-                min="0"
-                placeholder="e.g. 450"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="bg-[#f3f3f5] border-transparent rounded-lg h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <label
-                htmlFor="maxPrice"
-                className="text-xs font-medium text-[#525252]"
-              >
-                Max price (₹)
-              </label>
-              <Input
-                id="maxPrice"
-                type="number"
-                min="0"
-                placeholder="e.g. 700"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="bg-[#f3f3f5] border-transparent rounded-lg h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <label
-                htmlFor="avgPrice"
-                className="text-xs font-medium text-[#525252]"
-              >
-                Avg price (₹)
-              </label>
-              <Input
-                id="avgPrice"
-                type="number"
-                min="0"
-                placeholder="e.g. 550"
-                value={avgPrice}
-                onChange={(e) => setAvgPrice(e.target.value)}
-                className="bg-[#f3f3f5] border-transparent rounded-lg h-9 text-sm"
-              />
-            </div>
-          </div>
         </div>
       </div>
 

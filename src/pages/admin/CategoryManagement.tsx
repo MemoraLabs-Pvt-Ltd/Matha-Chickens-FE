@@ -84,9 +84,6 @@ export default function CategoryManagement() {
               <TableHead className="text-left py-3 text-sm font-medium text-primary">
                 Status
               </TableHead>
-              <TableHead className="text-left py-3 text-sm font-medium text-primary">
-                Per-Bird Price
-              </TableHead>
               <TableHead className="text-right py-3 pr-6 text-sm font-medium text-primary">
                 Actions
               </TableHead>
@@ -96,9 +93,9 @@ export default function CategoryManagement() {
             {isLoading && (
               <TableBodySkeleton
                 rows={6}
-                columns={4}
+                columns={3}
                 rowClassName="border-[rgba(0,0,0,0.1)]"
-                cellClassNames={["py-3 pl-6", "py-3", "py-3", "py-3 pr-6"]}
+                cellClassNames={["py-3 pl-6", "py-3", "py-3 pr-6"]}
                 renderCell={(columnIndex) => {
                   if (columnIndex === 0) {
                     return (
@@ -112,10 +109,6 @@ export default function CategoryManagement() {
                     return <Skeleton className="h-6 w-24 rounded-lg" />;
                   }
 
-                  if (columnIndex === 2) {
-                    return <Skeleton className="h-4 w-32 rounded-lg" />;
-                  }
-
                   return (
                     <div className="flex items-center justify-end gap-2">
                       <Skeleton className="h-8 w-8 rounded-lg" />
@@ -127,14 +120,14 @@ export default function CategoryManagement() {
             )}
             {isError && (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-destructive">
+                <TableCell colSpan={3} className="py-12 text-center text-sm text-destructive">
                   {error instanceof Error ? error.message : "Failed to load categories"}
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && !isError && categories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="py-12 text-center text-sm text-muted-foreground">
                   No categories found
                 </TableCell>
               </TableRow>

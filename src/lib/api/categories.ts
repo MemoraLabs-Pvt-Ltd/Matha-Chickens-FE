@@ -6,9 +6,6 @@ export interface Category {
   name: string;
   imgUrl: string | null;
   status: "active" | "inactive";
-  avgPrice: number | null;
-  minPrice: number | null;
-  maxPrice: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,9 +20,6 @@ export interface CreateCategoryInput {
   name: string;
   imgUrl?: string | null;
   status?: "active" | "inactive";
-  avgPrice?: number | null;
-  minPrice?: number | null;
-  maxPrice?: number | null;
 }
 
 export interface CategoriesQueryParams {

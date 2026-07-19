@@ -160,6 +160,7 @@ function ItemDialogBody({
   );
   const selectedBirdPriceLabel = birdPriceLabel(selectedCategory);
   const isBirdUnit = unit.trim().toLowerCase() === "bird";
+  const priceUnitLabel = isBirdUnit ? "kg" : unit || "kg";
 
   const [birdMinPrice, setBirdMinPrice] = useState("");
   const [birdMaxPrice, setBirdMaxPrice] = useState("");
@@ -499,7 +500,7 @@ function ItemDialogBody({
             htmlFor="price"
             className="text-sm font-medium text-foreground"
           >
-            Selling Price (₹/{unit || "kg"}) *
+            Selling Price (₹/{priceUnitLabel}) *
           </Label>
           <Input
             id="price"
@@ -661,7 +662,7 @@ function ItemDialogBody({
           {mode === "edit" && (
             <div className="bg-[#FAF5FF] rounded-lg p-4 space-y-3">
               <h4 className="text-sm font-medium text-[#59168B]">
-                Price Preview (per {unit || "kg"}, incl. GST)
+                Price Preview (per {priceUnitLabel}, incl. GST)
               </h4>
               <div className="flex flex-wrap items-start gap-6">
                 {savings > 0 ? (

@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api/client';
 import type { ApiResponse, PaginationMeta } from '@/lib/api/types';
 
-export const UNIT_OPTIONS = ['Kg', 'Nos', 'Tray', 'Bird'] as const;
+export const UNIT_OPTIONS = ['Kg', 'Nos', 'Tray', 'Bird', 'Pcs'] as const;
 
 export interface Item {
   id: number;

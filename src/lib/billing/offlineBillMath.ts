@@ -133,3 +133,25 @@ export function computeCampaignDiscountFromApi(
 ): number {
   return computeCampaignDiscount(subtotal, active ?? null);
 }
+
+export interface BirdPricingCategory {
+  avgPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+}
+
+/**
+ * Mirrors the bird-pricing fallback added to `orders/post.ts` and
+ * `offline_bills/post.ts`: a whole bird is priced by its category's
+ * avg/min/max price (set only for bird categories such as Nati), not by
+ * the item's own per-kg rate. Falls back to `itemPrice` for everything
+ * else, or when the category has no bird pricing set.
+ */
+export function resolveItemPrice(
+  itemPrice: number,
+  category: BirdPricingCategory | null | undefined,
+): number {
+  if (!category) return itemPrice;
+  const birdPrice = category.avgPrice ?? category.minPrice ?? category.maxPrice;
+  return birdPrice ?? itemPrice;
+}

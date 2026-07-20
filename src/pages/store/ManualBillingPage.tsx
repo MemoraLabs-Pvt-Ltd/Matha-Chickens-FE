@@ -29,10 +29,12 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
+import { useCategories } from '@/hooks/useCategories';
 import { useActiveCampaignDiscount } from '@/hooks/useDiscounts';
 import { useItems } from '@/hooks/useItems';
 import { useCreateOfflineBill, useOfflineBills } from '@/hooks/useOfflineBills';
 import { useMyStore } from '@/hooks/useStores';
+import type { Item } from '@/lib/api/items';
 import type { OfflineBillDetail, PaymentMode } from '@/lib/api/offlineBills';
 import {
   computeItemDiscount,
@@ -47,6 +49,7 @@ import {
   computeSubtotalAndTaxFromGrossLines,
   computeVendorDiscount,
   isStoreTaxApplicable,
+  resolveItemPrice,
 } from '@/lib/billing/offlineBillMath';
 import { printOfflineBillReceipt } from '@/lib/billing/printOfflineBill';
 import { formatInr, splitIsoDateTime } from '@/lib/display/formatting';
@@ -110,6 +113,16 @@ export default function ManualBillingPage() {
     limit: ITEMS_PAGE_LIMIT,
     search: searchQuery.trim() || undefined,
   });
+
+  // Needed to price whole birds by their category's avg/min/max price
+  // instead of the item's own per-kg rate — see resolveItemPrice.
+  const { data: categoriesData } = useCategories({ limit: 100 });
+  const categoryById = useMemo(
+    () => new Map((categoriesData?.data ?? []).map((c) => [c.id, c])),
+    [categoriesData?.data],
+  );
+  const resolvePrice = (item: Pick<Item, 'price' | 'category_id'>) =>
+    resolveItemPrice(Number(item.price), categoryById.get(item.category_id));
 
   const {
     data: completedBillsData,
@@ -201,7 +214,7 @@ export default function ManualBillingPage() {
         {
           id: source.id,
           name: source.name,
-          price: Number(source.price),
+          price: resolvePrice(source),
           unit: source.unit,
           gstPercent: Number(source.gst_percent),
           discountType: source.discount_type ?? 'none',
@@ -621,7 +634,7 @@ export default function ManualBillingPage() {
                     menuItems.map((item) => {
                       const quantityInCart =
                         cartQuantityByItemId.get(item.id) ?? 0;
-                      const listPrice = Number(item.price);
+                      const listPrice = resolvePrice(item);
                       const discPerUnit = computeItemDiscount(
                         listPrice,
                         item.discount_type ?? 'none',
@@ -703,7 +716,7 @@ export default function ManualBillingPage() {
                                 addToCart({
                                   id: item.id,
                                   name: item.name,
-                                  price: Number(item.price),
+                                  price: resolvePrice(item),
                                   unit: item.unit,
                                   gstPercent: Number(item.gst_percent),
                                   discountType: item.discount_type ?? 'none',

@@ -144,14 +144,18 @@ export interface BirdPricingCategory {
  * Mirrors the bird-pricing fallback added to `orders/post.ts` and
  * `offline_bills/post.ts`: a whole bird is priced by its category's
  * avg/min/max price (set only for bird categories such as Nati), not by
- * the item's own per-kg rate. Falls back to `itemPrice` for everything
- * else, or when the category has no bird pricing set.
+ * the item's own per-kg rate. Only applies when the item's own unit is
+ * "Bird" — the category may also contain non-bird items (Kg, Nos, etc.)
+ * that must keep their own price. Falls back to `itemPrice` otherwise, or
+ * when the category has no bird pricing set.
  */
 export function resolveItemPrice(
   itemPrice: number,
+  itemUnit: string,
   category: BirdPricingCategory | null | undefined,
 ): number {
   if (!category) return itemPrice;
+  if (itemUnit.trim().toLowerCase() !== "bird") return itemPrice;
   const birdPrice = category.avgPrice ?? category.minPrice ?? category.maxPrice;
   return birdPrice ?? itemPrice;
 }

@@ -121,8 +121,12 @@ export default function ManualBillingPage() {
     () => new Map((categoriesData?.data ?? []).map((c) => [c.id, c])),
     [categoriesData?.data],
   );
-  const resolvePrice = (item: Pick<Item, 'price' | 'category_id'>) =>
-    resolveItemPrice(Number(item.price), categoryById.get(item.category_id));
+  const resolvePrice = (item: Pick<Item, 'price' | 'unit' | 'category_id'>) =>
+    resolveItemPrice(
+      Number(item.price),
+      item.unit,
+      categoryById.get(item.category_id),
+    );
 
   const {
     data: completedBillsData,

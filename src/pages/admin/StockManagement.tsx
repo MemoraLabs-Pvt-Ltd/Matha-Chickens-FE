@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatCreatedAt, exportReceiptsToCSV } from "@/lib/csv";
 import {
   Plus,
@@ -54,6 +55,7 @@ import { getPaginationPageNumbers } from "@/lib/display/pagination";
 const STOCK_PAGE_LIMIT = 20;
 
 export default function StockManagement() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState("all");
@@ -125,6 +127,19 @@ export default function StockManagement() {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+
+    setAddDialogOpen(true);
+    setSearchParams(
+      (params) => {
+        params.delete("new");
+        return params;
+      },
+      { replace: true },
+    );
+  }, [searchParams, setSearchParams]);
 
   const recentReceipts = filteredReceipts.filter((receipt) => {
     if (currentTimeMs === null) return false;

@@ -38,6 +38,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DeleteAccountPage from "./pages/DeleteAccountPage";
 import RootLayout from "@/layouts/RootLayout";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { GlobalShortcuts } from "@/components/common/GlobalShortcuts";
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute allowedRoles={["admin"]}>{children}</ProtectedRoute>;
@@ -78,6 +79,7 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <GlobalShortcuts />
           <Routes>
             <Route element={<RootLayout />}>
               <Route path="/" element={<HomePage />} />

@@ -14,6 +14,7 @@ import {
   Receipt,
   ShoppingCart,
   Store,
+  TrendingUp,
   Users,
   Wallet,
 } from "lucide-react";
@@ -33,6 +34,7 @@ interface AdminLayoutProps {
 
 const adminNavItems = [
   { icon: LuLayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+  { icon: TrendingUp, label: "Sales", href: "/admin/sales" },
   { icon: LuTag, label: "Categories", href: "/admin/categories" },
   { icon: LuBox, label: "Items", href: "/admin/items" },
   { icon: LuTruck, label: "Suppliers", href: "/admin/suppliers" },

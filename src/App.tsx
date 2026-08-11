@@ -27,6 +27,7 @@ import OfflineBills from "./pages/admin/OfflineBills";
 import BillingInsights from "./pages/admin/BillingInsights";
 import Vendors from "./pages/admin/Vendors";
 import StockManagement from "./pages/admin/StockManagement";
+import ExpenseManagement from "./pages/admin/ExpenseManagement";
 import StoreDashboard from "./pages/store/Dashboard";
 import ManualBillingPage from "./pages/store/ManualBillingPage";
 import ItemAvailabilityPage from "./pages/store/ItemAvailabilityPage";
@@ -198,6 +199,14 @@ function App() {
               element={
                 <AdminRoute>
                   <StockManagement />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/expenses"
+              element={
+                <AdminRoute>
+                  <ExpenseManagement />
                 </AdminRoute>
               }
             />

@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   Store,
   Users,
+  Wallet,
 } from "lucide-react";
 import { LuBox, LuLayoutDashboard, LuTag, LuTruck } from "react-icons/lu";
 import { useEffect, startTransition, useState } from "react";
@@ -36,6 +37,7 @@ const adminNavItems = [
   { icon: LuBox, label: "Items", href: "/admin/items" },
   { icon: LuTruck, label: "Suppliers", href: "/admin/suppliers" },
   { icon: Box, label: "Stock Management", href: "/admin/stocks" },
+  { icon: Wallet, label: "Expenses", href: "/admin/expenses" },
   { icon: AlertTriangle, label: "Stock alerts", href: "/admin/stock-alerts" },
   { icon: Users, label: "Vendors", href: "/admin/vendors" },
   { icon: Store, label: "Stores", href: "/admin/stores" },

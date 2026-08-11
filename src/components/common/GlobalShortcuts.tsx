@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const SHORTCUTS: Record<string, string> = {
   p: "/admin/stocks?new=1",
   s: "/store/billing",
+  e: "/admin/expenses?new=1",
 };
 
 export function GlobalShortcuts() {

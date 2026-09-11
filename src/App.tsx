@@ -25,6 +25,9 @@ import StockAlerts from "./pages/admin/StockAlerts";
 import OnlineOrders from "./pages/admin/OnlineOrders";
 import OfflineBills from "./pages/admin/OfflineBills";
 import Sales from "./pages/admin/Sales";
+import PartnerManagement from "./pages/admin/PartnerManagement";
+import SalesReportImport from "./pages/admin/SalesReportImport";
+import PartnerSales from "./pages/admin/PartnerSales";
 import BillingInsights from "./pages/admin/BillingInsights";
 import Vendors from "./pages/admin/Vendors";
 import StockManagement from "./pages/admin/StockManagement";
@@ -192,6 +195,30 @@ function App() {
               element={
                 <AdminRoute>
                   <Sales />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/partners"
+              element={
+                <AdminRoute>
+                  <PartnerManagement />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/partner-sales"
+              element={
+                <AdminRoute>
+                  <PartnerSales />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/sales-reports"
+              element={
+                <AdminRoute>
+                  <SalesReportImport />
                 </AdminRoute>
               }
             />

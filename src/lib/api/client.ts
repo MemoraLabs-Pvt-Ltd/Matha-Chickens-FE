@@ -69,6 +69,35 @@ export async function apiPost<T>(
   return response.json();
 }
 
+/**
+ * Multipart form-data POST (file uploads). Omits Content-Type so the
+ * browser sets it with the correct multipart boundary.
+ */
+export async function apiPostForm<T>(
+  endpoint: string,
+  formData: FormData
+): Promise<T> {
+  const headers = await getAuthHeaders();
+  delete (headers as Record<string, string>)["Content-Type"];
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new ApiError(
+      data?.message || "Request failed",
+      response.status,
+      data
+    );
+  }
+
+  return response.json();
+}
+
 export async function apiPut<T>(
   endpoint: string,
   body: unknown

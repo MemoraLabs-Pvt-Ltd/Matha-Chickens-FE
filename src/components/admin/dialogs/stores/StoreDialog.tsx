@@ -102,6 +102,18 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
   const [isActive, setIsActive] = useState(
     mode === "edit" && store ? store.status !== "inactive" : true,
   );
+  const [billingEmail, setBillingEmail] = useState(
+    mode === "edit" && store ? (store.email ?? "") : "",
+  );
+  const [gstin, setGstin] = useState(
+    mode === "edit" && store ? (store.gstin ?? "") : "",
+  );
+  const [udyamNumber, setUdyamNumber] = useState(
+    mode === "edit" && store ? (store.udyam_number ?? "") : "",
+  );
+  const [fssaiLicense, setFssaiLicense] = useState(
+    mode === "edit" && store ? (store.fssai_license ?? "") : "",
+  );
 
   const isPending =
     mode === "add" ? createStore.isPending : updateStore.isPending;
@@ -161,6 +173,10 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
       discount_percent: enableDiscount ? parsedDiscountPercent : 0,
       is_tax_applicable: isTaxApplicable,
       status: isActive ? ("active" as const) : ("inactive" as const),
+      email: billingEmail.trim(),
+      gstin: gstin.trim(),
+      udyam_number: udyamNumber.trim(),
+      fssai_license: fssaiLicense.trim(),
     };
 
     if (mode === "add") {
@@ -327,6 +343,79 @@ function StoreDialogBody({ mode, store, onOpenChange }: StoreDialogBodyProps) {
               onChange={(e) => setPassword(e.target.value)}
               className="bg-input border-transparent rounded-lg h-9 text-sm"
             />
+          </div>
+        </div>
+
+        <div className="border-t border-border pt-4 space-y-3">
+          <h4 className="text-base font-medium text-foreground">
+            Tax Invoice Details
+          </h4>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Printed on the receipt header. UPI payment IDs are managed by the
+            store from its Printer Settings page.
+          </p>
+          <div className="space-y-2">
+            <Label
+              htmlFor="billingEmail"
+              className="text-sm font-medium text-foreground"
+            >
+              Business Email
+            </Label>
+            <Input
+              id="billingEmail"
+              type="email"
+              placeholder="shop@example.com"
+              value={billingEmail}
+              onChange={(e) => setBillingEmail(e.target.value)}
+              className="bg-input border-transparent rounded-lg h-9 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 min-w-0 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label
+                htmlFor="gstin"
+                className="text-sm font-medium text-foreground"
+              >
+                GSTIN
+              </Label>
+              <Input
+                id="gstin"
+                placeholder="29BAIPN3113Q1Z8"
+                value={gstin}
+                onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                className="bg-input border-transparent rounded-lg h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="udyamNumber"
+                className="text-sm font-medium text-foreground"
+              >
+                UDYAM Number
+              </Label>
+              <Input
+                id="udyamNumber"
+                placeholder="KR-26-0021050"
+                value={udyamNumber}
+                onChange={(e) => setUdyamNumber(e.target.value)}
+                className="bg-input border-transparent rounded-lg h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="fssaiLicense"
+                className="text-sm font-medium text-foreground"
+              >
+                FSSAI License
+              </Label>
+              <Input
+                id="fssaiLicense"
+                placeholder="11226328000023"
+                value={fssaiLicense}
+                onChange={(e) => setFssaiLicense(e.target.value)}
+                className="bg-input border-transparent rounded-lg h-9 text-sm"
+              />
+            </div>
           </div>
         </div>
 

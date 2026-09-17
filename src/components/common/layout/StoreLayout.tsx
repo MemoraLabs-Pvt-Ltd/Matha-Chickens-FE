@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Menu,
   Package,
+  Printer,
   Receipt,
   ShoppingBag,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const storeNavItems: { icon: IconType; label: string; href: string }[] = [
   { icon: Package, label: "Item Availability", href: "/store/items" },
   { icon: ShoppingBag, label: "Online Orders", href: "/store/orders" },
   { icon: FileText, label: "Offline Bills", href: "/store/bills" },
+  { icon: Printer, label: "Printer Settings", href: "/store/print-settings" },
 ];
 
 export function StoreLayout({

@@ -88,6 +88,9 @@ export default function SupplierManagement() {
               <TableHead className="text-left py-3 pl-6 text-sm font-medium text-foreground">
                 Address
               </TableHead>
+              <TableHead className="text-left py-3 pl-6 text-sm font-medium text-foreground">
+                GSTIN
+              </TableHead>
               <TableHead className="text-right py-3 pr-6 text-sm font-medium text-foreground">
                 Actions
               </TableHead>
@@ -97,11 +100,11 @@ export default function SupplierManagement() {
             {isLoading && (
               <TableBodySkeleton
                 rows={6}
-                columns={4}
+                columns={5}
                 rowClassName="border-[rgba(0,0,0,0.1)]"
-                cellClassNames={["py-3 pl-6", "py-3 pl-6", "py-3 pl-6", "py-3 pr-6"]}
+                cellClassNames={["py-3 pl-6", "py-3 pl-6", "py-3 pl-6", "py-3 pl-6", "py-3 pr-6"]}
                 renderCell={(columnIndex) => {
-                  if (columnIndex < 3) {
+                  if (columnIndex < 4) {
                     return <Skeleton className="h-4 w-3/4 rounded-lg" />;
                   }
 
@@ -117,7 +120,7 @@ export default function SupplierManagement() {
 
             {isError && (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-destructive">
+                <TableCell colSpan={5} className="py-12 text-center text-sm text-destructive">
                   {error instanceof Error ? error.message : "Failed to load suppliers"}
                 </TableCell>
               </TableRow>
@@ -125,7 +128,7 @@ export default function SupplierManagement() {
 
             {!isLoading && !isError && suppliers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
                   No suppliers found
                 </TableCell>
               </TableRow>
@@ -144,6 +147,9 @@ export default function SupplierManagement() {
                 </TableCell>
                 <TableCell className="py-3 pl-6 text-sm text-foreground">
                   {supplier.address}
+                </TableCell>
+                <TableCell className="py-3 pl-6 text-sm text-foreground">
+                  {supplier.gstin || "—"}
                 </TableCell>
                 <TableCell className="py-3 pr-6">
                   <div className="flex items-center justify-end gap-2">

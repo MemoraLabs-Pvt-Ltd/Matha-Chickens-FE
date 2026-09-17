@@ -6,6 +6,7 @@ export interface Supplier {
   name: string;
   phone_number: string;
   address: string;
+  gstin: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ export interface CreateSupplierInput {
   name: string;
   phone_number: string;
   address: string;
+  gstin?: string;
 }
 
 export async function getSuppliers(params?: SuppliersQueryParams): Promise<SupplierListResponse> {

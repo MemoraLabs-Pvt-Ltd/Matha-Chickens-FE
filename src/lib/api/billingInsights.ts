@@ -1,7 +1,13 @@
 import { apiGet } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export type PaymentMode = "cash" | "card" | "upi" | "other";
+export type PaymentMode =
+  | "cash"
+  | "credit_card"
+  | "debit_card"
+  | "upi"
+  | "cheque"
+  | "other";
 
 export interface BillingInsightsSummary {
   netInView: number;

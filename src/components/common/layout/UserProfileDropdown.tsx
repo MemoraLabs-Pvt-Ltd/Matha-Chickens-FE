@@ -1,12 +1,10 @@
-import { ChevronDown, LogOut, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,8 +40,6 @@ export function UserProfileDropdown({
   isLoading,
   onLogout,
 }: UserProfileDropdownProps) {
-  const navigate = useNavigate();
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -101,14 +97,6 @@ export function UserProfileDropdown({
           </p>
         </div>
         <div className="p-1">
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onSelect={() => navigate("/delete-account")}
-          >
-            <Trash2 className="size-4" />
-            Delete Account
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             className="cursor-pointer"

@@ -37,6 +37,7 @@ import ManualBillingPage from "./pages/store/ManualBillingPage";
 import ItemAvailabilityPage from "./pages/store/ItemAvailabilityPage";
 import OnlineOrdersPage from "./pages/store/OnlineOrdersPage";
 import OfflineBillsPage from "./pages/store/OfflineBillsPage";
+import PrinterSettingsPage from "./pages/store/PrinterSettingsPage";
 import NotFound from "./pages/NotFound";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -284,6 +285,14 @@ function App() {
               element={
                 <StoreRoute>
                   <OfflineBillsPage />
+                </StoreRoute>
+              }
+            />
+            <Route
+              path="/store/print-settings"
+              element={
+                <StoreRoute>
+                  <PrinterSettingsPage />
                 </StoreRoute>
               }
             />

@@ -18,7 +18,9 @@ interface ViewBillSheetProps {
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
-  card: "Card",
+  credit_card: "Credit Card",
+  debit_card: "Debit Card",
+  cheque: "Cheque",
   other: "Other",
 };
 

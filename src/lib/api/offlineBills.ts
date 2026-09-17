@@ -1,7 +1,13 @@
 import { apiGet, apiPost } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export type PaymentMode = "cash" | "card" | "upi" | "other";
+export type PaymentMode =
+  | "cash"
+  | "credit_card"
+  | "debit_card"
+  | "upi"
+  | "cheque"
+  | "other";
 export type DiscountType = "none" | "percentage" | "fixed";
 
 export interface OfflineBill {
@@ -14,6 +20,9 @@ export interface OfflineBill {
   tax: number;
   total_amount: number;
   payment_mode: PaymentMode;
+  received_amount: number;
+  previous_balance: number | null;
+  current_balance: number | null;
   created_at: string;
 }
 
@@ -51,7 +60,17 @@ export interface CreateOfflineBillInput {
   }>;
   discount_type?: DiscountType;
   discount_value?: number;
+  /** Amount actually collected. Defaults to the full total when omitted. */
+  received_amount?: number;
 }
+
+export interface CustomerBalance {
+  customer_phone: string;
+  customer_name: string | null;
+  balance: number;
+}
+
+export type CustomerBalanceResponse = ApiResponse<CustomerBalance>;
 
 export interface OfflineBillListResponse extends ApiResponse<OfflineBill[]> {
   pagination: PaginationMeta;
@@ -97,4 +116,12 @@ export async function createOfflineBill(
   data: CreateOfflineBillInput,
 ): Promise<OfflineBillCreateResponse> {
   return apiPost<OfflineBillCreateResponse>("/offline-bills", data);
+}
+
+export async function getCustomerBalance(
+  phone: string,
+): Promise<CustomerBalanceResponse> {
+  return apiGet<CustomerBalanceResponse>(
+    `/offline-bills/customer-balance?phone=${encodeURIComponent(phone)}`,
+  );
 }

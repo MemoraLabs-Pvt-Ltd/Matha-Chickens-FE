@@ -13,6 +13,10 @@ export interface Store {
   discount_percent: number;
   is_tax_applicable: boolean;
   status: string | null;
+  email: string | null;
+  gstin: string | null;
+  udyam_number: string | null;
+  fssai_license: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +45,10 @@ export interface CreateStoreInput {
   discount_percent?: number;
   is_tax_applicable?: boolean;
   status?: string;
+  email?: string;
+  gstin?: string;
+  udyam_number?: string;
+  fssai_license?: string;
 }
 
 export interface UpdateStoreInput {
@@ -55,6 +63,10 @@ export interface UpdateStoreInput {
   discount_percent?: number;
   is_tax_applicable?: boolean;
   status?: string;
+  email?: string;
+  gstin?: string;
+  udyam_number?: string;
+  fssai_license?: string;
 }
 
 export async function getStores(params?: StoresQueryParams): Promise<StoreListResponse> {

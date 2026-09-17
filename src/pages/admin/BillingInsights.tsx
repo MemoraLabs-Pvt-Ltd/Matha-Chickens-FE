@@ -50,14 +50,18 @@ import { useSearchParams } from "react-router-dom";
 const PAYMENT_LABEL: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
-  card: "Card",
+  credit_card: "Credit Card",
+  debit_card: "Debit Card",
+  cheque: "Cheque",
   other: "Other",
 };
 
 const paymentBadgeClass: Record<PaymentMode, string> = {
   cash: "bg-emerald-50 text-emerald-900 border-transparent",
   upi: "bg-sky-50 text-sky-900 border-transparent",
-  card: "bg-violet-50 text-violet-900 border-transparent",
+  credit_card: "bg-violet-50 text-violet-900 border-transparent",
+  debit_card: "bg-indigo-50 text-indigo-900 border-transparent",
+  cheque: "bg-amber-50 text-amber-900 border-transparent",
   other: "bg-muted text-foreground border-transparent",
 };
 

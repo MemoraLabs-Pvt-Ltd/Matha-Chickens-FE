@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   createOfflineBill,
+  getCustomerBalance,
   getOfflineBill,
   getOfflineBills,
   type CreateOfflineBillInput,
@@ -33,6 +34,15 @@ export function useOfflineBill(id: number) {
     queryKey: offlineBillKeys.detail(id),
     queryFn: () => getOfflineBill(id),
     enabled: id > 0,
+  });
+}
+
+export function useCustomerBalance(phone: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["offline-bills", "customer-balance", phone],
+    queryFn: () => getCustomerBalance(phone),
+    enabled: (options?.enabled ?? true) && phone.length >= 10,
+    staleTime: 0,
   });
 }
 

@@ -32,8 +32,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { useActiveCampaignDiscount } from '@/hooks/useDiscounts';
 import { useItems } from '@/hooks/useItems';
-import { useCreateOfflineBill, useOfflineBills } from '@/hooks/useOfflineBills';
+import {
+  useCreateOfflineBill,
+  useCustomerBalance,
+  useOfflineBills,
+} from '@/hooks/useOfflineBills';
 import { useMyStore } from '@/hooks/useStores';
+import { useStoreUpiIds } from '@/hooks/useStoreUpiIds';
 import type { Item } from '@/lib/api/items';
 import type { OfflineBillDetail, PaymentMode } from '@/lib/api/offlineBills';
 import {
@@ -86,7 +91,9 @@ const CREATE_BILL_BODY = {
 const paymentModeLabels: Record<PaymentMode, string> = {
   cash: 'Cash',
   upi: 'UPI',
-  card: 'Card',
+  credit_card: 'Credit Card',
+  debit_card: 'Debit Card',
+  cheque: 'Cheque',
   other: 'Other',
 };
 
@@ -98,6 +105,8 @@ export default function ManualBillingPage() {
   const [paymentMode, setPaymentMode] = useState<PaymentMode | ''>('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [receivedAmount, setReceivedAmount] = useState('');
+  const [isPrinting, setIsPrinting] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,9 +155,18 @@ export default function ManualBillingPage() {
     enabled: user?.role === 'store_owner',
   });
 
+  const { data: upiIdsResponse } = useStoreUpiIds({
+    enabled: user?.role === 'store_owner',
+  });
+
   const createOfflineBillMutation = useCreateOfflineBill();
 
   const currentStore = myStoreResponse?.data ?? null;
+  const storeUpiIds = upiIdsResponse?.data ?? [];
+  const defaultUpiId =
+    storeUpiIds.find((u) => u.is_default)?.upi_id ?? storeUpiIds[0]?.upi_id ?? null;
+  const [selectedUpiId, setSelectedUpiId] = useState<string | null>(null);
+  const receiptUpiId = selectedUpiId ?? defaultUpiId;
 
   const menuItems = itemsData?.data ?? [];
   const completedBills = completedBillsData?.data ?? [];
@@ -307,6 +325,19 @@ export default function ManualBillingPage() {
     vendorDiscountAmount,
   );
 
+  const customerPhonePayload = normalizeIndianPhonePayloadFromLocal(customerPhone);
+  const customerPhoneDigits = customerPhone.replace(/\D/g, '').length;
+  const { data: customerBalanceResponse } = useCustomerBalance(
+    customerPhonePayload ?? '',
+    { enabled: customerPhoneDigits >= 10 && !!customerPhonePayload },
+  );
+  const existingCustomerBalance = customerBalanceResponse?.data?.balance ?? null;
+
+  const parsedReceivedAmount = receivedAmount.trim()
+    ? Number(receivedAmount)
+    : estimatedTotal;
+  const balanceDue = Math.max(0, estimatedTotal - (Number.isFinite(parsedReceivedAmount) ? parsedReceivedAmount : estimatedTotal));
+
   const handleViewBill = (billId: number) => {
     setSelectedBillId(billId);
     setIsSheetOpen(true);
@@ -318,6 +349,17 @@ export default function ManualBillingPage() {
     const nameTrim = customerName.trim();
     const phoneDigits = customerPhone.replace(/\D/g, '').length;
     const phonePayload = normalizeIndianPhonePayloadFromLocal(customerPhone);
+
+    const receivedTrimmed = receivedAmount.trim();
+    const receivedValue = receivedTrimmed ? Number(receivedTrimmed) : undefined;
+    if (receivedValue !== undefined && (!Number.isFinite(receivedValue) || receivedValue < 0)) {
+      toast.error('Enter a valid received amount');
+      return;
+    }
+    if (receivedValue !== undefined && receivedValue > estimatedTotal) {
+      toast.error('Received amount cannot exceed the total');
+      return;
+    }
 
     const response = await createOfflineBillMutation.mutateAsync({
       payment_mode: paymentMode,
@@ -331,6 +373,7 @@ export default function ManualBillingPage() {
       ...(phoneDigits >= 10 && phonePayload
         ? { customer_phone: phonePayload }
         : {}),
+      ...(receivedValue !== undefined ? { received_amount: receivedValue } : {}),
     });
 
     const payload = response.data;
@@ -339,8 +382,13 @@ export default function ManualBillingPage() {
         ...payload.bill,
         bill_items: payload.bill_items,
       };
-      if (!printOfflineBillReceipt(detail, { storeName: currentStore?.name })) {
-        toast.error('Could not open print. Check browser settings.');
+      setIsPrinting(true);
+      try {
+        if (!(await printOfflineBillReceipt(detail, { store: currentStore, upiId: receiptUpiId }))) {
+          toast.error('Could not open print. Check browser settings.');
+        }
+      } finally {
+        setIsPrinting(false);
       }
     }
 
@@ -348,6 +396,7 @@ export default function ManualBillingPage() {
     setPaymentMode('');
     setCustomerName('');
     setCustomerPhone('');
+    setReceivedAmount('');
     setActiveTab('completed');
     setCurrentPage(1);
   };
@@ -947,8 +996,40 @@ export default function ManualBillingPage() {
                             className="h-auto min-h-10 border border-border bg-muted py-2.5 pl-12 pr-3 text-base leading-normal shadow-none focus-visible:ring-2 focus-visible:ring-ring/40"
                           />
                         </div>
+                        {existingCustomerBalance !== null && existingCustomerBalance !== 0 && (
+                          <p className="text-xs text-destructive">
+                            Existing balance: {formatInr(existingCustomerBalance)}
+                          </p>
+                        )}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="border-t border-border pt-4 space-y-2">
+                    <p className="text-sm font-medium text-foreground mb-2">
+                      Amount Received{' '}
+                      <span className="text-muted-foreground font-normal">
+                        (leave blank if paid in full)
+                      </span>
+                    </p>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="any"
+                      placeholder={estimatedTotal ? estimatedTotal.toFixed(2) : '0.00'}
+                      value={receivedAmount}
+                      onChange={(e) => setReceivedAmount(e.target.value)}
+                      className="h-9 bg-muted border-transparent rounded-lg text-sm"
+                    />
+                    {balanceDue > 0 && (
+                      <p className="text-xs text-destructive">
+                        Balance due: {formatInr(balanceDue)}
+                        {customerPhoneDigits >= 10
+                          ? ' (added to customer account)'
+                          : ' (add a phone number to track this on the customer account)'}
+                      </p>
+                    )}
                   </div>
 
                   <div className="border-t border-border pt-4">
@@ -966,26 +1047,54 @@ export default function ManualBillingPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="upi">UPI</SelectItem>
-                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="credit_card">Credit Card</SelectItem>
+                        <SelectItem value="debit_card">Debit Card</SelectItem>
                         <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {storeUpiIds.length > 1 && (
+                    <div className="border-t border-border pt-4">
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        Receipt UPI ID
+                      </p>
+                      <Select
+                        value={receiptUpiId ?? ''}
+                        onValueChange={(value) => setSelectedUpiId(value)}
+                      >
+                        <SelectTrigger className="w-full bg-muted border-transparent rounded-lg h-9 text-sm">
+                          <SelectValue placeholder="Select UPI ID" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {storeUpiIds.map((u) => (
+                            <SelectItem key={u.id} value={u.upi_id}>
+                              {u.label ? `${u.label} — ${u.upi_id}` : u.upi_id}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <Button
                     className="w-full h-9 bg-store hover:bg-store/90 rounded-lg text-white mt-4"
                     disabled={
                       cart.length === 0 ||
                       !paymentMode ||
-                      createOfflineBillMutation.isPending
+                      createOfflineBillMutation.isPending ||
+                      isPrinting
                     }
                     onClick={handleCreateBill}
                   >
                     <FileText className="size-4 mr-2" />
                     {createOfflineBillMutation.isPending
                       ? 'Saving...'
-                      : 'Save & Print Bill'}
+                      : isPrinting
+                        ? 'Preparing print...'
+                        : 'Save & Print Bill'}
                   </Button>
                 </div>
               </div>
@@ -996,7 +1105,7 @@ export default function ManualBillingPage() {
           billId={selectedBillId}
           isOpen={isSheetOpen}
           onClose={() => setIsSheetOpen(false)}
-          storeName={currentStore?.name}
+          store={currentStore}
         />
       </div>
     </StoreLayout>

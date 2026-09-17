@@ -76,6 +76,9 @@ function SupplierDialogBody({
   const [address, setAddress] = useState(
     mode === "edit" && supplier ? supplier.address : "",
   );
+  const [gstin, setGstin] = useState(
+    mode === "edit" && supplier ? (supplier.gstin ?? "") : "",
+  );
 
   const normalizedPhone = normalizeIndianPhonePayloadFromLocal(phoneNumber);
   const phoneDigitsCount = phoneNumber.replace(/\D/g, "").length;
@@ -100,6 +103,7 @@ function SupplierDialogBody({
       name: supplierName.trim(),
       phone_number: normalizedPhone,
       address: address.trim(),
+      gstin: gstin.trim(),
     };
 
     if (mode === "add") {
@@ -182,6 +186,22 @@ function SupplierDialogBody({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             className="bg-input border-transparent rounded-lg px-3 py-2 text-sm min-h-[64px] w-full resize-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="supplierGstin"
+            className="text-sm font-medium text-foreground"
+          >
+            GSTIN
+          </Label>
+          <Input
+            id="supplierGstin"
+            placeholder="29ABCDE1234F1Z5"
+            value={gstin}
+            onChange={(e) => setGstin(e.target.value.toUpperCase())}
+            className="bg-input border-transparent rounded-lg h-9 text-sm"
           />
         </div>
       </div>

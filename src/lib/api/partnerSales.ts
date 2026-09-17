@@ -1,7 +1,13 @@
 import { apiGet, apiPost } from "@/lib/api/client";
 import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
-export type PartnerSalePaymentType = "cash" | "card" | "upi" | "cheque" | "other";
+export type PartnerSalePaymentType =
+  | "cash"
+  | "credit_card"
+  | "debit_card"
+  | "upi"
+  | "cheque"
+  | "other";
 
 export interface PartnerSaleItem {
   id: number;

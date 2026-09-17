@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useOfflineBills } from "@/hooks/useOfflineBills";
+import { useMyStore } from "@/hooks/useStores";
 import type { PaymentMode } from "@/lib/api/offlineBills";
 import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import { getPaginationPageNumbers } from "@/lib/display/pagination";
@@ -33,7 +34,9 @@ const OFFLINE_BILLS_PAGE_LIMIT = 20;
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
-  card: "Card",
+  credit_card: "Credit Card",
+  debit_card: "Debit Card",
+  cheque: "Cheque",
   other: "Other",
 };
 
@@ -53,6 +56,9 @@ export default function OfflineBillsPage() {
     limit: OFFLINE_BILLS_PAGE_LIMIT,
     search: searchQuery.trim() || undefined,
   });
+
+  const { data: myStoreResponse } = useMyStore();
+  const currentStore = myStoreResponse?.data ?? null;
 
   const bills = billsData?.data ?? [];
   const totalPages = Math.max(billsData?.pagination?.totalPages ?? 1, 1);
@@ -277,6 +283,7 @@ export default function OfflineBillsPage() {
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
         subtitle="Offline bill transaction"
+        store={currentStore}
       />
     </StoreLayout>
   );

@@ -43,7 +43,8 @@ const ITEMS_PAGE_LIMIT = 10;
 
 const paymentTypeLabels: Record<PartnerSalePaymentType, string> = {
   cash: "Cash",
-  card: "Card",
+  credit_card: "Credit Card",
+  debit_card: "Debit Card",
   upi: "UPI",
   cheque: "Cheque",
   other: "Other",
@@ -180,16 +181,16 @@ export default function PartnerSales() {
         <TabsList className="mb-4 h-10 rounded-full w-auto border border-border/60 bg-[#eceef1] p-1">
           <TabsTrigger
             value="create"
-            className="rounded-full px-4 h-8 text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
+            className="rounded-full px-4 h-8 whitespace-nowrap text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
           >
-            <Receipt className="size-4 mr-2" />
+            <Receipt className="size-4 mr-2 shrink-0" />
             New Sale
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className="rounded-full px-4 h-8 text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
+            className="rounded-full px-4 h-8 whitespace-nowrap text-muted-foreground data-[state=active]:bg-white data-[state=active]:text-foreground"
           >
-            <FileText className="size-4 mr-2" />
+            <FileText className="size-4 mr-2 shrink-0" />
             Sale History
           </TabsTrigger>
         </TabsList>

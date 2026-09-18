@@ -7,6 +7,7 @@ export type PaymentMode =
   | "debit_card"
   | "upi"
   | "cheque"
+  | "credit_loan"
   | "other";
 export type DiscountType = "none" | "percentage" | "fixed";
 

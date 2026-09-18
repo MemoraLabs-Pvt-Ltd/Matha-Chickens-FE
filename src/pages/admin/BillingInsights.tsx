@@ -53,6 +53,7 @@ const PAYMENT_LABEL: Record<PaymentMode, string> = {
   credit_card: "Credit Card",
   debit_card: "Debit Card",
   cheque: "Cheque",
+  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 
@@ -62,6 +63,7 @@ const paymentBadgeClass: Record<PaymentMode, string> = {
   credit_card: "bg-violet-50 text-violet-900 border-transparent",
   debit_card: "bg-indigo-50 text-indigo-900 border-transparent",
   cheque: "bg-amber-50 text-amber-900 border-transparent",
+  credit_loan: "bg-rose-50 text-rose-900 border-transparent",
   other: "bg-muted text-foreground border-transparent",
 };
 

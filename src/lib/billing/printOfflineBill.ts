@@ -18,6 +18,7 @@ const paymentLabels: Record<PaymentMode, string> = {
   credit_card: "Credit Card",
   debit_card: "Debit Card",
   cheque: "Cheque",
+  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

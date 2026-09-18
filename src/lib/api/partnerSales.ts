@@ -7,6 +7,7 @@ export type PartnerSalePaymentType =
   | "debit_card"
   | "upi"
   | "cheque"
+  | "credit_loan"
   | "other";
 
 export interface PartnerSaleItem {

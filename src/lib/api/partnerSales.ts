@@ -3,11 +3,10 @@ import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
 export type PartnerSalePaymentType =
   | "cash"
-  | "credit_card"
-  | "debit_card"
+  | "card"
   | "upi"
+  | "credit"
   | "cheque"
-  | "credit_loan"
   | "other";
 
 export interface PartnerSaleItem {

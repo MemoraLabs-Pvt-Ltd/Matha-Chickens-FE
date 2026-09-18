@@ -34,20 +34,18 @@ const OFFLINE_BILLS_PAGE_LIMIT = 20;
 const paymentStyles: Record<PaymentMode, string> = {
   cash: "bg-muted text-foreground",
   upi: "bg-muted text-foreground",
-  credit_card: "bg-muted text-foreground",
-  debit_card: "bg-muted text-foreground",
+  card: "bg-muted text-foreground",
+  credit: "bg-muted text-foreground",
   cheque: "bg-muted text-foreground",
-  credit_loan: "bg-muted text-foreground",
   other: "bg-muted text-foreground",
 };
 
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
-  credit_card: "Credit Card",
-  debit_card: "Debit Card",
+  card: "Card",
+  credit: "Credit",
   cheque: "Cheque",
-  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

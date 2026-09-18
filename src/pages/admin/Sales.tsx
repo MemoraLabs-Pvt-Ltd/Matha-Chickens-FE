@@ -45,10 +45,9 @@ const channelLabels: Record<SaleChannel, string> = {
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
   upi: "UPI",
-  credit_card: "Credit Card",
-  debit_card: "Debit Card",
+  card: "Card",
+  credit: "Credit",
   cheque: "Cheque",
-  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

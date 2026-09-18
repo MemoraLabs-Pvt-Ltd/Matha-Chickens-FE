@@ -47,6 +47,7 @@ const paymentTypeLabels: Record<PartnerSalePaymentType, string> = {
   debit_card: "Debit Card",
   upi: "UPI",
   cheque: "Cheque",
+  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

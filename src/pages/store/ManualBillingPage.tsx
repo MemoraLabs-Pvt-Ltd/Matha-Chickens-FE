@@ -94,6 +94,7 @@ const paymentModeLabels: Record<PaymentMode, string> = {
   credit_card: 'Credit Card',
   debit_card: 'Debit Card',
   cheque: 'Cheque',
+  credit_loan: 'Credit (Loan)',
   other: 'Other',
 };
 
@@ -1051,6 +1052,7 @@ export default function ManualBillingPage() {
                         <SelectItem value="debit_card">Debit Card</SelectItem>
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="credit_loan">Credit (Loan)</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>

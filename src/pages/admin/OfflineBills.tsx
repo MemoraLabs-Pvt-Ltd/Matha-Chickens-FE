@@ -37,6 +37,7 @@ const paymentStyles: Record<PaymentMode, string> = {
   credit_card: "bg-muted text-foreground",
   debit_card: "bg-muted text-foreground",
   cheque: "bg-muted text-foreground",
+  credit_loan: "bg-muted text-foreground",
   other: "bg-muted text-foreground",
 };
 
@@ -46,6 +47,7 @@ const paymentLabels: Record<PaymentMode, string> = {
   credit_card: "Credit Card",
   debit_card: "Debit Card",
   cheque: "Cheque",
+  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

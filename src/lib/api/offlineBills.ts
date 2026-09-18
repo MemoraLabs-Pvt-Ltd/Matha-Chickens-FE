@@ -3,11 +3,10 @@ import type { ApiResponse, PaginationMeta } from "@/lib/api/types";
 
 export type PaymentMode =
   | "cash"
-  | "credit_card"
-  | "debit_card"
+  | "card"
   | "upi"
+  | "credit"
   | "cheque"
-  | "credit_loan"
   | "other";
 export type DiscountType = "none" | "percentage" | "fixed";
 

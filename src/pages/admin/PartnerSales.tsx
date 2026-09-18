@@ -43,11 +43,10 @@ const ITEMS_PAGE_LIMIT = 10;
 
 const paymentTypeLabels: Record<PartnerSalePaymentType, string> = {
   cash: "Cash",
-  credit_card: "Credit Card",
-  debit_card: "Debit Card",
+  card: "Card",
   upi: "UPI",
+  credit: "Credit",
   cheque: "Cheque",
-  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

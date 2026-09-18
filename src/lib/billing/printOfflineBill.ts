@@ -14,11 +14,10 @@ import {
 
 const paymentLabels: Record<PaymentMode, string> = {
   cash: "Cash",
+  card: "Card",
   upi: "UPI",
-  credit_card: "Credit Card",
-  debit_card: "Debit Card",
+  credit: "Credit",
   cheque: "Cheque",
-  credit_loan: "Credit (Loan)",
   other: "Other",
 };
 

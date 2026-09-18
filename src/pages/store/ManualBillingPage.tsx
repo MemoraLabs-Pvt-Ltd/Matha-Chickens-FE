@@ -91,10 +91,9 @@ const CREATE_BILL_BODY = {
 const paymentModeLabels: Record<PaymentMode, string> = {
   cash: 'Cash',
   upi: 'UPI',
-  credit_card: 'Credit Card',
-  debit_card: 'Debit Card',
+  card: 'Card',
+  credit: 'Credit',
   cheque: 'Cheque',
-  credit_loan: 'Credit (Loan)',
   other: 'Other',
 };
 
@@ -1047,12 +1046,11 @@ export default function ManualBillingPage() {
                         <SelectValue placeholder="Select Payment Method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="upi">UPI</SelectItem>
-                        <SelectItem value="credit_card">Credit Card</SelectItem>
-                        <SelectItem value="debit_card">Debit Card</SelectItem>
                         <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="credit">Credit</SelectItem>
                         <SelectItem value="cheque">Cheque</SelectItem>
-                        <SelectItem value="credit_loan">Credit (Loan)</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>

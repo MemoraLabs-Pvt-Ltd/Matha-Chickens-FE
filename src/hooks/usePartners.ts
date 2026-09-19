@@ -31,6 +31,24 @@ export function usePartners(params?: PartnersQueryParams) {
   });
 }
 
+/** Loads every partner across pages — the API caps a single request at 100 rows. */
+export function useAllPartners() {
+  return useQuery({
+    queryKey: [...partnerKeys.lists(), "all"] as const,
+    queryFn: async () => {
+      const limit = 100;
+      const first = await getPartners({ page: 1, limit });
+      const totalPages = first.pagination?.totalPages ?? 1;
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) =>
+          getPartners({ page: i + 2, limit }),
+        ),
+      );
+      return [first, ...rest].flatMap((res) => res.data);
+    },
+  });
+}
+
 export function usePartner(id: number) {
   return useQuery({
     queryKey: partnerKeys.detail(id),

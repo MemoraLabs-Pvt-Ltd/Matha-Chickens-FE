@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAllPartners } from "@/hooks/usePartners";
+import { PartnerPicker } from "@/components/admin/PartnerPicker";
 import { useItems } from "@/hooks/useItems";
 import { useCreatePartnerSale, usePartnerSales } from "@/hooks/usePartnerSales";
 import type { PartnerSalePaymentType } from "@/lib/api/partnerSales";
@@ -202,18 +203,7 @@ export default function PartnerSales() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Partner *</Label>
-                  <Select value={partnerId} onValueChange={setPartnerId}>
-                    <SelectTrigger className="w-full h-9 bg-muted border-transparent rounded-lg text-sm">
-                      <SelectValue placeholder="Select a partner" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="max-h-64">
-                      {partners.map((partner) => (
-                        <SelectItem key={partner.id} value={String(partner.id)}>
-                          {partner.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <PartnerPicker partners={partners} value={partnerId} onChange={setPartnerId} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Date *</Label>

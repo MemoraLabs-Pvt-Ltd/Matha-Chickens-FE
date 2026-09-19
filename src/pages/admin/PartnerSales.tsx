@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePartners } from "@/hooks/usePartners";
+import { useAllPartners } from "@/hooks/usePartners";
 import { useItems } from "@/hooks/useItems";
 import { useCreatePartnerSale, usePartnerSales } from "@/hooks/usePartnerSales";
 import type { PartnerSalePaymentType } from "@/lib/api/partnerSales";
@@ -80,8 +80,8 @@ export default function PartnerSales() {
   // History state
   const [historyPage, setHistoryPage] = useState(1);
 
-  const { data: partnersData } = usePartners({ limit: 100 });
-  const partners = (partnersData?.data ?? []).filter((p) => p.status === "active");
+  const { data: allPartners } = useAllPartners();
+  const partners = (allPartners ?? []).filter((p) => p.status === "active");
 
   const {
     data: itemsData,
@@ -206,7 +206,7 @@ export default function PartnerSales() {
                     <SelectTrigger className="w-full h-9 bg-muted border-transparent rounded-lg text-sm">
                       <SelectValue placeholder="Select a partner" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" className="max-h-64">
                       {partners.map((partner) => (
                         <SelectItem key={partner.id} value={String(partner.id)}>
                           {partner.name}

@@ -718,6 +718,10 @@ function buildThermalReceiptHtml(
       margin: 0 0 1px;
       text-align: center;
       font-size: 0.8em;
+      /* Thin strokes at this size don't fully trigger a direct-thermal head —
+         they print light/faint instead of solid black — so this block stays
+         bold regardless of the "Use Text Styling (Bold)" setting. */
+      font-weight: 700;
     }
     .doc-type {
       margin: 4px 0 2px;

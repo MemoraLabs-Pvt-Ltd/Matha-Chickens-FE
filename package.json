@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^13.2.0",
-    "html2canvas-pro": "^2.5.2",
+    "html2canvas-pro": "^2.4.3",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.45.0",
     "motion": "^13.2.0",

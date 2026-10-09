@@ -28,7 +28,7 @@ import { toast } from "sonner";
 
 const PAGE_SIZE_OPTIONS: { value: Exclude<ReceiptPageSize, "custom">; label: string }[] = [
   { value: "2in", label: "2 Inch (58mm)" },
-  { value: "3in", label: "3 Inch (68mm)" },
+  { value: "3in", label: "3 Inch (80mm)" },
   { value: "4in", label: "4 Inch (88mm)" },
 ];
 

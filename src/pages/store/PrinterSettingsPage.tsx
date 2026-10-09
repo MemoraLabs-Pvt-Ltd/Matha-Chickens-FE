@@ -44,7 +44,7 @@ const THEME_LABELS: Record<ReceiptTheme, string> = {
 
 const PAGE_SIZES: { value: Exclude<ReceiptPageSize, 'custom'>; label: string; mm: string }[] = [
   { value: '2in', label: '2 Inch', mm: '58mm' },
-  { value: '3in', label: '3 Inch', mm: '68mm' },
+  { value: '3in', label: '3 Inch', mm: '80mm' },
   { value: '4in', label: '4 Inch', mm: '88mm' },
 ];
 

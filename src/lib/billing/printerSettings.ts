@@ -31,7 +31,7 @@ export interface PrinterSettings {
 
 export const PAGE_SIZE_MM: Record<Exclude<ReceiptPageSize, "custom">, number> = {
   "2in": 58,
-  "3in": 80,
+  "3in": 68,
   "4in": 88,
 };
 

@@ -788,7 +788,7 @@ function buildThermalReceiptHtml(
 async function resolveReceiptHtmlAndWidth(
   bill: OfflineBillDetail,
   options?: PrintReceiptOptions,
-): Promise<{ html: string; widthMm: number }> {
+): Promise<{ html: string; widthMm: number; isThermal: boolean }> {
   const store: ReceiptStoreProfile | null =
     options?.store ?? (options?.storeName ? { name: options.storeName } : null);
 
@@ -802,6 +802,7 @@ async function resolveReceiptHtmlAndWidth(
       html: buildRegularReceiptHtml(bill, store, qrDataUrl),
       // Matches the regular receipt's own `.receipt { max-width: 78mm }` plus its print @page margin.
       widthMm: 78 + 16,
+      isThermal: false,
     };
   }
 
@@ -822,15 +823,12 @@ async function resolveReceiptHtmlAndWidth(
   return {
     html: buildThermalReceiptHtml(bill, store, thermal, qrDataUrl),
     widthMm,
+    isThermal: true,
   };
 }
 
-export async function printOfflineBillReceipt(
-  bill: OfflineBillDetail,
-  options?: PrintReceiptOptions,
-): Promise<boolean> {
-  const { html } = await resolveReceiptHtmlAndWidth(bill, options);
-
+/** Prints raw receipt HTML as live text through the browser's print pipeline. */
+async function printReceiptHtml(html: string): Promise<boolean> {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.cssText =
@@ -859,6 +857,88 @@ export async function printOfflineBillReceipt(
   }, 100);
 
   return true;
+}
+
+/**
+ * Prints a pre-rendered receipt bitmap as a single flattened image, sized to its
+ * physical dimensions. Thermal printheads are 1-bit (no real grayscale), so live
+ * anti-aliased text sent through the browser's print pipeline gets dithered into
+ * fuzzy/blurry edges — flattening to a bitmap first avoids that entirely, the same
+ * way the PDF download already does.
+ */
+async function printReceiptImage(imgDataUrl: string, widthMm: number, heightMm: number): Promise<boolean> {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  if (!doc || !win) {
+    iframe.remove();
+    return false;
+  }
+
+  doc.open();
+  doc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { background: #fff; }
+    img { display: block; width: ${widthMm}mm; }
+    @media print {
+      @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
+    }
+  </style>
+</head>
+<body><img src="${imgDataUrl}" /></body>
+</html>`);
+  doc.close();
+
+  await new Promise<void>((resolve) => {
+    const img = doc.querySelector("img");
+    if (!img || (img as HTMLImageElement).complete) {
+      resolve();
+      return;
+    }
+    img.addEventListener("load", () => resolve(), { once: true });
+  });
+
+  win.focus();
+
+  const cleanup = () => {
+    iframe.remove();
+  };
+
+  setTimeout(() => {
+    win.print();
+    window.setTimeout(cleanup, 1500);
+  }, 100);
+
+  return true;
+}
+
+export async function printOfflineBillReceipt(
+  bill: OfflineBillDetail,
+  options?: PrintReceiptOptions,
+): Promise<boolean> {
+  const { html, widthMm, isThermal } = await resolveReceiptHtmlAndWidth(bill, options);
+
+  if (!isThermal) return printReceiptHtml(html);
+
+  try {
+    const canvas = await renderReceiptToCanvas(html, widthMm);
+    const imgDataUrl = canvas.toDataURL("image/png");
+    const heightMm = (canvas.height / canvas.width) * widthMm;
+    return await printReceiptImage(imgDataUrl, widthMm, heightMm);
+  } catch {
+    // Rasterizing failed for some reason (e.g. html2canvas couldn't load) — fall
+    // back to the old live-text print rather than failing the print entirely.
+    return printReceiptHtml(html);
+  }
 }
 
 /** Renders receipt HTML off-screen at its real physical width and captures it as a canvas. */

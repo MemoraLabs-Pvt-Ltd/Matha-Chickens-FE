@@ -945,42 +945,77 @@ export async function printOfflineBillReceipt(
   }
 }
 
-/** Renders receipt HTML off-screen at its real physical width and captures it as a canvas. */
+/**
+ * Renders receipt HTML off-screen and captures it as a canvas.
+ *
+ * This used to write the HTML into a separate iframe document and capture that, but
+ * html2canvas-pro can't actually render elements that belong to a different `Document` — it
+ * silently returns a blank, fully-transparent canvas (no error), which is why the downloaded
+ * PDF, the WhatsApp PDF, and (since `printOfflineBillReceipt` started rasterizing thermal
+ * receipts) the thermal print all came out blank. Instead this renders into a shadow root
+ * attached to a hidden div in the *current* document: html2canvas handles that correctly,
+ * and the shadow boundary still keeps the receipt's own CSS from leaking into the app.
+ *
+ * The generated HTML styles the page via `body` / `html, body` selectors, but a shadow-root
+ * fragment has no real `<body>` element for those to match, so they're retargeted onto the
+ * wrapper div that stands in for it.
+ */
 async function renderReceiptToCanvas(html: string, widthMm: number): Promise<HTMLCanvasElement> {
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("aria-hidden", "true");
-  iframe.style.cssText = `position:fixed;left:-10000px;top:0;width:${widthMm}mm;height:100px;border:0;`;
-  document.body.appendChild(iframe);
+  const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/);
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/);
+  if (!styleMatch || !bodyMatch) throw new Error("Could not parse receipt HTML");
+
+  const captureRootClass = "receipt-capture-root";
+  const scopedStyle = styleMatch[1].replace(/\bbody\b/g, `.${captureRootClass}`);
+
+  const host = document.createElement("div");
+  host.style.cssText = `position:fixed;left:0;top:0;width:${widthMm}mm;opacity:0;pointer-events:none;z-index:-1;`;
+  document.body.appendChild(host);
+  const shadow = host.attachShadow({ mode: "open" });
+  shadow.innerHTML = `<style>${scopedStyle}</style><div class="${captureRootClass}">${bodyMatch[1]}</div>`;
+  const target = shadow.querySelector(`.${captureRootClass}`) as HTMLElement;
 
   try {
-    const doc = iframe.contentDocument;
-    if (!doc) throw new Error("Could not access iframe document");
-
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    await new Promise<void>((resolve) => {
-      if (doc.readyState === "complete") resolve();
-      else iframe.addEventListener("load", () => resolve(), { once: true });
-    });
-    // Let the QR <img> (data URL) finish painting before measuring/capturing.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const contentHeightPx = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-    iframe.style.height = `${contentHeightPx}px`;
+    // Let the QR <img> (data URL) finish decoding before measuring/capturing.
+    await Promise.all(
+      Array.from(shadow.querySelectorAll("img")).map((img) =>
+        (img as HTMLImageElement).decode().catch(() => {}),
+      ),
+    );
 
     const { default: html2canvas } = await import("html2canvas-pro");
-    return await html2canvas(doc.body, {
+    return await html2canvas(target, {
       scale: 3,
       useCORS: true,
       backgroundColor: "#ffffff",
-      windowWidth: doc.documentElement.scrollWidth,
-      windowHeight: contentHeightPx,
+      windowWidth: target.scrollWidth,
+      windowHeight: target.scrollHeight,
     });
   } finally {
-    iframe.remove();
+    host.remove();
   }
+}
+
+/** Renders the receipt to a jsPDF document sized to match its physical dimensions. */
+async function renderReceiptToPdf(
+  bill: OfflineBillDetail,
+  options?: PrintReceiptOptions,
+): Promise<{ pdf: InstanceType<typeof import("jspdf").default>; fileName: string }> {
+  const { html, widthMm } = await resolveReceiptHtmlAndWidth(bill, options);
+  const canvas = await renderReceiptToCanvas(html, widthMm);
+
+  const imgData = canvas.toDataURL("image/png");
+  const heightMm = (canvas.height / canvas.width) * widthMm;
+
+  const { default: jsPDF } = await import("jspdf");
+  const pdf = new jsPDF({
+    orientation: heightMm >= widthMm ? "portrait" : "landscape",
+    unit: "mm",
+    format: [widthMm, heightMm],
+  });
+  pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
+
+  return { pdf, fileName: `bill-${bill.id}.pdf` };
 }
 
 /** Downloads the bill as a PDF file sized to match the receipt's physical dimensions. */
@@ -989,20 +1024,47 @@ export async function downloadOfflineBillReceipt(
   options?: PrintReceiptOptions,
 ): Promise<boolean> {
   try {
-    const { html, widthMm } = await resolveReceiptHtmlAndWidth(bill, options);
-    const canvas = await renderReceiptToCanvas(html, widthMm);
+    const { pdf, fileName } = await renderReceiptToPdf(bill, options);
+    pdf.save(fileName);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-    const imgData = canvas.toDataURL("image/png");
-    const heightMm = (canvas.height / canvas.width) * widthMm;
+export interface ShareReceiptOnWhatsAppOptions extends PrintReceiptOptions {
+  /** Customer's phone number, in any format — used to open the chat with them directly. */
+  customerPhone?: string | null;
+}
 
-    const { default: jsPDF } = await import("jspdf");
-    const pdf = new jsPDF({
-      orientation: heightMm >= widthMm ? "portrait" : "landscape",
-      unit: "mm",
-      format: [widthMm, heightMm],
-    });
-    pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
-    pdf.save(`bill-${bill.id}.pdf`);
+/** Digits-only phone number for a `wa.me` link, assuming +91 when no country code is present. */
+function whatsAppPhoneDigits(phone: string | null | undefined): string | null {
+  const digits = phone?.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.length === 10 ? `91${digits}` : digits;
+}
+
+/**
+ * Downloads the bill PDF, then opens WhatsApp (the chat with the customer, if their phone is
+ * known) so it can be attached and sent. WhatsApp's own link scheme (`wa.me`) only supports a
+ * pre-filled text message, not an attached file — browsers have no API to hand a file to one
+ * specific app without going through the OS's general share sheet, which would offer every
+ * installed app, not just WhatsApp — so attaching the downloaded file is one manual tap away.
+ */
+export async function shareOfflineBillReceiptOnWhatsApp(
+  bill: OfflineBillDetail,
+  options?: ShareReceiptOnWhatsAppOptions,
+): Promise<boolean> {
+  try {
+    const { pdf, fileName } = await renderReceiptToPdf(bill, options);
+    pdf.save(fileName);
+
+    const phoneDigits = whatsAppPhoneDigits(options?.customerPhone);
+    const text = encodeURIComponent(`Hi, here's your bill #${bill.id}. Please find the PDF attached.`);
+    const waUrl = phoneDigits
+      ? `https://wa.me/${phoneDigits}?text=${text}`
+      : `https://wa.me/?text=${text}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
 
     return true;
   } catch {

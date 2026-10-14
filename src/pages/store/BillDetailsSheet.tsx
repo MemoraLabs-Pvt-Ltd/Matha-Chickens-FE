@@ -19,11 +19,13 @@ import {
 import {
   downloadOfflineBillReceipt,
   printOfflineBillReceipt,
+  shareOfflineBillReceiptOnWhatsApp,
   type ReceiptStoreProfile,
 } from "@/lib/billing/printOfflineBill";
 import type { LabelSize, ReceiptPageSize } from "@/lib/billing/printerSettings";
 import { formatInr, splitIsoDateTime } from "@/lib/display/formatting";
 import { Download, Printer, X } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "sonner";
 
 const PAGE_SIZE_OPTIONS: { value: Exclude<ReceiptPageSize, "custom">; label: string }[] = [
@@ -74,6 +76,7 @@ export function BillDetailsSheet({
   const { settings: printerSettings } = usePrinterSettings();
   const [isPrinting, setIsPrinting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSendingWhatsapp, setIsSendingWhatsapp] = useState(false);
   const [pageSizeOverride, setPageSizeOverride] = useState<Exclude<ReceiptPageSize, "custom"> | null>(null);
   const [labelSizeOverride, setLabelSizeOverride] = useState<Exclude<LabelSize, "custom"> | null>(null);
 
@@ -387,6 +390,33 @@ export function BillDetailsSheet({
               {isDownloading ? "Preparing..." : "Download"}
             </Button>
           </div>
+          <Button
+            type="button"
+            className="w-full h-9 bg-[#25D366] hover:bg-[#1ebe5a] rounded-lg text-white"
+            disabled={!bill || isSendingWhatsapp}
+            onClick={async () => {
+              if (!bill) return;
+              setIsSendingWhatsapp(true);
+              try {
+                const ok = await shareOfflineBillReceiptOnWhatsApp(bill, {
+                  store,
+                  upiId: defaultUpiId,
+                  customerPhone: bill.customer_phone,
+                  ...sizeOptions,
+                });
+                if (ok) {
+                  toast.info("Bill downloaded — attach it in the WhatsApp chat that just opened.");
+                } else {
+                  toast.error("Could not prepare the bill for WhatsApp");
+                }
+              } finally {
+                setIsSendingWhatsapp(false);
+              }
+            }}
+          >
+            <FaWhatsapp className="size-4 mr-2" />
+            {isSendingWhatsapp ? "Preparing..." : "Send via WhatsApp"}
+          </Button>
         </div>
       </div>
     </div>
